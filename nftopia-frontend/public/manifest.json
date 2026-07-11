@@ -1,7 +1,7 @@
 {
-  "name": "Stellar-LumenMint — NFT Marketplace",
+  "name": "Stellar-LumenMint — Discover, Collect & Trade NFTs",
   "short_name": "Stellar-LumenMint",
-  "description": "Discover, collect, and trade unique NFTs on the most innovative Stellar-powered marketplace",
+  "description": "The premier NFT marketplace on Stellar. Discover, collect, and trade unique digital assets with secure, fast, low-fee transactions on Soroban smart contracts.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0D1117",
@@ -9,7 +9,9 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["marketplace", "blockchain", "nft", "crypto"],
+  "categories": ["marketplace", "blockchain", "nft", "crypto", "stellar"],
+  "screenshots": [],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/stellar-lumenmint-mark.svg",
@@ -31,6 +33,20 @@
       "short_name": "Collection",
       "description": "View your NFT collection",
       "url": "/profile",
+      "icons": [{ "src": "/stellar-lumenmint-mark.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Create NFT",
+      "short_name": "Create",
+      "description": "Mint a new NFT collection",
+      "url": "/creator-dashboard/create-your-collection",
+      "icons": [{ "src": "/stellar-lumenmint-mark.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Marketplace",
+      "short_name": "Market",
+      "description": "Browse marketplace listings",
+      "url": "/marketplace",
       "icons": [{ "src": "/stellar-lumenmint-mark.svg", "sizes": "any" }]
     }
   ]
