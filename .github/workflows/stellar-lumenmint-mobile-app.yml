@@ -48,8 +48,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: ${{ steps.detect.outputs.manager }}
           cache-dependency-path: |
-            nftopia-mobile-app/pnpm-lock.yaml
-            nftopia-mobile-app/package-lock.json
+            mobile-app/pnpm-lock.yaml
+            mobile-app/package-lock.json
 
       - name: Setup pnpm
         if: steps.detect.outputs.manager == 'pnpm'

@@ -3,17 +3,17 @@ name: Stellar-LumenMint Contracts CI
 on:
   push:
     paths:
-      - "contracts/**"
+      - "soroban/**"
   pull_request:
     paths:
-      - "contracts/**"
+      - "soroban/**"
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: contracts
+        working-directory: ./soroban
 
     steps:
       - uses: actions/checkout@v4
