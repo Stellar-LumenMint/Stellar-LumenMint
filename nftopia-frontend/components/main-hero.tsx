@@ -71,19 +71,19 @@ export function MainHero() {
       icon: Globe,
       value: "100%",
       label: t("homepage.features.onChain"),
-      desc: "Fully on-chain NFTs",
+      desc: t("homepage.features.onChainDesc"),
     },
     {
       icon: Zap,
       value: t("homepage.features.stellar"),
       label: t("homepage.features.ecosystem"),
-      desc: "Lightning-fast Stellar",
+      desc: t("homepage.features.stellarDesc"),
     },
     {
       icon: Shield,
       value: t("homepage.features.secure"),
       label: t("homepage.features.storage"),
-      desc: "Bank-grade security",
+      desc: t("homepage.features.secureDesc"),
     },
   ];
 

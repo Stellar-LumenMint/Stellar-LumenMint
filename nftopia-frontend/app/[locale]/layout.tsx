@@ -44,7 +44,7 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
   }, {} as Record<string, string>);
 
   return (
-    <html lang={params.locale}>
+    <html lang={params.locale} className="scroll-smooth">
       <head>
         <meta
           name="viewport"
@@ -57,6 +57,8 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#0D1117" />
         <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="color-scheme" content="dark" />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
 
         {!isNftDetailPage && (
           <>
