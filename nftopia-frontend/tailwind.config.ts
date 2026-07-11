@@ -239,18 +239,6 @@ const config: Config = {
           paddingLeft:   "env(safe-area-inset-left)",
           paddingRight:  "env(safe-area-inset-right)",
         },
-        ".lm-glass": {
-          background:             "rgba(20, 27, 36, 0.68)",
-          backdropFilter:         "blur(20px) saturate(1.2)",
-          "-webkit-backdrop-filter": "blur(20px) saturate(1.2)",
-          border:                 "1px solid rgba(0, 212, 255, 0.10)",
-        },
-        ".lm-glass-light": {
-          background:             "rgba(255, 255, 255, 0.72)",
-          backdropFilter:         "blur(20px) saturate(1.2)",
-          "-webkit-backdrop-filter": "blur(20px) saturate(1.2)",
-          border:                 "1px solid rgba(0, 0, 0, 0.06)",
-        },
         ".container-responsive": {
           width: "100%",
           maxWidth: "1400px",
