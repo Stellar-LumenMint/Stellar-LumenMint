@@ -1,10 +1,9 @@
 <p align="center">
-  <b>✦</b>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Stellar-LumenMint/Stellar-LumenMint/main/frontend/public/stellar-lumenmint-logo-dark.svg">
+    <img src="https://raw.githubusercontent.com/Stellar-LumenMint/Stellar-LumenMint/main/frontend/public/stellar-lumenmint-logo.svg" alt="Stellar‑LumenMint" width="420" />
+  </picture>
 </p>
-
-<h1 align="center">
-  <b>Stellar‑LumenMint</b>
-</h1>
 
 <p align="center">
   <em>The curated NFT marketplace for the Stellar ecosystem.</em>
