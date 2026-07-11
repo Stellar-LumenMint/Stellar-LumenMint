@@ -1,0 +1,302 @@
+"use client";
+
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { X, AlertCircle, Loader2, ExternalLink } from "lucide-react";
+import { WalletInfo, WalletProvider } from "@/types/stellar";
+import { useStellarWallet } from "./hooks/useStellarWallet";
+import { detectInstalledWallets } from "@/lib/stellar/wallet/detection";
+import { useTranslation } from "@/hooks/useTranslation";
+import { OptimizedImage } from "@/components/image";
+import { useToast } from "@/lib/stores";
+import { Button } from "@/components/ui/button";
+import { telemetry } from "@/lib/telemetry";
+import { EVENT_NAMES } from "@/lib/telemetry/events";
+import { v4 as uuidv4 } from "uuid";
+
+interface WalletModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConnected?: (address: string) => void;
+}
+
+export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
+  const { t } = useTranslation();
+  const { showError } = useToast();
+  const { connect, connecting, error, connected, address, clearError } = useStellarWallet();
+  const [wallets, setWallets] = useState<WalletInfo[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<WalletProvider | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const firstFocusableRef = useRef<HTMLButtonElement>(null);
+  const lastFocusedElementRef = useRef<HTMLElement | null>(null);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [triggerSource, setTriggerSource] = useState<"header_button" | "cta" | "forced_prompt" | "other">("other");
+
+  useEffect(() => {
+    if (open) {
+      lastFocusedElementRef.current = document.activeElement as HTMLElement;
+      detectInstalledWallets().then(setWallets);
+      setIsVisible(true);
+      // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
+    } else {
+      setIsVisible(false);
+      document.body.style.overflow = '';
+      // Restore focus to the last focused element
+      lastFocusedElementRef.current?.focus();
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (connected && address && open) {
+      onConnected?.(address);
+      onClose();
+    }
+  }, [connected, address, open, onConnected, onClose]);
+
+  // Emit modal opened event
+  useEffect(() => {
+    if (open) {
+      telemetry.track(EVENT_NAMES.walletConnectModalOpened, {
+        surface: "modal",
+        trigger_source: triggerSource,
+      });
+    }
+  }, [open, triggerSource]);
+
+  // Emit modal closed event
+  const handleClose = useCallback((reason: "backdrop_click" | "escape_key" | "close_button" | "connect_success" | "route_change" = "close_button") => {
+    telemetry.track(EVENT_NAMES.walletConnectModalClosed, {
+      close_reason: reason,
+    });
+    onClose();
+  }, [onClose]);
+
+  // Handle ESC key press
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && open) {
+      handleClose("escape_key");
+    }
+  }, [open, handleClose]);
+
+  useEffect(() => {
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown);
+      // Focus trap - focus first element
+      firstFocusableRef.current?.focus();
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, handleKeyDown]);
+
+  // Show toast errors
+  useEffect(() => {
+    if (open && error && error !== lastError) {
+      showError(error);
+      setLastError(error);
+    }
+  }, [open, error, lastError, showError]);
+
+  useEffect(() => {
+    if (!open || !error) {
+      setLastError(null);
+    }
+  }, [open, error]);
+
+  // Focus trap within modal
+  const handleTabKey = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab' || !modalRef.current) return;
+
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    if (e.shiftKey) {
+      if (document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      }
+    } else {
+      if (document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  }, []);
+
+  // Provider selection
+  const handleProviderSelect = (provider: WalletProvider, available: boolean) => {
+    setSelectedProvider(provider);
+    clearError();
+    telemetry.track(EVENT_NAMES.walletConnectProviderSelected, {
+      provider: provider ?? "unknown",
+      provider_available: !!available,
+    });
+  };
+
+  // Connect submit
+  const handleConnect = async (provider: WalletProvider) => {
+    setSelectedProvider(provider);
+    clearError();
+    const newAttemptId = uuidv4();
+    setAttemptId(newAttemptId);
+    telemetry.track(EVENT_NAMES.walletConnectSubmitted, {
+      provider: provider ?? "unknown",
+      surface: "modal",
+      attempt_id: newAttemptId,
+    });
+    await connect(provider);
+  };
+
+  if (!open) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+      onKeyDown={handleTabKey}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={() => handleClose("backdrop_click")}
+        aria-hidden="true"
+      />
+
+      {/* Modal */}
+      <div 
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wallet-modal-title"
+        className={`
+          relative w-full max-w-[480px] rounded-2xl border border-purple-500/20 bg-gray-950/95 backdrop-blur-md shadow-2xl
+          transform transition-all duration-300 ease-out
+          ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}
+          sm:mx-auto
+          max-[480px]:w-[calc(100%-32px)] max-[480px]:mx-4
+        `}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-purple-500/10">
+          <h2 id="wallet-modal-title" className="text-lg font-semibold text-white">
+            {t("walletModal.title") || "Connect Wallet"}
+          </h2>
+          <Button
+            ref={firstFocusableRef}
+            variant="ghost"
+            size="icon"
+            onClick={() => handleClose("close_button")}
+            aria-label="Close wallet modal"
+            className="text-gray-400 hover:text-white min-h-0 h-9 w-9 rounded-lg hover:bg-white/5"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </Button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-4">
+          {error && (
+            <div className="mb-4 flex items-start gap-3 p-3 rounded-lg bg-red-900/30 border border-red-500/30 text-red-300 text-sm" role="alert">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <p className="text-sm text-gray-400 mb-4">
+            {t("walletModal.subtitle") ||
+              "Choose a Stellar wallet to connect. Freighter is recommended for browser use."}
+          </p>
+
+          <div className="space-y-2">
+            {wallets.map((wallet) => (
+              <WalletOption
+                key={wallet.id}
+                wallet={wallet}
+                isConnecting={connecting && selectedProvider === wallet.id}
+                onConnect={() => {
+                  handleProviderSelect(wallet.id, wallet.available);
+                  handleConnect(wallet.id);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-purple-500/10">
+          <p className="text-xs text-gray-500 text-center">
+            {t("walletModal.poweredBy") || "Secured by Stellar blockchain"}{" "}
+            <a
+              href="https://stellar.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-1"
+            >
+              stellar.org <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WalletOption({
+  wallet,
+  isConnecting,
+  onConnect,
+}: {
+  key?: string | number;
+  wallet: WalletInfo;
+  isConnecting: boolean;
+  onConnect: (id: WalletProvider) => void;
+}) {
+  return (
+    <Button
+      variant="outline"
+      onClick={() => onConnect(wallet.id)}
+      disabled={isConnecting}
+      className="w-full justify-start gap-4 p-4 rounded-xl border-purple-500/15 hover:border-purple-500/40 hover:bg-purple-500/5 min-h-0 h-auto group"
+    >
+      <div className="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <OptimizedImage
+          src={wallet.logo}
+          alt={wallet.name}
+          width={32}
+          height={32}
+          className="object-contain"
+          fallbackSrc="/images/fallbacks/avatar-fallback.svg"
+        />
+      </div>
+
+      <div className="flex-1 text-left">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-white text-sm">{wallet.name}</span>
+          {wallet.available && (
+            <span className="text-[10px] font-medium text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-full">
+              Detected
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 mt-0.5">{wallet.description}</p>
+      </div>
+
+      {isConnecting ? (
+        <Loader2 className="h-4 w-4 text-purple-400 animate-spin" aria-label="Connecting..." />
+      ) : (
+        <span className="text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true">
+          →
+        </span>
+      )}
+    </Button>
+  );
+}

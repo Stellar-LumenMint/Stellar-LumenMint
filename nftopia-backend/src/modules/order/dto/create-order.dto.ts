@@ -1,0 +1,84 @@
+import {
+  IsUUID,
+  IsString,
+  IsNumberString,
+  IsOptional,
+  IsEnum,
+} from 'class-validator';
+
+export enum OrderType {
+  SALE = 'SALE',
+  PURCHASE = 'PURCHASE',
+}
+
+export enum OrderStatus {
+  COMPLETED = 'COMPLETED',
+  PENDING = 'PENDING',
+  FAILED = 'FAILED',
+}
+
+export class CreateOrderDto {
+  // For trade contract integration
+  @IsString()
+  @IsOptional()
+  nftContractId?: string;
+
+  @IsString()
+  @IsOptional()
+  nftTokenId?: string;
+
+  @IsString()
+  @IsOptional()
+  requestedNftContract?: string;
+
+  @IsString()
+  @IsOptional()
+  requestedNftTokenId?: string;
+
+  @IsString()
+  @IsOptional()
+  expiresAt?: string;
+  @IsUUID()
+  nftId: string;
+
+  @IsUUID()
+  buyerId: string;
+
+  @IsUUID()
+  sellerId: string;
+
+  @IsNumberString()
+  price: string;
+
+  @IsString()
+  currency?: string;
+
+  @IsEnum(OrderType)
+  type: OrderType;
+
+  @IsEnum(OrderStatus)
+  status?: OrderStatus;
+
+  // Bundle specific fields
+  @IsOptional()
+  items?: { nftContractAddress: string; tokenId: string }[];
+
+  @IsString()
+  @IsOptional()
+  totalPrice?: string;
+
+  @IsOptional()
+  durationSeconds?: number;
+
+  @IsString()
+  @IsOptional()
+  transactionHash?: string;
+
+  @IsUUID()
+  @IsOptional()
+  listingId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  auctionId?: string;
+}

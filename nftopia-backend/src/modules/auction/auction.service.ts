@@ -1,0 +1,330 @@
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Brackets, In, Repository } from 'typeorm';
+import { Auction } from './entities/auction.entity';
+import { Bid } from './entities/bid.entity';
+import { CreateAuctionDto } from './dto/create-auction.dto';
+import { PlaceBidDto } from './dto/place-bid.dto';
+import { AuctionQueryDto } from './dto/auction-query.dto';
+import { AuctionStatus } from './interfaces/auction.interface';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { StellarNft } from '../../nft/entities/stellar-nft.entity';
+import { ConfigService } from '@nestjs/config';
+import { MarketplaceSettlementClient } from '../stellar/marketplace-settlement.client';
+import { TransactionService } from '../transaction/transaction.service';
+import { TransactionState } from '../transaction/enums/transaction-state.enum';
+
+@Injectable()
+export class AuctionService {
+  private readonly logger = new Logger(AuctionService.name);
+
+  constructor(
+    @InjectRepository(Auction)
+    private readonly auctionRepo: Repository<Auction>,
+    @InjectRepository(Bid)
+    private readonly bidRepo: Repository<Bid>,
+    @InjectRepository(StellarNft)
+    private readonly nftRepo: Repository<StellarNft>,
+    private readonly configService: ConfigService,
+    private readonly settlementClient: MarketplaceSettlementClient,
+    private readonly transactionService: TransactionService,
+  ) {}
+
+  async create(createDto: CreateAuctionDto, sellerId: string) {
+    const enableOnchain = this.configService.get<boolean>(
+      'ENABLE_ONCHAIN_SETTLEMENT',
+    );
+    if (enableOnchain) {
+      // Only allow 'english' or 'dutch' for auctionType
+      const auctionType: 'english' | 'dutch' =
+        createDto.auctionType === 'dutch' ? 'dutch' : 'english';
+      const params = {
+        seller: sellerId,
+        nftContract: createDto.nftContractId,
+        tokenId: createDto.nftTokenId,
+        startPrice: String(createDto.startPrice),
+        reservePrice: String(createDto.reservePrice),
+        currency: createDto.currency || 'XLM',
+        auctionType,
+        durationSeconds:
+          createDto.endTime && createDto.startTime
+            ? Math.floor(
+                (new Date(createDto.endTime).getTime() -
+                  new Date(createDto.startTime).getTime()) /
+                  1000,
+              )
+            : 0,
+      };
+      const auctionId = await this.settlementClient.createAuction(params);
+      return { success: true, auctionId };
+    }
+
+    // Legacy DB logic
+    const {
+      nftContractId,
+      nftTokenId,
+      startPrice,
+      reservePrice,
+      startTime,
+      endTime,
+    } = createDto;
+
+    // Prevent duplicate active auctions for same NFT
+    const existing = await this.auctionRepo.findOne({
+      where: { nftContractId, nftTokenId, status: AuctionStatus.ACTIVE },
+    });
+    if (existing)
+      throw new BadRequestException('NFT already in active auction');
+
+    // Ensure NFT exists
+    const nft = await this.nftRepo.findOne({
+      where: { contractId: nftContractId, tokenId: nftTokenId },
+    });
+    if (!nft) throw new NotFoundException('NFT not found');
+
+    const now = new Date();
+    const auction = this.auctionRepo.create({
+      nftContractId,
+      nftTokenId,
+      sellerId,
+      startPrice,
+      currentPrice: startPrice,
+      reservePrice,
+      startTime: startTime ? new Date(startTime) : now,
+      endTime: new Date(endTime),
+      status: AuctionStatus.ACTIVE,
+    });
+
+    return this.auctionRepo.save(auction);
+  }
+
+  async findAll(query: AuctionQueryDto) {
+    const qb = this.auctionRepo.createQueryBuilder('a');
+    if (query.status)
+      qb.andWhere('a.status = :status', { status: query.status });
+    if (query.sellerId)
+      qb.andWhere('a.sellerId = :sellerId', { sellerId: query.sellerId });
+    if (query.nftContractId)
+      qb.andWhere('a.nftContractId = :nftContractId', {
+        nftContractId: query.nftContractId,
+      });
+    if (query.nftTokenId)
+      qb.andWhere('a.nftTokenId = :nftTokenId', {
+        nftTokenId: query.nftTokenId,
+      });
+
+    // Active auctions should be non-expired
+    if (query.status === AuctionStatus.ACTIVE || !query.status) {
+      qb.andWhere('a.endTime > :now', { now: new Date() });
+    }
+
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    qb.skip((page - 1) * limit).take(limit);
+
+    return qb.getMany();
+  }
+
+  async findOne(id: string) {
+    const auction = await this.auctionRepo.findOne({ where: { id } });
+    if (!auction) throw new NotFoundException('Auction not found');
+    return auction;
+  }
+
+  async findByIds(ids: string[]): Promise<Auction[]> {
+    const uniqueIds = [...new Set(ids.filter(Boolean))];
+    if (!uniqueIds.length) {
+      return [];
+    }
+
+    return this.auctionRepo.find({ where: { id: In(uniqueIds) } });
+  }
+
+  async findByNFTIds(nftIds: string[]): Promise<Auction[]> {
+    const uniqueNftIds = [...new Set(nftIds.filter(Boolean))];
+    if (!uniqueNftIds.length) {
+      return [];
+    }
+
+    const parsed = uniqueNftIds
+      .map((nftId) => {
+        const [contractId, tokenId] = nftId.split(':');
+        if (!contractId || !tokenId) {
+          return null;
+        }
+
+        return { contractId, tokenId };
+      })
+      .filter(
+        (value): value is { contractId: string; tokenId: string } =>
+          value !== null,
+      );
+
+    if (!parsed.length) {
+      return [];
+    }
+
+    const qb = this.auctionRepo
+      .createQueryBuilder('a')
+      .where(
+        new Brackets((where) => {
+          parsed.forEach(({ contractId, tokenId }, index) => {
+            where.orWhere(
+              `(a.nftContractId = :contractId${index} AND a.nftTokenId = :tokenId${index})`,
+              {
+                [`contractId${index}`]: contractId,
+                [`tokenId${index}`]: tokenId,
+              },
+            );
+          });
+        }),
+      )
+      .andWhere('a.status = :status', { status: AuctionStatus.ACTIVE })
+      .andWhere('a.endTime > :now', { now: new Date() });
+
+    return qb.getMany();
+  }
+
+  async getBids(auctionId: string) {
+    return this.bidRepo.find({
+      where: { auctionId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async placeBid(auctionId: string, bidderId: string, dto: PlaceBidDto) {
+    const enableOnchain = this.configService.get<boolean>(
+      'ENABLE_ONCHAIN_SETTLEMENT',
+    );
+    if (enableOnchain) {
+      // On-chain: call contract to place bid
+      const result = await this.settlementClient.placeBid(
+        Number(auctionId),
+        bidderId,
+        String(dto.amount),
+      );
+      return { success: true, result };
+    }
+
+    // Legacy DB logic
+    const auction = await this.auctionRepo.findOne({
+      where: { id: auctionId },
+    });
+    if (!auction) throw new NotFoundException('Auction not found');
+    if (auction.status !== AuctionStatus.ACTIVE)
+      throw new BadRequestException('Auction is not active');
+    if (new Date(auction.endTime) <= new Date())
+      throw new BadRequestException('Auction expired');
+
+    const amount = dto.amount;
+    if (amount <= Number(auction.currentPrice))
+      throw new BadRequestException('Bid must be greater than current price');
+
+    const bid = this.bidRepo.create({ auctionId, bidderId, amount });
+
+    await this.bidRepo.save(bid);
+
+    auction.currentPrice = amount;
+    await this.auctionRepo.save(auction);
+
+    return bid;
+  }
+
+  async cancelAuction(auctionId: string, callerId: string) {
+    const auction = await this.findOne(auctionId);
+    if (auction.sellerId !== callerId)
+      throw new ForbiddenException('Only seller can cancel');
+    if (auction.status !== AuctionStatus.ACTIVE)
+      throw new BadRequestException('Auction not active');
+
+    auction.status = AuctionStatus.CANCELLED;
+    return this.auctionRepo.save(auction);
+  }
+
+  async settleAuction(auctionId: string, callerId?: string) {
+    const auction = await this.findOne(auctionId);
+    if (auction.status !== AuctionStatus.ACTIVE)
+      throw new BadRequestException('Auction not active');
+    const now = new Date();
+    if (
+      now < new Date(auction.endTime) &&
+      callerId &&
+      callerId !== auction.sellerId
+    ) {
+      throw new ForbiddenException(
+        'Only seller or admin can settle before end',
+      );
+    }
+
+    const highest = await this.bidRepo.findOne({
+      where: { auctionId },
+      order: { amount: 'DESC' },
+    });
+
+    if (!highest) {
+      // No bids — mark completed
+      auction.status = AuctionStatus.COMPLETED;
+      await this.auctionRepo.save(auction);
+      return { settled: false, reason: 'No bids' };
+    }
+
+    // Reserve enforcement
+    if (
+      auction.reservePrice &&
+      Number(highest.amount) < Number(auction.reservePrice)
+    ) {
+      auction.status = AuctionStatus.COMPLETED;
+      await this.auctionRepo.save(auction);
+      return { settled: false, reason: 'Reserve not met' };
+    }
+
+    const transaction =
+      await this.transactionService.createAndExecuteAuctionSettlement(
+        auctionId,
+        highest.bidderId,
+        Number(highest.amount),
+      );
+
+    auction.winnerId = highest.bidderId;
+    auction.currentPrice = highest.amount;
+    auction.status =
+      transaction.state === TransactionState.COMPLETED
+        ? AuctionStatus.SETTLED
+        : AuctionStatus.COMPLETED;
+    await this.auctionRepo.save(auction);
+
+    return {
+      settled: transaction.state === TransactionState.COMPLETED,
+      winner: highest.bidderId,
+      amount: highest.amount,
+      transactionId: transaction.id,
+      transactionState: transaction.state,
+    };
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleExpiredAuctions() {
+    this.logger.debug('Checking for expired auctions to settle');
+    const now = new Date();
+    const expired = await this.auctionRepo
+      .createQueryBuilder('a')
+      .where('a.status = :status', { status: AuctionStatus.ACTIVE })
+      .andWhere('a.endTime <= :now', { now })
+      .getMany();
+    for (const a of expired) {
+      try {
+        await this.settleAuction(a.id);
+      } catch (e) {
+        this.logger.error(
+          `Failed to settle auction ${a.id}: ${(e as Error).message}`,
+        );
+      }
+    }
+  }
+}

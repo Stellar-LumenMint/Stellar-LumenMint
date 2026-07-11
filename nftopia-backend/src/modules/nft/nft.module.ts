@@ -1,0 +1,23 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { NftController } from './nft.controller';
+import { NftService } from './nft.service';
+import { Nft } from './entities/nft.entity';
+import { NftMetadata } from './entities/nft-metadata.entity';
+import { User } from '../../users/user.entity';
+import { SorobanService } from '../../nft/soroban.service';
+import { NftTransferEvent } from '../../jobs/entities/nft-transfer-event.entity';
+import { MetricsModule } from '../../common/metrics/metrics.module';
+
+@Module({
+  imports: [
+    EventEmitterModule,
+    TypeOrmModule.forFeature([Nft, NftMetadata, User, NftTransferEvent]),
+    MetricsModule,
+  ],
+  controllers: [NftController],
+  providers: [NftService, SorobanService],
+  exports: [NftService],
+})
+export class NftModule {}

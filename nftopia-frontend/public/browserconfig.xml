@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<browserconfig>
+  <msapplication>
+    <tile>
+      <square150x150logo src="/stellar-lumenmint-mark.svg"/>
+      <wide310x150logo src="/stellar-lumenmint-mark.svg"/>
+      <square310x310logo src="/stellar-lumenmint-mark.svg"/>
+      <TileColor>#0D1117</TileColor>
+    </tile>
+  </msapplication>
+</browserconfig>

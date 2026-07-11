@@ -1,0 +1,37 @@
+{
+  "name": "Stellar-LumenMint — NFT Marketplace",
+  "short_name": "Stellar-LumenMint",
+  "description": "Discover, collect, and trade unique NFTs on the most innovative Stellar-powered marketplace",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D1117",
+  "theme_color": "#0D1117",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["marketplace", "blockchain", "nft", "crypto"],
+  "icons": [
+    {
+      "src": "/stellar-lumenmint-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore NFTs",
+      "short_name": "Explore",
+      "description": "Browse the latest NFT collections on Stellar",
+      "url": "/explore",
+      "icons": [{ "src": "/stellar-lumenmint-mark.svg", "sizes": "any" }]
+    },
+    {
+      "name": "My Collection",
+      "short_name": "Collection",
+      "description": "View your NFT collection",
+      "url": "/profile",
+      "icons": [{ "src": "/stellar-lumenmint-mark.svg", "sizes": "any" }]
+    }
+  ]
+}
