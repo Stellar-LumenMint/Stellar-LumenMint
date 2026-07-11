@@ -79,7 +79,7 @@ describe("wallet link flow", () => {
       })
     );
     expect(mockSignMessage).toHaveBeenCalledWith(
-      "Stellar-LumenMint Authentication\nNonce: nonce-12345678",
+      "Stellar-LumenMint Wallet Authentication\nNonce: nonce-12345678",
       { address: walletAddress }
     );
     expect(mockFetchWithAuth).toHaveBeenCalledWith(
