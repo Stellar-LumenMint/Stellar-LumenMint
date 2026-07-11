@@ -1,8 +1,9 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Stellar-LumenMint — Tailwind Configuration
+ * Stellar-LumenMint — Tailwind Configuration (v2.0)
  * Brand: Stellar-LumenMint  |  Org: Stellar-LumenMint
+ * Theme: Cosmic Midnight / Radiant Light
  */
 const config: Config = {
   darkMode: ["class"],
@@ -19,6 +20,7 @@ const config: Config = {
       lg:  "992px",
       xl:  "1200px",
       "2xl": "1440px",
+      "3xl": "1600px",
     },
     extend: {
       backgroundImage: {
@@ -26,13 +28,20 @@ const config: Config = {
         "gradient-conic":  "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
         /* ── Stellar-LumenMint brand gradients ── */
         "gradient-lm":        "linear-gradient(135deg, #00D4FF, #7B6FFF)",
+        "gradient-lm-reverse":"linear-gradient(135deg, #7B6FFF, #00D4FF)",
         "gradient-lm-subtle": "linear-gradient(135deg, rgba(0,212,255,0.12), rgba(123,111,255,0.12))",
         "gradient-lm-dark":   "linear-gradient(180deg, #0D1117 0%, #0A1628 100%)",
+        "gradient-lm-warm":   "linear-gradient(135deg, #00D4FF, #FF6B9D, #7B6FFF)",
+        "gradient-lm-surface":"linear-gradient(135deg, #141B24, #1C2433)",
+        "gradient-cosmic":    "radial-gradient(ellipse at 50% 0%, #0A1628 0%, #0D1117 50%, #060B12 100%)",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        "3xl": "1.25rem",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
@@ -59,20 +68,26 @@ const config: Config = {
           "5": "hsl(var(--chart-5))",
         },
 
-        /* ── Stellar-LumenMint semantic design tokens ── */
+        /* ── Stellar-LumenMint semantic design tokens (v2) ── */
         lumen: {
           /* dark surface scale */
           bg:        "#0D1117",
           surface:   "#141B24",
-          surface2:  "#1C2433",
+          "surface-2":  "#1C2433",
+          "surface-3":  "#243044",
           /* brand colours */
           teal:      "#00D4FF",
           "teal-dim":"#00A8CC",
+          "teal-dark":"#0088A8",
           violet:    "#7B6FFF",
           "violet-dim":"#5E52D4",
+          "violet-dark":"#4A3FB8",
+          pink:      "#FF6B9D",
+          "pink-dim": "#D45580",
           /* text */
           text:      "#EEF2F7",
           subtext:   "#8A9BB0",
+          "text-muted": "#6B7A8D",
           /* structural */
           border:    "#1E2D3D",
           "border-bright": "#00D4FF",
@@ -89,9 +104,6 @@ const config: Config = {
           primary:     "#00D4FF",
           hover:       "#0099BB",
         },
-
-        /* All former legacy class references have been migrated
-           to lumen-* tokens above. No compatibility shim needed. */
       },
       keyframes: {
         "accordion-down": {
@@ -125,9 +137,29 @@ const config: Config = {
           from: { transform: "translateY(14px)", opacity: "0" },
           to:   { transform: "translateY(0)",    opacity: "1" },
         },
+        "lm-fade-in": {
+          from: { opacity: "0" },
+          to:   { opacity: "1" },
+        },
+        "lm-scale-in": {
+          from: { transform: "scale(0.92)", opacity: "0" },
+          to:   { transform: "scale(1)",    opacity: "1" },
+        },
+        "lm-shimmer": {
+          "0%":   { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
+        },
         "slide-in-right": {
           from: { transform: "translateX(100%)", opacity: "0" },
           to:   { transform: "translateX(0)",    opacity: "1" },
+        },
+        "lm-spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to:   { transform: "rotate(360deg)" },
+        },
+        "lm-glow-pulse": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%":      { opacity: "0.8" },
         },
       },
       animation: {
@@ -138,22 +170,38 @@ const config: Config = {
         float:              "float 6s ease-in-out infinite",
         marquee:            "marquee 22s linear infinite",
         "lm-fade-up":       "lm-fade-up 0.45s ease-out forwards",
+        "lm-fade-in":       "lm-fade-in 0.5s ease-out forwards",
+        "lm-scale-in":      "lm-scale-in 0.35s ease-out forwards",
+        "lm-shimmer":       "lm-shimmer 2s ease-in-out infinite",
         "slide-in-right":   "slide-in-right 0.3s ease-out",
+        "lm-spin-slow":     "lm-spin-slow 8s linear infinite",
+        "lm-glow-pulse":    "lm-glow-pulse 3s ease-in-out infinite",
       },
       backdropBlur: {
         xs: "2px",
+        "4xl": "60px",
       },
       boxShadow: {
         "lm-glow":      "0 0 20px rgba(0,212,255,0.22), 0 0 40px rgba(0,212,255,0.08)",
         "lm-glow-sm":   "0 0 10px rgba(0,212,255,0.18)",
+        "lm-glow-lg":   "0 0 40px rgba(0,212,255,0.15), 0 0 80px rgba(0,212,255,0.05)",
         "lm-glow-v":    "0 0 20px rgba(123,111,255,0.22)",
+        "lm-glow-v-lg": "0 0 40px rgba(123,111,255,0.15)",
         card:           "0 4px 16px rgba(0,0,0,0.32), inset 0 1px 1px rgba(255,255,255,0.04)",
         "card-hover":   "0 8px 32px rgba(0,212,255,0.10), inset 0 1px 1px rgba(255,255,255,0.06)",
+        "card-premium": "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,212,255,0.06), inset 0 1px 1px rgba(255,255,255,0.04)",
         nav:            "0 1px 0 rgba(0,212,255,0.08), 0 4px 24px rgba(0,0,0,0.4)",
+        "nav-scrolled": "0 1px 0 rgba(0,212,255,0.12), 0 8px 32px rgba(0,0,0,0.6)",
+        "lm-elevated":  "0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,212,255,0.08)",
       },
       spacing: {
         "18": "4.5rem",
         "88": "22rem",
+      },
+      transitionDuration: {
+        "400": "400ms",
+        "600": "600ms",
+        "800": "800ms",
       },
       fontSize: {
         xs:    ["0.75rem",  { lineHeight: "1rem" }],
@@ -192,10 +240,16 @@ const config: Config = {
           paddingRight:  "env(safe-area-inset-right)",
         },
         ".lm-glass": {
-          background:             "rgba(20, 27, 36, 0.72)",
-          backdropFilter:         "blur(18px)",
-          "-webkit-backdrop-filter": "blur(18px)",
+          background:             "rgba(20, 27, 36, 0.68)",
+          backdropFilter:         "blur(20px) saturate(1.2)",
+          "-webkit-backdrop-filter": "blur(20px) saturate(1.2)",
           border:                 "1px solid rgba(0, 212, 255, 0.10)",
+        },
+        ".lm-glass-light": {
+          background:             "rgba(255, 255, 255, 0.72)",
+          backdropFilter:         "blur(20px) saturate(1.2)",
+          "-webkit-backdrop-filter": "blur(20px) saturate(1.2)",
+          border:                 "1px solid rgba(0, 0, 0, 0.06)",
         },
         ".container-responsive": {
           width: "100%",
@@ -204,6 +258,24 @@ const config: Config = {
           marginRight: "auto",
           paddingLeft: "clamp(1rem, 4vw, 2.5rem)",
           paddingRight: "clamp(1rem, 4vw, 2.5rem)",
+        },
+        ".lm-gradient-text": {
+          background: "linear-gradient(135deg, #00D4FF 0%, #7B6FFF 100%)",
+          "-webkit-background-clip": "text",
+          "-webkit-text-fill-color": "transparent",
+          "background-clip": "text",
+        },
+        ".lm-text-glow": {
+          textShadow: "0 0 24px rgba(0, 212, 255, 0.45)",
+        },
+        ".lm-grid-bg": {
+          backgroundImage: "linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        },
+        ".lm-shimmer": {
+          background: "linear-gradient(90deg, rgba(0,212,255,0) 0%, rgba(0,212,255,0.05) 50%, rgba(0,212,255,0) 100%)",
+          backgroundSize: "200% 100%",
+          animation: "shimmer 2s ease-in-out infinite",
         },
       });
     },
