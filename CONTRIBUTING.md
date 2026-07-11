@@ -6,7 +6,9 @@ Thanks for your interest in contributing! Below are 10 well-scoped issues ready 
 
 ## Open Issues for Contributors
 
-### 1. 🟢 Frontend — Implement WalletConnect integration
+> All issues are live on GitHub — click the numbers below to claim one.
+
+### 1. 🟢 [Frontend — Implement WalletConnect integration (#1)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/1)
 
 **Workspace:** `frontend/`  
 **Difficulty:** Intermediate  
@@ -23,7 +25,7 @@ The frontend currently supports Freighter and Albedo wallet flows, but WalletCon
 
 ---
 
-### 2. 🟢 Frontend — Complete Spanish and German translations
+### 2. 🟢 [Frontend — Complete Spanish and German translations (#2)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/2)
 
 **Workspace:** `frontend/`  
 **Difficulty:** Beginner  
@@ -40,7 +42,7 @@ The project supports 4 locales (EN, FR, ES, DE), but the Spanish and German tran
 
 ---
 
-### 3. 🟡 Backend — Replace `synchronize: true` with migration-driven schema control
+### 3. 🟡 [Backend — Replace `synchronize: true` with migration-driven schema control (#3)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/3)
 
 **Workspace:** `backend/`**Difficulty:** Advanced
 **Time estimate:** 8–12 hours
@@ -60,7 +62,7 @@ The backend currently uses TypeORM's `synchronize: true`, which auto‑creates t
 
 ---
 
-### 4. 🟡 Backend — Add rate limiting tests
+### 4. 🟡 [Backend — Add rate limiting tests (#4)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/4)
 
 **Workspace:** `backend/`  
 **Difficulty:** Beginner  
@@ -78,7 +80,7 @@ The backend has Redis‑backed rate limiting guards, but they lack dedicated tes
 
 ---
 
-### 5. 🟡 Mobile App — Build out Marketplace, Home, and Profile screens
+### 5. 🟡 [Mobile App — Build out Marketplace, Home, and Profile screens (#5)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/5)
 
 **Workspace:** `mobile-app/`  
 **Difficulty:** Intermediate  
@@ -96,7 +98,7 @@ The mobile app currently has foundation screens (`screens/Marketplace/sample.tsx
 
 ---
 
-### 6. 🟡 Admin — Implement admin authentication and backend integration
+### 6. 🟡 [Admin — Implement admin authentication and backend integration (#6)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/6)
 
 **Workspace:** `admin/`  
 **Difficulty:** Intermediate  
@@ -114,7 +116,7 @@ The admin dashboard (`admin/README.md`) currently has no backend integration, ro
 
 ---
 
-### 7. 🟡 Admin — Build collection moderation table
+### 7. 🟡 [Admin — Build collection moderation table (#7)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/7)
 
 **Workspace:** `admin/`  
 **Difficulty:** Intermediate  
@@ -133,7 +135,7 @@ As listed in the admin's "Recommended Next Modules," build a collection moderati
 
 ---
 
-### 8. 🔴 Soroban — Flesh out the `nft_contract` package
+### 8. 🔴 [Soroban — Flesh out the `nft_contract` package (#8)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/8)
 
 **Workspace:** `soroban/`  
 **Difficulty:** Advanced  
@@ -154,7 +156,7 @@ The `soroban/contracts/nft_contract` package (`soroban/README.md`) is scaffold�
 
 ---
 
-### 9. 🔴 Soroban — Reformat code for edition 2021 and re-enable formatting check
+### 9. 🔴 [Soroban — Reformat code for edition 2021 and re-enable formatting check (#9)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/9)
 
 **Workspace:** `soroban/`  
 **Difficulty:** Beginner  
@@ -172,7 +174,7 @@ The Soroban contracts were originally written with `edition = "2024"` formatting
 
 ---
 
-### 10. 🟢 Cross-cutting — Dark mode logo in Navbar, Footer, and Auth components
+### 10. 🟢 [Cross-cutting — Dark mode logo in Navbar, Footer, and Auth components (#10)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/10)
 
 **Workspace:** `frontend/`  
 **Difficulty:** Beginner  
