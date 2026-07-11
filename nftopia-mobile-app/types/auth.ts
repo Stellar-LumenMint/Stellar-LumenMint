@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email?: string;
   walletAddress?: string;
-  walletType?: 'argentx' | 'braavos' | 'stellar';
+  walletType?: 'stellar' | 'freighter' | 'albedo';
   createdAt: Date;
 }
 
