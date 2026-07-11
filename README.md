@@ -71,12 +71,13 @@ Stellar-LumenMint is a full-stack NFT platform built around Stellar and Soroban.
 ## 📁 Repository Structure
 
 ```text
-soroban/
+./
 ├── admin/          # React + Vite admin dashboard
 ├── backend/        # NestJS API, GraphQL sidecar, storage, search
 ├── frontend/       # Next.js marketplace, wallet UX, localization
 ├── mobile-app/     # Expo mobile app with auth and wallet flows
 ├── soroban/        # Soroban contract workspace and deployment scripts
+├── DESIGN_SYSTEM.md # Design system documentation
 └── README.md       # Monorepo overview
 ```
 
