@@ -63,7 +63,7 @@ jobs:
 
       - name: Install dependencies (npm)
         if: steps.detect.outputs.manager == 'npm'
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Type check
         run: |
