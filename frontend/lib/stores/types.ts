@@ -61,7 +61,7 @@ export type AuthStore = {
   unlinkWallet: (walletAddress: string) => Promise<unknown>;
   listWallets: () => Promise<unknown>;
 
-  // Legacy Starknet methods (kept for backward compat)
+  // Legacy wallet methods (kept for backward compat)
   requestNonce: (walletAddress: string) => Promise<string>;
   verifySignature: (
     walletAddress: string,

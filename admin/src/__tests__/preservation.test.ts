@@ -1,7 +1,7 @@
 /**
  * Preservation Property Tests
  *
- * Property 2: Preservation — Non-Starknet Strings and UX Flows Unchanged
+ * Property 2: Preservation — Non-Blockchain Strings and UX Flows Unchanged
  * Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5
  *
  * IMPORTANT: These tests MUST PASS on unfixed code.
@@ -74,7 +74,7 @@ const ES_NON_BLOCKCHAIN_SNAPSHOT: Record<string, string> = {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('Preservation — Property 2: Non-Starknet strings and UX flows unchanged', () => {
+describe('Preservation — Property 2: Non-blockchain strings and UX flows unchanged', () => {
   /**
    * Property-based test: for all locale keys outside wallet.* and network.*
    * namespaces, assert the value does not change between stub and fixed locale

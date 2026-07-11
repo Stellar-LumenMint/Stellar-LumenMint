@@ -129,7 +129,7 @@ There are tests for wallet services, auth services, and auth store behavior in t
 
 ## 📌 Repository Notes
 
-- Older docs in this workspace mention ArgentX, Braavos, or Starknet terminology. The active wallet service code is built around Stellar.
+- The active wallet service code is built around Stellar and Soroban.
 - The navigation and auth documentation files remain useful references for the current implementation:
   - `ARCHITECTURE-DIAGRAM.md`
   - `NAVIGATION-README.md`

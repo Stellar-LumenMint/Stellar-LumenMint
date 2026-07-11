@@ -1,8 +1,7 @@
-# Stellar-LumenMint — Complete Rebranding Summary
+# Stellar-LumenMint — Design & Architecture Summary
 
-## ✅ Rebranding Complete — 12 Atomic Commits Pushed
-
-The project has been fully rebranded from "NFTopia" to **Stellar-LumenMint** with a premium cosmic dark theme.
+## ✅ v3.0 Design System — 12 Atomic Commits Pushed
+The project has been updated to the v3.0 Lumen Minimal design system with a gallery-fintech aesthetic.
 
 ### Design System
 - Enhanced `globals.css` with premium tokens, glassmorphism, new animations

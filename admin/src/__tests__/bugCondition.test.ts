@@ -1,7 +1,7 @@
 /**
  * Bug Condition Exploration Test
  *
- * Property 1: Bug Condition — No Starknet Strings in i18n and Rendered Output
+ * Property 1: Bug Condition — No Legacy Blockchain Strings in i18n and Rendered Output
  * Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5
  *
  * CRITICAL: This test is EXPECTED TO FAIL on unfixed code.
@@ -28,14 +28,15 @@ function collectLeafStrings(obj: unknown, path = ''): Array<{ path: string; valu
 
 /** isBugCondition: returns true when value contains "starknet" (case-insensitive) */
 function isBugCondition(value: string): boolean {
-  return value.toLowerCase().includes('starknet')
+  const lower = value.toLowerCase()
+  return lower.includes('starknet') || lower.includes('nftopia')
 }
 
-describe('Bug Condition Exploration — Property 1: No Starknet strings', () => {
+describe('Bug Condition Exploration — Property 1: No legacy blockchain strings', () => {
   describe('en.json locale values', () => {
     const enLeaves = collectLeafStrings(enJson)
 
-    it('should have no leaf values containing "starknet" (case-insensitive)', () => {
+    it('should have no leaf values containing legacy chain names (case-insensitive)', () => {
       const violations = enLeaves.filter(({ value }) => isBugCondition(value))
       if (violations.length > 0) {
         const details = violations.map(({ path, value }) => `  en.json ${path} = "${value}"`).join('\n')
@@ -48,7 +49,7 @@ describe('Bug Condition Exploration — Property 1: No Starknet strings', () => 
   describe('es.json locale values', () => {
     const esLeaves = collectLeafStrings(esJson)
 
-    it('should have no leaf values containing "starknet" (case-insensitive)', () => {
+    it('should have no leaf values containing legacy chain names (case-insensitive)', () => {
       const violations = esLeaves.filter(({ value }) => isBugCondition(value))
       if (violations.length > 0) {
         const details = violations.map(({ path, value }) => `  es.json ${path} = "${value}"`).join('\n')
@@ -59,22 +60,22 @@ describe('Bug Condition Exploration — Property 1: No Starknet strings', () => 
   })
 
   describe('explorerUrl helper', () => {
-    it('should not return a URL containing "starknet", "voyager", or "starkscan"', () => {
+    it('should not return a URL containing legacy explorer names', () => {
       const url = explorerUrl('abc123', 'tx')
       const lower = url.toLowerCase()
       const hasBug = lower.includes('starknet') || lower.includes('voyager') || lower.includes('starkscan')
       if (hasBug) {
-        throw new Error(`Bug condition found in explorerUrl("abc123", "tx") = "${url}" — contains Starknet explorer reference`)
+        throw new Error(`Bug condition found in explorerUrl("abc123", "tx") = "${url}" — contains legacy explorer reference`)
       }
       expect(hasBug).toBe(false)
     })
 
-    it('should not return an account URL containing "starknet", "voyager", or "starkscan"', () => {
+    it('should not return an account URL containing legacy explorer names', () => {
       const url = explorerUrl('abc123', 'account')
       const lower = url.toLowerCase()
       const hasBug = lower.includes('starknet') || lower.includes('voyager') || lower.includes('starkscan')
       if (hasBug) {
-        throw new Error(`Bug condition found in explorerUrl("abc123", "account") = "${url}" — contains Starknet explorer reference`)
+        throw new Error(`Bug condition found in explorerUrl("abc123", "account") = "${url}" — contains legacy explorer reference`)
       }
       expect(hasBug).toBe(false)
     })
