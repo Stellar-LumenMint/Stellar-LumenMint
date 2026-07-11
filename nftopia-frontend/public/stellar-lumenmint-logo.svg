@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" fill="none">
+  <!-- Mark: hexagonal star with orbital ring -->
+  <circle cx="30" cy="30" r="28" fill="none" stroke="#00D4FF" stroke-width="1.2" opacity="0.3"/>
+  <circle cx="30" cy="30" r="18" fill="#0D1117"/>
+  <circle cx="30" cy="30" r="18" fill="none" stroke="#00D4FF" stroke-width="1.5" opacity="0.6"/>
+  <!-- 6-point star / hex mark -->
+  <polygon points="30,12 34.5,22 45,22 36.5,29 39.5,40 30,34 20.5,40 23.5,29 15,22 25.5,22" fill="#00D4FF" opacity="0.95"/>
+  <!-- Wordmark -->
+  <text x="68" y="38" font-family="Inter, system-ui, -apple-system, sans-serif" font-weight="700" font-size="24" letter-spacing="-0.5" fill="#FFFFFF">Stellar</text>
+  <text x="148" y="38" font-family="Inter, system-ui, -apple-system, sans-serif" font-weight="300" font-size="24" letter-spacing="1" fill="#00D4FF">LumenMint</text>
+</svg>

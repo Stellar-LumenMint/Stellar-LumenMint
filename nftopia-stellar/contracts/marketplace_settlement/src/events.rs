@@ -1,0 +1,617 @@
+use crate::types::*;
+use soroban_sdk::{contracttype, symbol_short, Address, Bytes, Env, Symbol, Vec};
+
+// Sale Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SaleCreatedEvent {
+    pub transaction_id: u64,
+    pub seller: Address,
+    pub nft_address: Address,
+    pub token_id: u64,
+    pub price: i128,
+    pub currency: Asset,
+    pub expires_at: u64,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SaleExecutedEvent {
+    pub transaction_id: u64,
+    pub seller: Address,
+    pub buyer: Address,
+    pub nft_address: Address,
+    pub token_id: u64,
+    pub price: i128,
+    pub platform_fee: i128,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SaleCancelledEvent {
+    pub transaction_id: u64,
+    pub cancelled_by: Address,
+    pub reason: Bytes,
+    pub timestamp: u64,
+}
+
+// Auction Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuctionCreatedEvent {
+    pub auction_id: u64,
+    pub seller: Address,
+    pub nft_address: Address,
+    pub token_id: u64,
+    pub starting_price: i128,
+    pub reserve_price: i128,
+    pub currency: Asset,
+    pub end_time: u64,
+    pub auction_type: AuctionType,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BidPlacedEvent {
+    pub auction_id: u64,
+    pub bidder: Address,
+    pub amount: i128,
+    pub is_committed: bool,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BidRevealedEvent {
+    pub auction_id: u64,
+    pub bidder: Address,
+    pub amount: i128,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BidBelowMinimumIncrementEvent {
+    pub auction_id: u64,
+    pub bidder: Address,
+    pub bid_amount: i128,
+    pub current_highest_bid: i128,
+    pub min_required_bid: i128,
+    pub min_increment_bps: u64,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuctionEndedEvent {
+    pub auction_id: u64,
+    pub winner: Option<Address>,
+    pub final_price: i128,
+    pub reason: Bytes,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuctionExtendedEvent {
+    pub auction_id: u64,
+    pub new_end_time: u64,
+    pub extension_reason: Bytes,
+    pub timestamp: u64,
+}
+
+// Trade Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TradeCreatedEvent {
+    pub trade_id: u64,
+    pub initiator: Address,
+    pub expires_at: u64,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TradeAcceptedEvent {
+    pub trade_id: u64,
+    pub acceptor: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TradeExecutedEvent {
+    pub trade_id: u64,
+    pub timestamp: u64,
+}
+
+// Bundle Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BundleCreatedEvent {
+    pub bundle_id: u64,
+    pub seller: Address,
+    pub item_count: u64,
+    pub total_price: i128,
+    pub currency: Asset,
+    pub expires_at: u64,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BundleExecutedEvent {
+    pub bundle_id: u64,
+    pub buyer: Address,
+    pub timestamp: u64,
+}
+
+// Royalty and Fee Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RoyaltiesDistributedEvent {
+    pub transaction_id: u64,
+    pub nft_address: Address,
+    pub token_id: u64,
+    pub creator: Address,
+    pub creator_amount: i128,
+    pub seller_amount: i128,
+    pub platform_amount: i128,
+    pub total_amount: i128,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PlatformFeesCollectedEvent {
+    pub amount: i128,
+    pub currency: Asset,
+    pub collector: Address,
+    pub timestamp: u64,
+}
+
+// Dispute Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeCreatedEvent {
+    pub dispute_id: u64,
+    pub transaction_id: u64,
+    pub auction_id: Option<u64>,
+    pub initiator: Address,
+    pub reason: Bytes,
+    pub arbitrators: Vec<Address>,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeVoteEvent {
+    pub dispute_id: u64,
+    pub arbitrator: Address,
+    pub vote: u64,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeResolvedEvent {
+    pub dispute_id: u64,
+    pub resolution: u64,
+    pub winning_votes: u64,
+    pub total_votes: u64,
+    pub timestamp: u64,
+}
+
+// Bid Escrow / Refund Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BidEscrowedEvent {
+    pub auction_id: u64,
+    pub bidder: Address,
+    pub amount: i128,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BidRefundedEvent {
+    pub auction_id: u64,
+    pub bidder: Address,
+    pub amount: i128,
+    pub reason: Bytes,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuctionCancelledWithRefundsEvent {
+    pub auction_id: u64,
+    pub cancelled_by: Address,
+    pub refunded_bidder: Option<Address>,
+    pub refunded_amount: i128,
+    pub timestamp: u64,
+}
+
+// Security Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ReentrancyDetectedEvent {
+    pub caller: Address,
+    pub function: Bytes,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FrontRunningDetectedEvent {
+    pub suspicious_address: Address,
+    pub pattern: Bytes,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RateLimitExceededEvent {
+    pub caller: Address,
+    pub function: Symbol,
+    pub window_seconds: u64,
+    pub limit: u32,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EmergencyWithdrawalEvent {
+    pub transaction_id: u64,
+    pub reason: Bytes,
+    pub admin: Address,
+    pub timestamp: u64,
+}
+
+// Pause Events - NEW
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ContractPausedEvent {
+    pub paused: bool,
+    pub admin: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ContractUnpausedEvent {
+    pub admin: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ModulePausedEvent {
+    pub module: Symbol,
+    pub admin: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ModuleUnpausedEvent {
+    pub module: Symbol,
+    pub admin: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PauseScheduledEvent {
+    pub admin: Address,
+    pub execution_at: u64,
+    pub modules: Vec<Symbol>,
+    pub reason: Bytes,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PauseCancelledEvent {
+    pub admin: Address,
+    pub timestamp: u64,
+}
+
+// Configuration Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FeeConfigInitializedEvent {
+    pub config: FeeConfig,
+    pub initialized_by: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FeeConfigUpdatedEvent {
+    pub new_config: FeeConfig,
+    pub updated_by: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AdminConfigUpdatedEvent {
+    pub updated_fields: Bytes,
+    pub updated_by: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UnauthorizedAccessAttemptEvent {
+    pub caller: Address,
+    pub action: Bytes,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RejectedContractTargetEvent {
+    pub contract: Address,
+    pub target_type: Bytes,
+    pub timestamp: u64,
+}
+
+// Blocklist Events
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AddressBlockedEvent {
+    pub blocked_address: Address,
+    pub blocked_by: Address,
+    pub reason: u32,
+    pub expires_at: Option<u64>,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AddressUnblockedEvent {
+    pub unblocked_address: Address,
+    pub unblocked_by: Address,
+    pub timestamp: u64,
+}
+
+// Event emission functions
+#[allow(deprecated)]
+pub fn emit_sale_created(env: &Env, event: SaleCreatedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("sale_crtd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_sale_executed(env: &Env, event: SaleExecutedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("sale_exec")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_sale_cancelled(env: &Env, event: SaleCancelledEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("sale_canc")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_auction_created(env: &Env, event: AuctionCreatedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("auc_crtd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_bid_placed(env: &Env, event: BidPlacedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("bid_plcd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_bid_revealed(env: &Env, event: BidRevealedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("bid_revl")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_auction_ended(env: &Env, event: AuctionEndedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("auc_ended")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_auction_extended(env: &Env, event: AuctionExtendedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("auc_extd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_trade_created(env: &Env, event: TradeCreatedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("trd_crtd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_trade_accepted(env: &Env, event: TradeAcceptedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("trd_acc")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_trade_executed(env: &Env, event: TradeExecutedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("trd_exec")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_bundle_created(env: &Env, event: BundleCreatedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("bndl_crtd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_bundle_executed(env: &Env, event: BundleExecutedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("bndl_exec")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_royalties_distributed(env: &Env, event: RoyaltiesDistributedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("roy_dist")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_platform_fees_collected(env: &Env, event: PlatformFeesCollectedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("fee_coll")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_dispute_created(env: &Env, event: DisputeCreatedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("dsp_crtd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_dispute_vote(env: &Env, event: DisputeVoteEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("dsp_vote")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_dispute_resolved(env: &Env, event: DisputeResolvedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("dsp_rslv")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_reentrancy_detected(env: &Env, event: ReentrancyDetectedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("reentr")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_front_running_detected(env: &Env, event: FrontRunningDetectedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("frontrun")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_rate_limit_exceeded(env: &Env, event: RateLimitExceededEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("rt_limit")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_emergency_withdrawal(env: &Env, event: EmergencyWithdrawalEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("emerg_wd")), event);
+}
+
+// Pause Events - NEW emit functions
+#[allow(deprecated)]
+pub fn emit_contract_paused(env: &Env, event: ContractPausedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("cont_pas")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_contract_unpaused(env: &Env, event: ContractUnpausedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("cont_unp")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_module_paused(env: &Env, event: ModulePausedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("mod_pas")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_module_unpaused(env: &Env, event: ModuleUnpausedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("mod_unp")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_pause_scheduled(env: &Env, event: PauseScheduledEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("pas_sch")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_pause_cancelled(env: &Env, event: PauseCancelledEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("pas_can")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_fee_config_initialized(env: &Env, event: FeeConfigInitializedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("fee_init")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_fee_config_updated(env: &Env, event: FeeConfigUpdatedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("fee_upd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_admin_config_updated(env: &Env, event: AdminConfigUpdatedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("admin_upd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_unauthorized_access(env: &Env, event: UnauthorizedAccessAttemptEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("unauth")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_rejected_contract(env: &Env, event: RejectedContractTargetEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("rej_cont")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_bid_escrowed(env: &Env, event: BidEscrowedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("bid_escr")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_bid_refunded(env: &Env, event: BidRefundedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("bid_rfnd")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_auction_cancelled_with_refunds(env: &Env, event: AuctionCancelledWithRefundsEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("auc_cref")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_bid_below_minimum_increment(env: &Env, event: BidBelowMinimumIncrementEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("bid_min")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_address_blocked(env: &Env, event: AddressBlockedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("addr_blk")), event);
+}
+
+#[allow(deprecated)]
+pub fn emit_address_unblocked(env: &Env, event: AddressUnblockedEvent) {
+    env.events()
+        .publish(("MarketplaceSettlement", symbol_short!("addr_unb")), event);
+}

@@ -1,0 +1,34 @@
+[workspace]
+resolver = "2"
+members = [
+  "contracts/*",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace.metadata.versioning]
+strategy = "semver+git"
+version_env = "CARGO_PKG_VERSION"
+git_hash_env = "GIT_COMMIT_HASH"
+build_timestamp_env = "BUILD_TIMESTAMP"
+rustc_version_env = "RUSTC_VERSION"
+
+[workspace.dependencies]
+soroban-sdk = "23"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+# For more information about this profile see https://soroban.stellar.org/docs/basic-tutorials/logging#cargotoml-profile
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true

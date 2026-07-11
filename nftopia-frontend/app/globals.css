@@ -1,0 +1,161 @@
+/* ═══════════════════════════════════════════════════════════════
+   Stellar-LumenMint — Global Stylesheet
+   Brand: Stellar-LumenMint | Org: Stellar-LumenMint
+   Theme: Midnight Dark / Crisp Light
+═══════════════════════════════════════════════════════════════ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ─── Color Tokens ─────────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Light Mode — Stellar-LumenMint */
+    --background:         214 32% 97%;     /* #F4F7FC */
+    --foreground:         222 47% 8%;      /* #0D1117 */
+    --card:               0   0%  100%;    /* #FFFFFF */
+    --card-foreground:    222 47% 8%;
+    --popover:            0   0%  100%;
+    --popover-foreground: 222 47% 8%;
+    --primary:            192 100% 50%;    /* #00D4FF — signature teal */
+    --primary-foreground: 222 47%  8%;     /* dark text on teal */
+    --secondary:          214 30% 92%;
+    --secondary-foreground: 222 30% 40%;
+    --muted:              214 30% 92%;
+    --muted-foreground:   215 20% 55%;
+    --accent:             192 100% 50%;
+    --accent-foreground:  222 47%  8%;
+    --destructive:        0   84%  60%;
+    --destructive-foreground: 0 0% 98%;
+    --border:             214 25% 85%;
+    --input:              214 30% 92%;
+    --ring:               192 100% 50%;
+    --chart-1:            192 100% 50%;
+    --chart-2:            160  70% 45%;
+    --chart-3:            265  80% 60%;
+    --chart-4:             35  90% 55%;
+    --chart-5:            340  75% 55%;
+    --radius:             0.625rem;
+  }
+
+  .dark {
+    /* Dark Mode — Stellar-LumenMint Midnight */
+    --background:         222 28%  7%;     /* #0D1117 */
+    --foreground:         210 20% 95%;     /* #EEF2F7 */
+    --card:               222 25% 11%;     /* #141B24 */
+    --card-foreground:    210 20% 95%;
+    --popover:            222 25% 11%;
+    --popover-foreground: 210 20% 95%;
+    --primary:            192 100% 50%;    /* #00D4FF */
+    --primary-foreground: 222 47%  8%;
+    --secondary:          222 22% 16%;     /* #1C2433 */
+    --secondary-foreground: 210 15% 68%;
+    --muted:              222 22% 16%;
+    --muted-foreground:   215 15% 58%;     /* #8A9BB0 */
+    --accent:             192 100% 50%;
+    --accent-foreground:  222 47%  8%;
+    --destructive:        0   84%  60%;
+    --destructive-foreground: 0 0% 98%;
+    --border:             222 22% 18%;
+    --input:              222 22% 16%;
+    --ring:               192 100% 50%;
+    --chart-1:            192 100% 50%;
+    --chart-2:            160  70% 45%;
+    --chart-3:            265  80% 60%;
+    --chart-4:             35  90% 55%;
+    --chart-5:            340  75% 55%;
+  }
+}
+
+/* ─── Base Reset ────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ── Scrollbar — Stellar-LumenMint signature teal ────────── */
+  ::-webkit-scrollbar        { width: 5px; }
+  ::-webkit-scrollbar-track  { background: #0D1117; }
+  ::-webkit-scrollbar-thumb  { background: rgba(0, 212, 255, 0.28); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(0, 212, 255, 0.5); }
+}
+
+/* ─── Brand Utilities ───────────────────────────────────────── */
+.lm-glow {
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.22), 0 0 40px rgba(0, 212, 255, 0.08);
+}
+.lm-glow-sm {
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.18);
+}
+.lm-text-glow {
+  text-shadow: 0 0 24px rgba(0, 212, 255, 0.45);
+}
+.lm-gradient-text {
+  background: linear-gradient(135deg, #00D4FF 0%, #7B6FFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass card */
+.lm-glass {
+  background: rgba(20, 27, 36, 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(0, 212, 255, 0.10);
+}
+.lm-glass:hover {
+  border-color: rgba(0, 212, 255, 0.24);
+  box-shadow: 0 8px 32px rgba(0, 212, 255, 0.07);
+}
+
+/* ─── Animations ────────────────────────────────────────────── */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 22s linear infinite;
+}
+.animate-pause {
+  animation-play-state: paused;
+}
+
+@keyframes lm-pulse-ring {
+  0%   { transform: scale(0.88); opacity: 0.7; }
+  50%  { transform: scale(1.06); opacity: 0.25; }
+  100% { transform: scale(0.88); opacity: 0.7; }
+}
+.animate-lm-pulse-ring {
+  animation: lm-pulse-ring 2.8s ease-in-out infinite;
+}
+
+@keyframes lm-fade-up {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.animate-lm-fade-up {
+  animation: lm-fade-up 0.45s ease-out forwards;
+}
