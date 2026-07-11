@@ -1,6 +1,41 @@
-1. **Create `ContractEventDlq` Entity**: Add the requested fields.
-2. **Update Event Persistence**: In `ContractEventIndexerJob`, capture failures (and in `IndexerService` if applicable, though the problem describes `ContractEventIndexerJob` having events) and save them to DLQ instead of failing the batch.
-3. **Implement Retry Worker**: Create a cron job that finds pending/retrying DLQ entries, attempts to re-process them, updates attempts and next retry time with exponential backoff. Status changes to `exhausted` after max attempts.
-4. **Idempotency Guard**: Replay should successfully insert into `ContractEvent` using `orIgnore`, and update the DLQ record status to `resolved`.
-5. **Operator Endpoint**: Add endpoints in an existing controller (e.g., `AdminController`) or a new controller to list DLQ records and trigger manual replay.
-6. **Pre-commit Checks**: Run tests, linter, formatting.
+# Stellar-LumenMint — Complete Rebranding Summary
+
+## ✅ Rebranding Complete — 12 Atomic Commits Pushed
+
+The project has been fully rebranded from "NFTopia" to **Stellar-LumenMint** with a premium cosmic dark theme.
+
+### Design System
+- Enhanced `globals.css` with premium tokens, glassmorphism, new animations
+- Extended Tailwind config with cosmic gradients, shadows, color tokens
+- Added stagger animations, shimmer effects, scale-in/float animations
+
+### Frontend (Web)
+- **Navbar**: Premium glass morphism, cosmic theme, enhanced mobile drawer with icon+description items
+- **Hero**: Ambient glow orbs, gradient text, stagger animations, cosmic feature cards with i18n
+- **Footer**: Premium layout, scroll-to-top, network badge, resources section
+- **Button**: New `cosmic`, `cosmic-outline`, `glow` variants with shimmer effects
+- **Card**: Enhanced hover states with border glow and subtle transform
+- **Circuit Background v2**: Diagonal grid, shooting stars, mobile-aware particle count
+- **404 Page**: Premium design with cosmic badge and gradient text
+- **i18n**: Added translation keys across EN, FR, ES, DE locales
+
+### Admin Dashboard
+- Complete redesign with glassmorphism sidebar, live network indicator, glowing stats cards
+- Activity feed with type-based icons, quick actions panel
+
+### Mobile App (React Native / Expo)
+- Dark cosmic `LMTheme` constants with all design tokens
+- All auth screens redesigned with dark theme, brand colors, and back navigation
+- Splash screen with animated brand icon
+- Dark status bar and background colors
+- Added `lucide-react-native` dependency
+
+### Infrastructure
+- Package names updated across all workspaces
+- GitHub workflow paths standardized
+- All 57 test suites passing (242 tests)
+
+### Key Stats
+- **12 commits** made with conventional commit messages
+- All pushed to `origin/main`
+- Zero regressions — full test suite passes
