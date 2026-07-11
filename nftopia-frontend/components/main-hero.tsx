@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 import { telemetry } from "@/lib/telemetry";
 import { sanitizeTelemetryPayload } from "@/lib/telemetry/sanitizer";
 import { EVENT_NAMES } from "@/lib/telemetry/events";
+import { Sparkles, ArrowRight, Shield, Zap, Globe } from "lucide-react";
 
 export function MainHero() {
   const { t, locale } = useTranslation();
@@ -21,7 +22,6 @@ export function MainHero() {
 
   useEffect(() => {
     if (!heroCTAAssignment || exposureSentRef.current) return;
-    // Generate a session-unique exposure ID
     const exposureSessionId = crypto.randomUUID();
     exposureSessionIdRef.current = exposureSessionId;
     exposureTimestampRef.current = Date.now();
@@ -41,7 +41,7 @@ export function MainHero() {
         target_user_segment: "all",
         rollout_percentage: 50,
         exposure_session_id: exposureSessionId,
-        experiment_session_id: "", // Optionally wire funnel session here
+        experiment_session_id: "",
       })
     );
     exposureSentRef.current = true;
@@ -66,52 +66,88 @@ export function MainHero() {
     );
   };
 
+  const features = [
+    {
+      icon: Globe,
+      value: "100%",
+      label: t("homepage.features.onChain"),
+      desc: "Fully on-chain NFTs",
+    },
+    {
+      icon: Zap,
+      value: t("homepage.features.stellar"),
+      label: t("homepage.features.ecosystem"),
+      desc: "Lightning-fast Stellar",
+    },
+    {
+      icon: Shield,
+      value: t("homepage.features.secure"),
+      label: t("homepage.features.storage"),
+      desc: "Bank-grade security",
+    },
+  ];
+
   return (
-    <div className="flex flex-col  lg:flex-row gap-8 items-center py-8 sm:py-12 md:py-16 px-4 sm:px-8 lg:px-0 mt-8 sm:mt-12 md:mt-16">
+    <div className="relative flex flex-col lg:flex-row gap-8 lg:gap-12 items-center py-8 sm:py-12 md:py-16 lg:py-20 px-4 sm:px-8 lg:px-0 mt-8 sm:mt-12 md:mt-16 overflow-hidden">
+      {/* Ambient glow orbs */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#00D4FF]/5 rounded-full blur-[120px] animate-lm-glow-pulse" aria-hidden="true" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#7B6FFF]/5 rounded-full blur-[120px] animate-lm-glow-pulse" aria-hidden="true" style={{ animationDelay: "1.5s" }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-[#00D4FF]/3 to-[#7B6FFF]/3 rounded-full blur-[150px]" aria-hidden="true" />
+
       {/* Left Section */}
-      <div className="w-full flex flex-col md:justify-center md:items-center lg:items-start lg:justify-start lg:w-1/2 space-y-6 md:space-y-8 pt-4 md:pt-0">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white font-display tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200 mb-2">
+      <div className="relative w-full flex flex-col md:justify-center md:items-center lg:items-start lg:justify-start lg:w-1/2 space-y-6 md:space-y-8 pt-4 md:pt-0">
+        {/* Premium badge */}
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#00D4FF]/10 to-[#7B6FFF]/10 border border-[#00D4FF]/20 text-xs font-medium text-[#00D4FF] lm-stagger-1">
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>Powered by Stellar · Soroban Smart Contracts</span>
+        </div>
+
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-white font-display tracking-tight lm-stagger-2">
           {t("homepage.hero.titlePart1")}
           <br />
-          <span className="text-4xl sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-[#00D4FF] to-[#7B6FFF] block mt-1 mb-1">
+          <span className="text-4xl sm:text-5xl md:text-6xl xl:text-7xl lm-gradient-text block mt-1 mb-1">
             {t("homepage.hero.titlePart2")}
           </span>
-          <span className="tracking-tight block mt-1 text-white">
+          <span className="tracking-tight block mt-1 text-white/90">
             {t("homepage.hero.titlePart3")}
           </span>
         </h1>
-        <p className="text-gray-400 text-base sm:text-lg max-w-md">
+
+        <p className="text-gray-400 text-base sm:text-lg max-w-lg leading-relaxed lm-stagger-3">
           {t("homepage.hero.subtitle")}
         </p>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2 sm:pt-4">
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2 sm:pt-4 lm-stagger-4">
           <Link href={`/${locale}/auth/register`}>
             <Button
               variant="default"
               size="lg"
-              className="rounded-full px-6 sm:px-8 text-sm sm:text-base font-semibold"
+              className="rounded-full px-6 sm:px-8 text-sm sm:text-base font-semibold group relative overflow-hidden"
               onClick={handleRegisterClick}
             >
-              {t("homepage.hero.cta")}
+              <span className="relative z-10 flex items-center gap-2">
+                {t("homepage.hero.cta")}
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </span>
+              <span className="absolute inset-0 bg-gradient-to-r from-[#00D4FF] to-[#7B6FFF] opacity-0 group-hover:opacity-100 transition-opacity duration-500" aria-hidden="true" />
             </Button>
           </Link>
           <Link href={`/${locale}/marketplace`}>
             <Button
               variant="outline"
               size="lg"
-              className="relative border-2 border-transparent text-white hover:bg-gray-800/30 rounded-full px-6 sm:px-8 group overflow-hidden text-sm sm:text-base font-semibold"
+              className="relative rounded-full px-6 sm:px-8 text-sm sm:text-base font-semibold group overflow-hidden border-[#1E2D3D] hover:border-[#00D4FF]/40"
             >
-              <span className="absolute inset-0 rounded-full bg-gradient-to-r from-[#00D4FF] to-[#7B6FFF] opacity-20 group-hover:opacity-30 transition-opacity" aria-hidden="true"></span>
-              <span className="absolute inset-0 rounded-full border-2 border-[#ec796b] opacity-70 group-hover:opacity-100 transition-all duration-300 shadow-[0_0_15px_rgba(236,121,107,0.5)] group-hover:shadow-[0_0_20px_rgba(236,121,107,0.7)]" aria-hidden="true"></span>
-              <span className="absolute -inset-px rounded-full bg-[#181359] border border-gray-700" aria-hidden="true"></span>
-              <span className="relative z-10 flex items-center justify-center">
-                <span className="mr-2">{t("homepage.hero.learnMore")}</span>
+              <span className="absolute inset-0 rounded-full bg-gradient-to-r from-[#00D4FF]/10 to-[#7B6FFF]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+              <span className="relative z-10 flex items-center gap-2">
+                {t("homepage.hero.learnMore")}
                 <svg
                   width="16"
                   height="16"
                   viewBox="0 0 16 16"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="transition-transform group-hover:translate-x-1"
+                  className="transition-transform duration-300 group-hover:translate-x-1"
                   aria-hidden="true"
                 >
                   <path
@@ -133,70 +169,40 @@ export function MainHero() {
             </Button>
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 pt-6 sm:pt-8 max-w-sm sm:max-w-md">
-          <div className="relative bg-[#141B24]/70 p-3 sm:p-4 rounded-xl text-center backdrop-blur-md border border-[#1E2D3D] shadow-lg hover:shadow-lm-glow-sm transition-all duration-300 overflow-hidden group">
-            <div className="absolute -right-6 -top-6 w-16 h-16 bg-[#00D4FF]/8 rounded-full blur-xl group-hover:bg-[#00D4FF]/15 transition-all duration-500" aria-hidden="true"></div>
-            <div className="absolute -left-6 -bottom-6 w-12 h-12 bg-[#7B6FFF]/8 rounded-full blur-lg group-hover:bg-[#7B6FFF]/15 transition-all duration-500" aria-hidden="true"></div>
-            <svg
-              className="absolute opacity-5 -right-4 -bottom-4 w-20 h-20 text-[#00D4FF]"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
+
+        {/* Feature stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-6 sm:pt-8 max-w-lg lm-stagger-5">
+          {features.map(({ icon: Icon, value, label, desc }, idx) => (
+            <div
+              key={idx}
+              className="group relative bg-[#141B24]/60 p-3.5 sm:p-4 rounded-xl text-center backdrop-blur-md border border-[#1E2D3D]/60 hover:border-[#00D4FF]/20 shadow-lg hover:shadow-lm-glow-sm transition-all duration-300 overflow-hidden"
             >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5"></path>
-            </svg>
-            <div className="text-xl sm:text-2xl font-bold text-white mb-1">
-              100%
+              {/* Hover glow */}
+              <div className="absolute -inset-px bg-gradient-to-br from-[#00D4FF]/10 to-[#7B6FFF]/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" aria-hidden="true" />
+              
+              <Icon className="h-5 w-5 mx-auto mb-2 text-[#00D4FF]/60 group-hover:text-[#00D4FF] transition-colors duration-300" />
+              <div className="text-xl sm:text-2xl font-bold text-white mb-0.5 lm-gradient-text">
+                {value}
+              </div>
+              <div className="text-xs sm:text-sm text-[#8A9BB0] font-medium">
+                {label}
+              </div>
+              <p className="text-[10px] text-[#6B7A8D] mt-0.5">{desc}</p>
+              
+              {/* Top accent */}
+              <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-[#00D4FF]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
             </div>
-            <div className="text-xs sm:text-sm text-[#00D4FF] font-medium">
-              {t("homepage.features.onChain")}
-            </div>
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00D4FF]/40 to-transparent" aria-hidden="true"></div>
-          </div>
-          <div className="relative bg-[#141B24]/70 p-3 sm:p-4 rounded-xl text-center backdrop-blur-md border border-[#1E2D3D] shadow-lg hover:shadow-lm-glow-sm transition-all duration-300 overflow-hidden group">
-            <div className="absolute -right-6 -top-6 w-16 h-16 bg-[#00D4FF]/8 rounded-full blur-xl group-hover:bg-[#00D4FF]/15 transition-all duration-500" aria-hidden="true"></div>
-            <div className="absolute -left-6 -bottom-6 w-12 h-12 bg-[#7B6FFF]/8 rounded-full blur-lg group-hover:bg-[#7B6FFF]/15 transition-all duration-500" aria-hidden="true"></div>
-            <svg
-              className="absolute opacity-5 -right-4 -bottom-4 w-20 h-20 text-[#00D4FF]"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-15v5l4.5 2.5"></path>
-            </svg>
-            <div className="text-xl sm:text-2xl font-bold text-white mb-1 truncate">
-              {t("homepage.features.stellar")}
-            </div>
-            <div className="text-xs sm:text-sm text-[#00D4FF] font-medium">
-              {t("homepage.features.ecosystem")}
-            </div>
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00D4FF]/40 to-transparent" aria-hidden="true"></div>
-          </div>
-          <div className="relative bg-[#141B24]/70 p-3 sm:p-4 rounded-xl text-center backdrop-blur-md border border-[#1E2D3D] shadow-lg hover:shadow-lm-glow-sm transition-all duration-300 overflow-hidden group">
-            <div className="absolute -right-6 -top-6 w-16 h-16 bg-[#00D4FF]/8 rounded-full blur-xl group-hover:bg-[#00D4FF]/15 transition-all duration-500" aria-hidden="true"></div>
-            <div className="absolute -left-6 -bottom-6 w-12 h-12 bg-[#7B6FFF]/8 rounded-full blur-lg group-hover:bg-[#7B6FFF]/15 transition-all duration-500" aria-hidden="true"></div>
-            <svg
-              className="absolute opacity-5 -right-4 -bottom-4 w-20 h-20 text-[#00D4FF]"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-15v5l4.5 2.5"></path>
-            </svg>
-            <div className="text-xl sm:text-2xl font-bold text-white mb-1">
-              {t("homepage.features.secure")}
-            </div>
-            <div className="text-xs sm:text-sm text-[#00D4FF] font-medium">
-              {t("homepage.features.storage")}
-            </div>
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00D4FF]/40 to-transparent" aria-hidden="true"></div>
-          </div>
+          ))}
         </div>
       </div>
+
       {/* Right Section */}
       <div className="w-full md:w-1/2 lg:flex hidden justify-center md:justify-end items-center mt-8 md:mt-0">
         <div className="relative max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl w-full md:w-[90%] lg:w-[85%] -mt-8 sm:-mt-12 md:-mt-16 lg:-mt-24 md:mr-4 lg:mr-8">
           <div className="relative h-[260px] sm:h-[340px] md:h-[400px] lg:h-[500px] flex items-center justify-center">
+            {/* Decorative rings */}
+            <div className="absolute w-[90%] h-[90%] border border-[#00D4FF]/10 rounded-full animate-lm-spin-slow" aria-hidden="true" />
+            <div className="absolute w-[70%] h-[70%] border border-[#7B6FFF]/10 rounded-full animate-lm-spin-slow" aria-hidden="true" style={{ animationDirection: "reverse", animationDuration: "12s" }} />
             <Vault />
           </div>
         </div>
