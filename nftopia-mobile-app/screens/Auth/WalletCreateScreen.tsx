@@ -4,6 +4,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '@/navigation/AuthNavigator';
 import { useAuthStore } from '@/stores/authStore';
 import { StellarWalletService } from '@/src/services/stellar/wallet.service';
+import { LMTheme } from '@/constants/theme';
+import { ChevronLeft, Sparkles, Shield } from 'lucide-react-native';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'WalletCreate'>;
 
@@ -18,12 +20,10 @@ export default function WalletCreateScreen({ navigation }: Props) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-
     if (password.length < 8) {
       Alert.alert('Error', 'Password must be at least 8 characters');
       return;
@@ -31,33 +31,22 @@ export default function WalletCreateScreen({ navigation }: Props) {
 
     try {
       setIsLoading(true);
-      
-      // Create new wallet using the wallet service
       const walletService = new StellarWalletService();
       const wallet = await walletService.createWallet(password);
-      
-      // Store user data
       setUser({
         id: Date.now().toString(),
         walletAddress: wallet.wallet.publicKey,
         walletType: 'stellar',
         createdAt: new Date(),
       });
-
       Alert.alert(
         'Success',
         'Wallet created successfully! Make sure to backup your recovery phrase.',
         [{ text: 'OK' }]
       );
-      
-      // Navigate to main app (to be implemented)
-      // navigation.reset({ routes: [{ name: 'Main' }] });
     } catch (error) {
       console.error('Wallet creation error:', error);
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to create wallet'
-      );
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create wallet');
     } finally {
       setIsLoading(false);
     }
@@ -66,6 +55,10 @@ export default function WalletCreateScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} disabled={isLoading}>
+          <ChevronLeft size={20} color={LMTheme.colors.textSecondary} />
+        </TouchableOpacity>
+
         <Text style={styles.title}>Create New Wallet</Text>
         <Text style={styles.subtitle}>
           Set a secure password to encrypt your wallet
@@ -77,7 +70,7 @@ export default function WalletCreateScreen({ navigation }: Props) {
             <TextInput
               style={styles.input}
               placeholder="Enter password"
-              placeholderTextColor="#999"
+              placeholderTextColor={LMTheme.colors.textMuted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -91,7 +84,7 @@ export default function WalletCreateScreen({ navigation }: Props) {
             <TextInput
               style={styles.input}
               placeholder="Confirm password"
-              placeholderTextColor="#999"
+              placeholderTextColor={LMTheme.colors.textMuted}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
@@ -101,7 +94,7 @@ export default function WalletCreateScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.warningBox}>
-            <Text style={styles.warningIcon}>⚠️</Text>
+            <Shield size={20} color={LMTheme.colors.warning} />
             <Text style={styles.warningText}>
               Store your password securely. We cannot recover it if you lose it.
             </Text>
@@ -115,17 +108,11 @@ export default function WalletCreateScreen({ navigation }: Props) {
           onPress={handleCreateWallet}
           disabled={isLoading}
         >
-          <Text style={styles.primaryButtonText}>
-            {isLoading ? 'Creating...' : 'Create Wallet'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          disabled={isLoading}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
+          {isLoading ? (
+            <Text style={styles.primaryButtonText}>Creating...</Text>
+          ) : (
+            <Text style={styles.primaryButtonText}>Create Wallet</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -133,88 +120,47 @@ export default function WalletCreateScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 24,
+  container: { flex: 1, backgroundColor: LMTheme.colors.bg, paddingHorizontal: LMTheme.spacing.lg },
+  content: { flex: 1, justifyContent: 'center' },
+  backButton: {
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: LMTheme.colors.surface, borderWidth: 1, borderColor: LMTheme.colors.border,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 24,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 32,
-  },
-  form: {
-    gap: 20,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
+  title: { fontSize: 32, fontWeight: '700', color: LMTheme.colors.textPrimary, letterSpacing: -0.5 },
+  subtitle: { fontSize: 16, color: LMTheme.colors.textSecondary, marginBottom: 32, lineHeight: 24 },
+  form: { gap: 20 },
+  inputGroup: { gap: 8 },
+  label: { fontSize: 14, fontWeight: '600', color: LMTheme.colors.textPrimary },
   input: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    backgroundColor: LMTheme.colors.surface,
+    borderRadius: LMTheme.borderRadius.md,
     paddingVertical: 16,
     paddingHorizontal: 16,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: LMTheme.colors.border,
+    color: LMTheme.colors.textPrimary,
   },
   warningBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    backgroundColor: '#fff3cd',
+    backgroundColor: LMTheme.colors.surface,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: LMTheme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: LMTheme.colors.border,
     marginTop: 8,
-  },
-  warningIcon: {
-    fontSize: 20,
   },
   warningText: {
     flex: 1,
     fontSize: 14,
-    color: '#856404',
+    color: LMTheme.colors.textSecondary,
     lineHeight: 20,
   },
-  footer: {
-    paddingBottom: 32,
-    gap: 12,
-  },
-  primaryButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  backButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    color: '#666',
-    fontSize: 16,
-  },
+  footer: { paddingBottom: 32, gap: 12 },
+  primaryButton: { backgroundColor: LMTheme.colors.teal, borderRadius: LMTheme.borderRadius.lg, paddingVertical: 16, alignItems: 'center' },
+  buttonDisabled: { opacity: 0.6 },
+  primaryButtonText: { color: LMTheme.colors.textLight, fontSize: 16, fontWeight: '600' },
 });
