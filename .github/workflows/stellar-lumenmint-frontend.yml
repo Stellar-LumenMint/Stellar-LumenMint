@@ -3,11 +3,11 @@ name: Stellar-LumenMint Frontend CI/CD
 on:
   push:
     paths:
-      - 'frontend/**'
+      - "frontend/**"
     branches: [main, develop]
   pull_request:
     paths:
-      - 'frontend/**'
+      - "frontend/**"
     branches: [main, develop]
   workflow_dispatch:
 
@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
 
 jobs:
   build-and-verify:

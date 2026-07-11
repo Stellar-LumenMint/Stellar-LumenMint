@@ -3,11 +3,11 @@ name: Stellar-LumenMint Backend CI/CD
 on:
   push:
     paths:
-      - 'backend/**'
+      - "backend/**"
     branches: [main, develop]
   pull_request:
     paths:
-      - 'backend/**'
+      - "backend/**"
     branches: [main, develop]
   workflow_dispatch:
 
@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
 
 jobs:
   build-and-verify:
