@@ -1,6 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 48" fill="none">
-  <!-- 4-point star mark (✦) -->
-  <path d="M14 2L16.5 11.5L26 14L16.5 16.5L14 26L11.5 16.5L2 14L11.5 11.5Z" fill="#4F46E5" fill-opacity="0.92"/>
-  <!-- Wordmark -->
-  <text x="40" y="33" font-family="'Geist', 'Inter', system-ui, -apple-system, sans-serif" font-weight="700" font-size="22" letter-spacing="-0.5" fill="#FAFAFA">Stellar‑LumenMint</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" fill="none">
+  <text x="60" y="36" text-anchor="middle" font-family="'Playfair Display', 'Georgia', serif" font-weight="700" font-size="32" letter-spacing="8" fill="#FAFAFA">SLM</text>
 </svg>

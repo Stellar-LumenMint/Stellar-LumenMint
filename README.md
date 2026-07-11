@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Stellar-LumenMint/Stellar-LumenMint/main/frontend/public/stellar-lumenmint-logo-dark.svg">
-    <img src="https://raw.githubusercontent.com/Stellar-LumenMint/Stellar-LumenMint/main/frontend/public/stellar-lumenmint-logo.svg" alt="Stellar‑LumenMint" width="420" />
+    <img src="https://raw.githubusercontent.com/Stellar-LumenMint/Stellar-LumenMint/main/frontend/public/stellar-lumenmint-logo.svg" alt="Stellar‑LumenMint" width="160" />
   </picture>
 </p>
 
