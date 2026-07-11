@@ -3,17 +3,17 @@ name: Stellar-LumenMint Contracts CI
 on:
   push:
     paths:
-      - 'nftopia-stellar/**'
+      - 'contracts/**'
   pull_request:
     paths:
-      - 'nftopia-stellar/**'
+      - 'contracts/**'
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: nftopia-stellar
+        working-directory: contracts
 
     steps:
       - uses: actions/checkout@v4
