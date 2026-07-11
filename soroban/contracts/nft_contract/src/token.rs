@@ -31,10 +31,10 @@ fn check_supply(env: &Env) -> Result<(), ContractError> {
         .get(&DataKey::TotalSupply)
         .unwrap_or(0);
 
-    if let Some(max) = config.max_supply
-        && total >= max
-    {
-        return Err(ContractError::SupplyLimitExceeded);
+    if let Some(max) = config.max_supply {
+        if total >= max {
+            return Err(ContractError::SupplyLimitExceeded);
+        }
     }
     Ok(())
 }
@@ -162,10 +162,10 @@ pub fn batch_mint(
         .instance()
         .get(&DataKey::TotalSupply)
         .unwrap_or(0);
-    if let Some(max) = config.max_supply
-        && total + n as u64 > max
-    {
-        return Err(ContractError::SupplyLimitExceeded);
+    if let Some(max) = config.max_supply {
+        if total + n as u64 > max {
+            return Err(ContractError::SupplyLimitExceeded);
+        }
     }
     if total + n as u64 > MAX_SUPPLY_HARD_CAP {
         return Err(ContractError::SupplyLimitExceeded);

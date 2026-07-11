@@ -13,10 +13,10 @@ pub fn token_uri(env: &Env, token_id: u64) -> Result<String, ContractError> {
         .ok_or(ContractError::TokenNotFound)?;
 
     let base: Option<String> = env.storage().instance().get(&DataKey::BaseUri);
-    if let Some(base_uri) = base
-        && !base_uri.is_empty()
-    {
-        return Ok(base_uri);
+    if let Some(base_uri) = base {
+        if !base_uri.is_empty() {
+            return Ok(base_uri);
+        }
     }
     Ok(data.metadata_uri)
 }
