@@ -3,6 +3,7 @@
 import LottiePlayer from "@/components/animations/LottiePlayer";
 import Link from "next/link";
 import React from "react";
+import { Sparkles, Home } from "lucide-react";
 import { useMobile } from "@/hooks";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/navbar";

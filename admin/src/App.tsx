@@ -5,10 +5,10 @@ function App() {
   const { t } = useTranslation()
 
   const stats = [
-    { label: 'Total Collections', value: '24', change: '+3', icon: Layers, color: '#0A0A0A' },
-    { label: 'Active Wallets', value: '1,847', change: '+12.5%', icon: Users, color: '#4F46E5' },
-    { label: 'Transactions (24h)', value: '3,421', change: '+8.2%', icon: Activity, color: '#10B981' },
-    { label: 'Network Uptime', value: '99.97%', change: 'Stable', icon: Shield, color: '#F59E0B' },
+    { label: 'Total Collections', value: '24', change: '+3', icon: Layers },
+    { label: 'Active Wallets', value: '1,847', change: '+12.5%', icon: Users },
+    { label: 'Transactions (24h)', value: '3,421', change: '+8.2%', icon: Activity },
+    { label: 'Network Uptime', value: '99.97%', change: 'Stable', icon: Shield },
   ]
 
   const recentActivity = [
@@ -101,7 +101,7 @@ function App() {
 
           <div className="p-8 space-y-8">
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {stats.map(({ label, value, change, icon: Icon, color }) => (
+              {stats.map(({ label, value, change, icon: Icon }) => (
                 <article
                   key={label}
                   className="group rounded-md border border-neutral-200 bg-white p-5 hover:border-neutral-300 transition-colors"
@@ -109,7 +109,7 @@ function App() {
                   <div className="flex items-start justify-between mb-3">
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500">{label}</h2>
                     <div className="flex h-8 w-8 items-center justify-center rounded-md border border-neutral-100 bg-neutral-50">
-                      <Icon className="h-4 w-4" style={{ color }} />
+                      <Icon className="h-4 w-4" />
                     </div>
                   </div>
                   <div className="flex items-end justify-between">
@@ -162,11 +162,11 @@ function App() {
                 </h2>
                 <div className="space-y-2">
                   {[
-                    { label: 'Verify Collection', desc: 'Approve pending collections', color: '#0A0A0A' },
-                    { label: 'Review Reports', desc: '3 new moderation flags', color: '#F43F5E' },
-                    { label: 'System Health', desc: 'All services operational', color: '#10B981' },
-                    { label: 'Export Data', desc: 'Generate analytics report', color: '#4F46E5' },
-                  ].map(({ label, desc, color }) => (
+                    { label: 'Verify Collection', desc: 'Approve pending collections' },
+                    { label: 'Review Reports', desc: '3 new moderation flags' },
+                    { label: 'System Health', desc: 'All services operational' },
+                    { label: 'Export Data', desc: 'Generate analytics report' },
+                  ].map(({ label, desc }) => (
                     <button
                       key={label}
                       className="flex w-full items-center justify-between gap-3 rounded-md px-4 py-3 bg-neutral-50 hover:bg-neutral-100 transition-colors group text-left"

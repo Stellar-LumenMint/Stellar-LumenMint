@@ -15,6 +15,8 @@ export const LMTheme = {
     // Brand
     primary: '#0A0A0A',
     indigo: '#4F46E5',
+    teal: '#4F46E5',
+    violet: '#4F46E5',
     mint: '#10B981',
     amber: '#F59E0B',
     rose: '#F43F5E',
@@ -44,8 +46,8 @@ export const LMTheme = {
     gradientCard: ['#FFFFFF', '#FAFAFA'] as const,
 
     // Transparency helpers
-    tealAlpha: (opacity: number) => `rgba(0, 212, 255, ${opacity})`,
-    violetAlpha: (opacity: number) => `rgba(123, 111, 255, ${opacity})`,
+    tealAlpha: (opacity: number) => `rgba(79, 70, 229, ${opacity})`,
+    violetAlpha: (opacity: number) => `rgba(79, 70, 229, ${opacity})`,
     pinkAlpha: (opacity: number) => `rgba(255, 107, 157, ${opacity})`,
     whiteAlpha: (opacity: number) => `rgba(250, 250, 250, ${opacity})`,
     blackAlpha: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
