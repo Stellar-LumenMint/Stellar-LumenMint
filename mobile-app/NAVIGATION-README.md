@@ -30,7 +30,7 @@ App
 ### Files Structure
 
 ```
-Stellar-LumenMint-mobile-app/
+mobile-app/
 ├── navigation/
 │   ├── AppNavigator.tsx          # Main conditional router
 │   ├── AuthNavigator.tsx         # Auth stack navigator
@@ -227,7 +227,7 @@ Required packages (add to package.json):
 After cloning the repository:
 
 ```bash
-cd Stellar-LumenMint-mobile-app
+cd mobile-app
 npm install
 ```
 

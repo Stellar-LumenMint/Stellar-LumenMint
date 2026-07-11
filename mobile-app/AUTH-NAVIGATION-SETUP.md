@@ -9,7 +9,7 @@ All authentication navigation components have been created successfully. Follow 
 The following packages need to be installed:
 
 ```bash
-cd Stellar-LumenMint-mobile-app
+cd mobile-app
 
 # Using npm
 npm install @react-navigation/native @react-navigation/stack zustand react-native-screens react-native-safe-area-context

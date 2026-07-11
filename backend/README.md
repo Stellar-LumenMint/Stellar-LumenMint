@@ -83,7 +83,7 @@ Stellar-LumenMint Backend is the service backbone of the platform. It owns authe
 ### Local Setup
 
 ```bash
-cd stellar-lumenmint-backend
+cd backend
 npm install
 cp .env.example .env
 
@@ -185,7 +185,7 @@ curl -X POST http://localhost:3001/graphql \
 ## 📁 Project Structure
 
 ```text
-Stellar-LumenMint-backend/
+backend/
 ├── migrations/              # SQL migrations for marketplace tables
 ├── src/
 │   ├── admin/               # Admin-facing module

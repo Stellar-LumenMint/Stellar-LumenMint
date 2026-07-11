@@ -68,7 +68,7 @@ Current top-level route areas include:
 ## 🚀 Quick Start
 
 ```bash
-cd Stellar-LumenMint-frontend
+cd frontend
 npm install
 ```
 
@@ -129,7 +129,7 @@ The frontend currently reads these runtime values directly from code:
 ## 📁 Project Structure
 
 ```text
-Stellar-LumenMint-frontend/
+frontend/
 ├── app/                     # App Router pages and layouts
 ├── components/              # Shared UI and wallet components
 ├── features/                # Feature-oriented modules

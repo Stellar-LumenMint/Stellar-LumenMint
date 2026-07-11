@@ -71,7 +71,7 @@ stellar contract invoke --id <CONTRACT_ID> --network testnet -- get_version
 
 ## CI/CD
 
-The GitHub Actions workflow (`Stellar-LumenMint-stellar.yml`) sets `GIT_COMMIT_HASH`, `BUILD_TIMESTAMP`, and `RUSTC_VERSION` as environment variables before the build step, ensuring reproducible version metadata in every CI artefact.
+The GitHub Actions workflow (`stellar-lumenmint-stellar.yml`) sets `GIT_COMMIT_HASH`, `BUILD_TIMESTAMP`, and `RUSTC_VERSION` as environment variables before the build step, ensuring reproducible version metadata in every CI artefact.
 
 ## Deployment manifest
 

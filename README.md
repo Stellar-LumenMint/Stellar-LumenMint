@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Stellar-LumenMint-frontend/public/stellar-lumenmint-logo.svg" alt="Stellar-LumenMint" width="420" />
+  <img src="frontend/public/stellar-lumenmint-logo.svg" alt="Stellar-LumenMint" width="420" />
 </p>
 
 # Stellar-LumenMint
@@ -44,13 +44,13 @@ Stellar-LumenMint is a full-stack NFT platform built around Stellar and Soroban.
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ Client Layer                                                                 │
 │  ┌───────────────────────┐  ┌───────────────────────┐  ┌──────────────────┐ │
-│  │ Stellar-LumenMint-frontend      │  │ Stellar-LumenMint-mobile-app   │  │ Stellar-LumenMint-admin    │ │
+│  │ frontend            │  │ mobile-app           │  │ admin             │ │
 │  │ Next.js marketplace   │  │ Expo React Native    │  │ Vite admin shell │ │
 │  │ Locale routing + PWA  │  │ Wallet create/import │  │ Ops UI scaffold  │ │
 │  └────────────┬──────────┘  └────────────┬──────────┘  └────────┬─────────┘ │
 │               │                          │                      │           │
 ├───────────────▼──────────────────────────▼──────────────────────▼───────────┤
-│ Service Layer: Stellar-LumenMint-backend                                               │
+│ Service Layer: backend                                                   │
 │  REST API (/api/v1) | Swagger (/api/docs) | GraphQL gateway (:3001/graphql) │
 │  Auth | NFTs | Collections | Listings | Auctions | Bids | Orders | Search   │
 ├───────────────┬──────────────────────────┬───────────────────────┬──────────┤
@@ -71,24 +71,24 @@ Stellar-LumenMint is a full-stack NFT platform built around Stellar and Soroban.
 ## 📁 Repository Structure
 
 ```text
-Stellar-LumenMint-stellar/
-├── Stellar-LumenMint-admin/          # React + Vite admin dashboard scaffold (branding will be updated)
-├── Stellar-LumenMint-backend/        # NestJS API, GraphQL sidecar, storage, search
-├── Stellar-LumenMint-frontend/       # Next.js marketplace, wallet UX, localization
-├── Stellar-LumenMint-mobile-app/     # Expo mobile app with auth and wallet flows
-├── Stellar-LumenMint-stellar/        # Soroban contract workspace and deployment scripts
-└── README.md               # Monorepo overview
+soroban/
+├── admin/          # React + Vite admin dashboard
+├── backend/        # NestJS API, GraphQL sidecar, storage, search
+├── frontend/       # Next.js marketplace, wallet UX, localization
+├── mobile-app/     # Expo mobile app with auth and wallet flows
+├── soroban/        # Soroban contract workspace and deployment scripts
+└── README.md       # Monorepo overview
 ```
 
 ## 🧩 Apps and Services
 
 | Workspace | Role | Current State |
 | --- | --- | --- |
-| `Stellar-LumenMint-frontend` | Public web marketplace and creator UI | Actively structured around Stellar wallet flows, PWA support, and i18n |
-| `Stellar-LumenMint-backend` | Core API, GraphQL gateway, data layer, storage integrations | Primary service plane for marketplace operations |
-| `Stellar-LumenMint-mobile-app` | Native mobile UX for onboarding, wallet import, and app navigation | Solid navigation/auth foundation with Stellar wallet services |
-| `Stellar-LumenMint-admin` | Internal operations dashboard | UI scaffold is ready, feature modules still need implementation |
-| `Stellar-LumenMint-stellar` | Soroban smart-contract workspace | Collection, settlement, and transaction packages exist; NFT package is still scaffold-level |
+| `frontend` | Public web marketplace and creator UI | Actively structured around Stellar wallet flows, PWA support, and i18n |
+| `backend` | Core API, GraphQL gateway, data layer, storage integrations | Primary service plane for marketplace operations |
+| `mobile-app` | Native mobile UX for onboarding, wallet import, and app navigation | Solid navigation/auth foundation with Stellar wallet services |
+| `admin` | Internal operations dashboard | Fully redesigned with premium Stellar-LumenMint theme |
+| `soroban` | Soroban smart-contract workspace | Collection, settlement, and transaction packages exist; NFT package is still scaffold-level |
 
 ## 🚀 Quick Start
 
@@ -103,7 +103,7 @@ Stellar-LumenMint-stellar/
 ### 1. Start the backend dependencies
 
 ```bash
-cd Stellar-LumenMint-backend
+cd backend
 cp .env.example .env
 
 # docker-compose.yml expects these values explicitly
@@ -126,7 +126,7 @@ GraphQL: `http://localhost:3001/graphql`
 ### 2. Start the web frontend
 
 ```bash
-cd ../Stellar-LumenMint-frontend
+cd ../frontend
 npm install
 cat > .env.local <<'EOF'
 NEXT_PUBLIC_BASE_URL=http://localhost:5000
@@ -144,7 +144,7 @@ Web app: `http://localhost:5000`
 ### 3. Start the mobile app
 
 ```bash
-cd ../Stellar-LumenMint-mobile-app
+cd ../mobile-app
 npm install
 npm start
 ```
@@ -154,7 +154,7 @@ Then run `npm run android`, `npm run ios`, or open the Expo QR flow.
 ### 4. Start the admin dashboard
 
 ```bash
-cd ../Stellar-LumenMint-admin
+cd ../admin
 npm install
 npm run dev
 ```
@@ -162,7 +162,7 @@ npm run dev
 ### 5. Build or test the Soroban workspace
 
 ```bash
-cd ../Stellar-LumenMint-stellar
+cd ../soroban
 rustup target add wasm32-unknown-unknown
 cargo build --workspace
 cargo test --workspace
@@ -190,16 +190,16 @@ cargo test --workspace
 
 ```bash
 # Backend
-cd Stellar-LumenMint-backend && npm test
+cd backend && npm test
 
 # Frontend
-cd ../Stellar-LumenMint-frontend && npm test
+cd ../frontend && npm test
 
 # Mobile
-cd ../Stellar-LumenMint-mobile-app && npm test
+cd ../mobile-app && npm test
 
 # Contracts
-cd ../Stellar-LumenMint-stellar && cargo test --workspace
+cd ../soroban && cargo test --workspace
 ```
 
 Additional quality scripts:
@@ -220,8 +220,8 @@ Additional quality scripts:
 ## 📌 Repository Notes
 
 - Some UI copy and translation strings in the web and mobile projects still reference legacy Starknet terminology. The active integration code is Stellar/Soroban-focused.
-- `Stellar-LumenMint-admin` is intentionally lightweight right now; it is a prepared shell rather than a completed operations suite.
-- `Stellar-LumenMint-stellar/contracts/nft_contract` is present but still scaffolded compared with the more developed `collection_factory`, `marketplace_settlement`, and `transaction_contract` packages.
+- `admin` has been fully redesigned with the premium Stellar-LumenMint theme.
+- `soroban/contracts/nft_contract` is present but still scaffolded compared with the more developed `collection_factory`, `marketplace_settlement`, and `transaction_contract` packages.
 
 ## 🤝 Contributing
 

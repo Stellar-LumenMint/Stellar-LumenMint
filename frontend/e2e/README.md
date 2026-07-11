@@ -5,7 +5,7 @@ Quick start:
 1. Install dev dependencies (on your machine):
 
 ```bash
-cd Stellar-LumenMint-frontend
+cd frontend
 npm install --save-dev @playwright/test
 npx playwright install --with-deps
 ```

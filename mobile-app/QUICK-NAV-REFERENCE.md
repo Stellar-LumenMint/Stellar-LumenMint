@@ -70,7 +70,7 @@ Onboarding
 ## 🗂️ File Organization
 
 ```
-Stellar-LumenMint-mobile-app/
+mobile-app/
 │
 ├── App.tsx                           # Entry point with SafeAreaView
 │
@@ -208,7 +208,7 @@ From the original requirements:
 
 ```bash
 # Navigate to mobile app directory
-cd Stellar-LumenMint-mobile-app
+cd mobile-app
 
 # Install dependencies (if not done)
 npm install

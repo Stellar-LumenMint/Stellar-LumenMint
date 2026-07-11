@@ -43,7 +43,7 @@ The current `src/App.tsx` renders a branded placeholder page that explicitly sta
 ## 📁 Project Structure
 
 ```text
-Stellar-LumenMint-admin/
+admin/
 ├── public/               # Static assets
 ├── src/
 │   ├── App.tsx           # Current placeholder dashboard shell
@@ -59,7 +59,7 @@ Stellar-LumenMint-admin/
 ## 🚀 Quick Start
 
 ```bash
-cd Stellar-LumenMint-admin
+cd admin
 npm install
 npm run dev
 ```

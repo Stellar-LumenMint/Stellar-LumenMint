@@ -27,7 +27,7 @@ The errors appear because the npm packages haven't been installed yet. The code 
 Run this command to install all dependencies:
 
 ```bash
-cd Stellar-LumenMint-mobile-app
+cd mobile-app
 npm install
 ```
 
@@ -105,7 +105,7 @@ Based on your error list:
 
 **Quick Fix:** 
 ```bash
-cd Stellar-LumenMint-mobile-app && npm install
+cd mobile-app && npm install
 ```
 
 That's it! 🚀

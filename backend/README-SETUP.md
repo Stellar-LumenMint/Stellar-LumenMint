@@ -22,7 +22,7 @@ A scalable NestJS backend for the Stellar-LumenMint NFT marketplace platform. Th
 
 1. Navigate to the backend directory:
 ```bash
-cd stellar-lumenmint-backend
+cd backend
 ```
 
 2. Install dependencies:
@@ -113,7 +113,7 @@ curl http://localhost:3000/api/v1/health
 ## Project Structure
 
 ```
-stellar-lumenmint-backend/
+backend/
 ├── src/
 │   ├── app.controller.ts      # Main API controller
 │   ├── app.service.ts         # Main service logic

@@ -74,7 +74,7 @@ cargo install --locked stellar-cli
 Build the full workspace:
 
 ```bash
-cd Stellar-LumenMint-stellar
+cd soroban
 cargo build --workspace
 ```
 
@@ -99,7 +99,7 @@ Helper scripts are provided for the collection factory package.
 ### Deploy the collection factory
 
 ```bash
-cd Stellar-LumenMint-stellar
+cd soroban
 chmod +x scripts/deploy_factory.sh
 NETWORK=testnet SOURCE=secret ./scripts/deploy_factory.sh
 ```
@@ -124,7 +124,7 @@ The verification script currently checks the deployed factory by invoking `get_c
 ## 📁 Project Structure
 
 ```text
-Stellar-LumenMint-stellar/
+soroban/
 ├── contracts/
 │   ├── collection_factory/
 │   │   └── src/               # factory, collection, storage, events, tests

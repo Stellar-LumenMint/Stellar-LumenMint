@@ -63,7 +63,7 @@ The workspace currently organizes UI and flow code around these groups:
 ## 🚀 Quick Start
 
 ```bash
-cd Stellar-LumenMint-mobile-app
+cd mobile-app
 npm install
 npm start
 ```
@@ -91,7 +91,7 @@ At the moment, the codebase does not consume any explicit `EXPO_PUBLIC_*` variab
 ## 📁 Project Structure
 
 ```text
-Stellar-LumenMint-mobile-app/
+mobile-app/
 ├── components/                 # Shared UI pieces including SplashScreen
 ├── navigation/                 # AppNavigator, AuthNavigator, MainNavigator
 ├── screens/                    # Auth, Home, Marketplace, Profile screens
