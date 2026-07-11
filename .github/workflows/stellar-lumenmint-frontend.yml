@@ -3,11 +3,11 @@ name: Stellar-LumenMint Frontend CI/CD
 on:
   push:
     paths:
-      - 'nftopia-frontend/**'
+      - 'frontend/**'
     branches: [main, develop]
   pull_request:
     paths:
-      - 'nftopia-frontend/**'
+      - 'frontend/**'
     branches: [main, develop]
   workflow_dispatch:
 
@@ -24,7 +24,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./nftopia-frontend
+        working-directory: ./frontend
 
     steps:
       - name: Checkout repository

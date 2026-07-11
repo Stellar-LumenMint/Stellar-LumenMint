@@ -3,11 +3,11 @@ name: Stellar-LumenMint Admin CI/CD
 on:
   push:
     paths:
-      - 'nftopia-admin/**'
+      - 'admin/**'
     branches: [main, develop]
   pull_request:
     paths:
-      - 'nftopia-admin/**'
+      - 'admin/**'
     branches: [main, develop]
   workflow_dispatch:
 
@@ -24,7 +24,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./nftopia-admin
+        working-directory: ./admin
 
     steps:
       - name: Checkout repository
