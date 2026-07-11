@@ -14,7 +14,7 @@ export function CircuitBackground() {
     const container = containerRef.current;
     if (!container) return;
 
-    container.innerHTML = "";
+    const isMobile = window.innerWidth < 768;
     const w = window.innerWidth;
     const h = window.innerHeight;
 
@@ -27,6 +27,8 @@ export function CircuitBackground() {
       "radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,107,157,0.03) 0%, transparent 50%), " +
       "#0D1117";
     container.appendChild(base);
+
+    if (isMobile) return; // Skip complex effects on mobile
 
     /* ── Subtle scan-line grid ───────────────────────── */
     const grid = document.createElement("div");
@@ -55,7 +57,9 @@ export function CircuitBackground() {
     const WHITE  = "rgba(238,242,247,";
     const PINK   = "rgba(255,107,157,";
 
-    for (let i = 0; i < 80; i++) {
+    const particleCount = isMobile ? 20 : 60;
+
+    for (let i = 0; i < particleCount; i++) {
       const p = document.createElement("div");
       p.className = "absolute rounded-full";
       const size = 0.6 + Math.random() * 2.5;
@@ -88,7 +92,9 @@ export function CircuitBackground() {
     const nContainer = document.createElement("div");
     nContainer.className = "absolute inset-0 pointer-events-none";
 
-    for (let i = 0; i < 20; i++) {
+    const nodeCount = isMobile ? 6 : 16;
+
+    for (let i = 0; i < nodeCount; i++) {
       const node = document.createElement("div");
       node.className = "absolute rounded-full";
       const size = 2 + Math.random() * 2;
@@ -110,13 +116,15 @@ export function CircuitBackground() {
     container.appendChild(nContainer);
 
     /* ── Shooting star trails ───────────────────────── */
-    const shootingStar = document.createElement("div");
-    shootingStar.className = "absolute w-[100px] h-[1px]";
-    shootingStar.style.background = "linear-gradient(to right, transparent, rgba(0,212,255,0.3), rgba(123,111,255,0.2), transparent)";
-    shootingStar.style.top = `${Math.random() * 40}%`;
-    shootingStar.style.right = "-100px";
-    shootingStar.style.animation = `lm-shooting-star ${6 + Math.random() * 8}s ${Math.random() * 10}s linear infinite`;
-    container.appendChild(shootingStar);
+    if (!isMobile) {
+      const shootingStar = document.createElement("div");
+      shootingStar.className = "absolute w-[120px] h-[1px]";
+      shootingStar.style.background = "linear-gradient(to right, transparent, rgba(0,212,255,0.3), rgba(123,111,255,0.2), transparent)";
+      shootingStar.style.top = `${Math.random() * 40}%`;
+      shootingStar.style.right = "-120px";
+      shootingStar.style.animation = `lm-shooting-star ${6 + Math.random() * 8}s ${Math.random() * 10}s linear infinite`;
+      container.appendChild(shootingStar);
+    }
 
     /* ── Keyframes (injected once) ──────────────────── */
     const styleId = "lm-bg-keyframes-v2";
@@ -137,7 +145,7 @@ export function CircuitBackground() {
         @keyframes lm-shooting-star {
           0%   { transform: translateX(0) translateY(0) rotate(-20deg); opacity: 0; }
           10%  { opacity: 1; }
-          40%  { transform: translateX(-1200px) translateY(200px) rotate(-20deg); opacity: 1; }
+          40%  { transform: translateX(-2000px) translateY(350px) rotate(-20deg); opacity: 1; }
           41%  { opacity: 0; }
           100% { opacity: 0; }
         }
