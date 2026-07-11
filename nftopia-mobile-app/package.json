@@ -25,6 +25,7 @@
     "react-native-screens": "^4.6.0",
     "stellar-hd-wallet": "^1.0.2",
     "stellar-sdk": "^12.3.0",
+    "lucide-react-native": "^0.446.0",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

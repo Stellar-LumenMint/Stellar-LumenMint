@@ -50,8 +50,11 @@
         "onChain": "On-Chain",
         "stellar": "Stellar",
         "ecosystem": "Ökosystem",
-        "storage": "Speicher"
-      }
+      "storage": "Speicher",
+      "onChainDesc": "Vollständig On-Chain NFTs",
+      "stellarDesc": "Blitzschnelles Stellar",
+      "secureDesc": "Sicherheit auf Bankniveau"
+    }
     },
     "marketplace": {
       "title": "NFT-Marktplatz",

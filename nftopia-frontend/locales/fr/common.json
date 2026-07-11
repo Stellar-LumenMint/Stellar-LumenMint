@@ -50,7 +50,10 @@
       "onChain": "Sur la chaîne",
       "stellar": "Stellar",
       "ecosystem": "Écosystème",
-      "storage": "Stockage"
+      "storage": "Stockage",
+      "onChainDesc": "NFTs entièrement en chaîne",
+      "stellarDesc": "Stellar ultra-rapide",
+      "secureDesc": "Sécurité de niveau bancaire"
     }
   },
   "marketplace": {
