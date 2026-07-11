@@ -18,12 +18,12 @@ const NotFound = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0c38] via-[#181359] to-[#241970] text-white relative contain-layout">
+    <div className="min-h-screen bg-[#0D1117] text-white relative contain-layout">
+      <CircuitBackground />
       <StoreProvider>
         <StellarWalletProvider>
           <main className="relative z-10 pt-16 md:pt-20">
             <Navbar />
-            <CircuitBackground />
             <div className="container-responsive py-4 md:py-8">
               <div
                 className={`flex items-center justify-center min-h-[60vh] w-full px-4 py-12 ${
@@ -34,44 +34,50 @@ const NotFound = () => {
                   className={`flex flex-col ${
                     isMobile
                       ? "items-center text-center space-y-4"
-                      : "space-y-3 max-w-md items-start text-left"
+                      : "space-y-4 max-w-md items-start text-left"
                   }`}
                 >
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#00D4FF]/10 to-[#7B6FFF]/10 border border-[#00D4FF]/20 text-xs font-medium text-[#00D4FF] w-fit">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>404 Error</span>
+                  </div>
                   <h1
                     className={
                       isMobile
-                        ? "text-4xl font-bold mt-5 text-white"
-                        : "text-6xl mt-5 font-bold text-white"
+                        ? "text-5xl font-bold text-white tracking-tight"
+                        : "text-7xl font-bold text-white tracking-tight"
                     }
                   >
                     {t("notFound.title")}
                   </h1>
                   <p
                     className={`${
-                      isMobile ? "text-lg" : "text-2xl"
-                    } text-white`}
+                      isMobile ? "text-lg" : "text-xl"
+                    } text-[#8A9BB0] leading-relaxed`}
                   >
                     {t("notFound.message")}
                   </p>
                   <p
                     className={`${
-                      isMobile ? "text-lg" : "text-2xl"
-                    } text-white`}
+                      isMobile ? "text-sm" : "text-base"
+                    } text-[#6B7A8D] font-mono`}
                   >
                     {t("notFound.errorCode")}
                   </p>
                   <Link href="/en">
                     <Button
                       size={isMobile ? "sm" : "lg"}
-                      className="rounded-xl bg-gradient-to-r from-[#4e3bff] to-[#9747ff] text-white mt-2"
+                      variant="cosmic"
+                      className="rounded-xl mt-2"
                     >
+                      <Home className="h-4 w-4" />
                       {t("notFound.backToHome")}
                     </Button>
                   </Link>
                 </div>
                 <div
                   className={
-                    isMobile ? "w-full max-w-2xl mt-8" : "w-[740px] ml-8"
+                    isMobile ? "w-full max-w-2xl mt-8" : "w-[540px] ml-8"
                   }
                 >
                   <LottiePlayer />
