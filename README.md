@@ -1,107 +1,132 @@
 <p align="center">
-  <img src="frontend/public/stellar-lumenmint-logo.svg" alt="Stellar-LumenMint" width="420" />
+  <b>✦</b>
 </p>
 
-# Stellar-LumenMint
-**Stellar NFT Marketplace Monorepo**
+<h1 align="center">
+  <b>Stellar‑LumenMint</b>
+</h1>
 
-![Next.js](https://img.shields.io/badge/Next.js-Web-black)
-![NestJS](https://img.shields.io/badge/NestJS-API-e0234e)
-![Expo](https://img.shields.io/badge/Expo-Mobile-1b1f23)
-![Soroban](https://img.shields.io/badge/Soroban-Smart%20Contracts-0f766e)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Data-336791)
-![Redis](https://img.shields.io/badge/Redis-Cache-d82c20)
+<p align="center">
+  <em>The curated NFT marketplace for the Stellar ecosystem.</em>
+  <br />
+  Mint, collect, and trade digital assets with zero‑gas efficiency.
+</p>
 
-Stellar-LumenMint is a full-stack NFT platform built around Stellar and Soroban. This monorepo contains the public web marketplace, the NestJS API and integration layer, the Expo mobile app, a lightweight admin surface, and a Soroban smart-contract workspace. The goal is to deliver creator tooling, marketplace flows, wallet-based authentication, decentralized asset storage, and on-chain settlement from a single repository.
+<p align="center">
+  <!-- CI/CD -->
+  <a href="https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-frontend.yml"><img src="https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-frontend.yml/badge.svg" alt="Frontend CI" /></a>
+  <a href="https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-backend.yml"><img src="https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-backend.yml/badge.svg" alt="Backend CI" /></a>
+  <a href="https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-mobile-app.yml"><img src="https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-mobile-app.yml/badge.svg" alt="Mobile CI" /></a>
+  <a href="https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-stellar.yml"><img src="https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-stellar.yml/badge.svg" alt="Soroban CI" /></a>
+  <br />
+  <!-- Tech Stack -->
+  <img src="https://img.shields.io/badge/Next.js-13-black?logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/NestJS-11-e0234e?logo=nestjs" alt="NestJS" />
+  <img src="https://img.shields.io/badge/Expo-54-1b1f23?logo=expo" alt="Expo" />
+  <img src="https://img.shields.io/badge/Soroban-SDK_23-0f766e?logo=stellar" alt="Soroban" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/PostgreSQL-14-336791?logo=postgresql" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Redis-cache-d82c20?logo=redis" alt="Redis" />
+  <img src="https://img.shields.io/badge/Vite-8-646cff?logo=vite" alt="Vite" />
+  <br />
+  <!-- Meta -->
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License" />
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs Welcome" />
+  <img src="https://img.shields.io/badge/i18n-en_|_fr_|_es_|_de-4F46E5" alt="i18n" />
+</p>
 
-## 🌟 Key Features
+---
 
-- **Multi-Surface Product** - Separate web, mobile, admin, backend, and contract workspaces with a shared marketplace domain.
-- **Stellar-Native Authentication** - Supports Stellar wallet challenge and signature verification alongside email/password auth in the backend.
-- **Marketplace Core** - NFT minting, collections, listings, auctions, bids, orders, and search are implemented in the service layer.
-- **Hybrid Data Plane** - PostgreSQL, Redis, Meilisearch, IPFS, and Arweave are used together for persistence, cache, discovery, and asset storage.
-- **Localized Web UX** - The frontend uses locale-based routing and translation validation for EN, FR, ES, and DE.
-- **Soroban Contract Workspace** - Rust contracts cover collection creation, marketplace settlement, and transaction orchestration.
+## Why Stellar‑LumenMint?
 
-## 📋 Table of Contents
+Most NFT platforms are slow, expensive, and cluttered. Stellar‑LumenMint takes a different path:
 
-1. [System Architecture](#-system-architecture)
-2. [Repository Structure](#-repository-structure)
-3. [Apps and Services](#-apps-and-services)
-4. [Quick Start](#-quick-start)
-5. [Development Workflow](#-development-workflow)
-6. [API and Integration Surfaces](#-api-and-integration-surfaces)
-7. [Testing and Quality](#-testing-and-quality)
-8. [Security and Operational Notes](#-security-and-operational-notes)
-9. [Repository Notes](#-repository-notes)
-10. [Contributing](#-contributing)
+- **Zero‑gas minting** — built on Stellar, where transactions cost fractions of a cent.
+- **Gallery‑first design** — a quiet, editorial interface that lets the art speak.
+- **Full‑stack ownership** — web, mobile, API, admin, and on‑chain contracts in a single monorepo.
+- **Creator sovereignty** — royalties, provenance, and curation tools natively supported.
 
-## 🏗️ System Architecture
+---
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                          Stellar-LumenMint Platform Stack                    │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ Client Layer                                                                 │
-│  ┌───────────────────────┐  ┌───────────────────────┐  ┌──────────────────┐ │
-│  │ frontend            │  │ mobile-app           │  │ admin             │ │
-│  │ Next.js marketplace   │  │ Expo React Native    │  │ Vite admin shell │ │
-│  │ Locale routing + PWA  │  │ Wallet create/import │  │ Ops UI scaffold  │ │
-│  └────────────┬──────────┘  └────────────┬──────────┘  └────────┬─────────┘ │
-│               │                          │                      │           │
-├───────────────▼──────────────────────────▼──────────────────────▼───────────┤
-│ Service Layer: backend                                                   │
-│  REST API (/api/v1) | Swagger (/api/docs) | GraphQL gateway (:3001/graphql) │
-│  Auth | NFTs | Collections | Listings | Auctions | Bids | Orders | Search   │
-├───────────────┬──────────────────────────┬───────────────────────┬──────────┤
-│               │                          │                       │          │
-│               ▼                          ▼                       ▼          │
-│      PostgreSQL persistence         Redis cache/rate limit   Meilisearch   │
-│      users, NFTs, collections       session/cache guards     discovery      │
-│      listings, bids, orders         app-level TTL storage    fuzzy search   │
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         Stellar‑LumenMint Platform                        │
+├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-├───────────────┬───────────────────────────────────────────────┬────────────┤
-│               ▼                                               ▼            │
-│      IPFS / Arweave asset storage                     Stellar / Soroban     │
-│      metadata, files, fallback storage               contract execution     │
-│      and retrieval                                   collection + market    │
-└──────────────────────────────────────────────────────────────────────────────┘
+│   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐                │
+│   │   Frontend    │   │  Mobile App   │   │    Admin     │                │
+│   │ Next.js 13    │   │   Expo 54    │   │   Vite 8    │                │
+│   │ Tailwind 3    │   │ React Native │   │  React 19   │                │
+│   └──────┬───────┘   └──────┬───────┘   └──────┬───────┘                │
+│          │                  │                  │                         │
+│          └──────────────────┼──────────────────┘                         │
+│                             │                                            │
+│                    ┌────────▼────────┐                                   │
+│                    │     Backend      │                                   │
+│                    │   NestJS 11      │                                   │
+│                    │  REST + GraphQL  │                                   │
+│                    └────────┬────────┘                                   │
+│                             │                                            │
+│     ┌───────────────┬───────┼───────┬───────────────┐                   │
+│     ▼               ▼       │       ▼               ▼                   │
+│  PostgreSQL      Redis       │   Meilisearch    IPFS / Arweave           │
+│  (persistence)  (cache)      │   (search)      (asset storage)           │
+│                              │                                           │
+├──────────────────────────────┼───────────────────────────────────────────┤
+│                    Stellar Network                                       │
+│                              │                                           │
+│                    ┌─────────▼─────────┐                                 │
+│                    │     Soroban        │                                 │
+│                    │  Smart Contracts   │                                 │
+│                    │  (Rust / WASM)     │                                 │
+│                    └───────────────────┘                                 │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 📁 Repository Structure
+---
 
-```text
-./
-├── admin/          # React + Vite admin dashboard
-├── backend/        # NestJS API, GraphQL sidecar, storage, search
-├── frontend/       # Next.js marketplace, wallet UX, localization
-├── mobile-app/     # Expo mobile app with auth and wallet flows
-├── soroban/        # Soroban contract workspace and deployment scripts
-├── DESIGN_SYSTEM.md # Design system documentation
-└── README.md       # Monorepo overview
-```
+## Tech Stack
 
-## 🧩 Apps and Services
+| Layer | Technology |
+|-------|------------|
+| **Web** | [Next.js 13](https://nextjs.org) · [React 18](https://react.dev) · [Tailwind CSS 3](https://tailwindcss.com) · [Apollo GraphQL](https://www.apollographql.com) · [Zustand](https://zustand.docs.pmnd.rs) |
+| **Mobile** | [Expo 54](https://expo.dev) · [React Native 0.73](https://reactnative.dev) · [Stellar SDK](https://stellar.org) |
+| **API** | [NestJS 11](https://nestjs.com) · [TypeORM](https://typeorm.io) · [GraphQL](https://graphql.org) · [Swagger](https://swagger.io) |
+| **Data** | [PostgreSQL](https://www.postgresql.org) · [Redis](https://redis.io) · [Meilisearch](https://www.meilisearch.com) |
+| **Storage** | [IPFS](https://ipfs.tech) · [Arweave](https://www.arweave.org) |
+| **Contracts** | [Soroban SDK 23](https://soroban.stellar.org) · [Rust](https://www.rust-lang.org) · WASM |
+| **Admin** | [React 19](https://react.dev) · [Vite 8](https://vitejs.dev) · [Tailwind CSS 4](https://tailwindcss.com) |
+| **DevOps** | [Docker](https://www.docker.com) · [GitHub Actions](https://github.com/features/actions) · [Jest](https://jestjs.io) |
 
-| Workspace | Role | Current State |
-| --- | --- | --- |
-| `frontend` | Public web marketplace and creator UI | Actively structured around Stellar wallet flows, PWA support, and i18n |
-| `backend` | Core API, GraphQL gateway, data layer, storage integrations | Primary service plane for marketplace operations |
-| `mobile-app` | Native mobile UX for onboarding, wallet import, and app navigation | Solid navigation/auth foundation with Stellar wallet services |
-| `admin` | Internal operations dashboard | Fully redesigned with premium Stellar-LumenMint theme |
-| `soroban` | Soroban smart-contract workspace | Collection, settlement, and transaction packages exist; NFT package is still scaffold-level |
+---
 
-## 🚀 Quick Start
+## Features
+
+- 🔐 **Stellar wallet auth** — sign in with Freighter, Albedo, or email/password. Challenge‑response verification with JWT sessions.
+- 🖼️ **NFT minting & collections** — create, mint, and manage NFT collections with rich metadata, attributes, and IPFS/Arweave storage.
+- 🏷️ **Marketplace listings** — fixed‑price listings with buy, cancel, and transfer flows.
+- ⚡ **Auctions & bidding** — time‑bound auctions with automatic settlement via Soroban contracts.
+- 🔍 **Full‑text search** — discover NFTs and profiles through Meilisearch‑powered fuzzy search.
+- 🌐 **Internationalization** — locale‑aware routing with EN, FR, ES, DE translations and validation.
+- 📱 **PWA support** — installable web app with offline fallback.
+- 🎨 **Gallery‑first design** — minimal, editorial UI that puts the art front and center. Dark and light modes.
+- 📊 **Admin dashboard** — internal operations console for moderation, analytics, and platform management.
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- npm 10+ or pnpm 10+
-- Docker and Docker Compose
-- Rust toolchain with `wasm32-unknown-unknown`
-- Soroban CLI for contract deployment
+- **Node.js** 18+
+- **Docker** & Docker Compose
+- **Rust** toolchain with `wasm32-unknown-unknown` target (for Soroban contracts)
+- **Soroban CLI** (for contract deployment)
 
-### 1. Start the backend dependencies
+### 1. Backend & Dependencies
 
 ```bash
 cd backend
@@ -113,22 +138,26 @@ printf '\nDB_USER=postgres\nDB_PASSWORD=postgres\nDB_NAME=stellar_lumenmint\nDB_
 # align DATABASE_URL with the compose port mapping
 sed -i 's|localhost:5432|localhost:5433|' .env
 
-docker compose up -d
+docker compose up -d      # PostgreSQL, Redis, Meilisearch
 npm install
 npm run start:dev
 ```
 
-REST API: `http://localhost:3000/api/v1`
+The API is now live:
 
-Swagger: `http://localhost:3000/api/docs`
+| Service | URL |
+|---------|-----|
+| REST API | `http://localhost:3000/api/v1` |
+| Swagger Docs | `http://localhost:3000/api/docs` |
+| GraphQL | `http://localhost:3001/graphql` |
 
-GraphQL: `http://localhost:3001/graphql`
-
-### 2. Start the web frontend
+### 2. Web Frontend
 
 ```bash
 cd ../frontend
 npm install
+
+# Create the environment file
 cat > .env.local <<'EOF'
 NEXT_PUBLIC_BASE_URL=http://localhost:5000
 NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
@@ -137,22 +166,18 @@ NEXT_PUBLIC_STELLAR_NETWORK=testnet
 NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 EOF
 
-npm run dev
+npm run dev                # → http://localhost:5000
 ```
 
-Web app: `http://localhost:5000`
-
-### 3. Start the mobile app
+### 3. Mobile App
 
 ```bash
 cd ../mobile-app
 npm install
-npm start
+npm start                  # then npm run android, npm run ios, or npm run web
 ```
 
-Then run `npm run android`, `npm run ios`, or open the Expo QR flow.
-
-### 4. Start the admin dashboard
+### 4. Admin Dashboard
 
 ```bash
 cd ../admin
@@ -160,7 +185,7 @@ npm install
 npm run dev
 ```
 
-### 5. Build or test the Soroban workspace
+### 5. Soroban Contracts
 
 ```bash
 cd ../soroban
@@ -169,66 +194,93 @@ cargo build --workspace
 cargo test --workspace
 ```
 
-## 🔄 Development Workflow
+---
 
-1. Bring up the backend first, because the web and mobile clients depend on its REST and GraphQL surfaces.
-2. Start the frontend on port `5000` for browser-based wallet and creator flows.
-3. Start the mobile app separately with Expo when validating onboarding and secure wallet flows.
-4. Use the admin app as an internal surface for future moderation and operations modules.
-5. Build and test contracts independently from the app layer when evolving Soroban logic.
+## Repository Structure
 
-## 🔌 API and Integration Surfaces
+```
+.
+├── frontend/          Next.js marketplace (web app, PWA, i18n)
+├── backend/           NestJS API, GraphQL, PostgreSQL, Redis
+├── mobile-app/        Expo React Native (iOS + Android)
+├── admin/             Vite + React operations dashboard
+├── soroban/           Rust smart contracts (Soroban)
+│   └── contracts/
+│       ├── collection_factory/
+│       ├── marketplace_settlement/
+│       ├── transaction_contract/
+│       └── nft_contract/
+├── .github/
+│   └── workflows/     CI/CD pipelines for all workspaces
+├── DESIGN_SYSTEM.md   Visual language, tokens, and components
+└── plan.md            Rebranding summary and design decisions
+```
 
-| Surface | Default URL | Purpose |
-| --- | --- | --- |
-| REST API | `http://localhost:3000/api/v1` | Primary application API for auth, NFTs, collections, auctions, listings, orders, users, and search |
-| Swagger | `http://localhost:3000/api/docs` | Interactive REST documentation generated from Nest decorators |
-| GraphQL | `http://localhost:3001/graphql` | Secondary query surface and health endpoint |
-| Search | REST `search` controller | NFT and profile discovery backed by Meilisearch |
-| Soroban RPC | Configured via env | Backend and frontend contract interaction |
+---
 
-## 🧪 Testing and Quality
+## Testing
+
+Every workspace has its own test suite. Run them all from root:
 
 ```bash
-# Backend
-cd backend && npm test
+# Backend — unit + e2e
+cd backend && npm test && npm run test:e2e
 
-# Frontend
+# Frontend — Jest + accessibility
 cd ../frontend && npm test
 
-# Mobile
+# Mobile — Jest
 cd ../mobile-app && npm test
 
-# Contracts
+# Soroban — Rust tests
 cd ../soroban && cargo test --workspace
 ```
 
-Additional quality scripts:
+Additional quality checks:
 
-- Frontend i18n validation: `npm run validate-translations`
-- Frontend GraphQL types: `npm run graphql:codegen`
-- Backend linting: `npm run lint`
-- Admin linting: `npm run lint`
+```bash
+cd frontend && npm run validate-translations   # i18n completeness
+cd frontend && npm run lint                    # ESLint
+cd backend  && npm run lint                    # ESLint + Prettier
+cd admin    && npm run lint                    # ESLint
+```
 
-## 🔐 Security and Operational Notes
+---
 
-- The backend supports Stellar wallet challenge verification and JWT-based protected routes.
-- Redis-backed guards are used for application-level rate limiting and cache TTL handling.
-- Pino logging redacts sensitive request headers such as authorization and cookies.
-- Asset storage is designed with IPFS-first configuration and optional Arweave fallback.
-- The backend currently uses TypeORM `synchronize: true`, which is convenient for development but should be replaced with an explicit migration workflow before production rollout.
+## Documentation
 
-## 📌 Repository Notes
+| Document | Description |
+|----------|-------------|
+| [Design System](DESIGN_SYSTEM.md) | Visual language, color tokens, typography, motion, components |
+| [Frontend](frontend/README.md) | Web app architecture, routing, wallet integration, PWA |
+| [Backend](backend/README.md) | API surface, modules, database, storage, security |
+| [Mobile](mobile-app/README.md) | Expo app, auth flow, wallet services, navigation |
+| [Admin](admin/README.md) | Dashboard shell, setup, recommended next modules |
+| [Soroban](soroban/README.md) | Smart contracts, deployment, verification, security |
 
-- Some UI copy and translation strings in the web and mobile projects still reference legacy Starknet terminology. The active integration code is Stellar/Soroban-focused.
-- `admin` has been fully redesigned with the premium Stellar-LumenMint theme.
-- `soroban/contracts/nft_contract` is present but still scaffolded compared with the more developed `collection_factory`, `marketplace_settlement`, and `transaction_contract` packages.
+---
 
-## 🤝 Contributing
+## Contributing
 
-1. Create a feature branch.
-2. Keep changes scoped to the workspace you are modifying.
-3. Run the local test or lint command for that workspace before opening a PR.
-4. Update the relevant README when setup, architecture, or operational behavior changes.
+We welcome contributions. Here's how:
 
-For deeper setup details, use the workspace-level READMEs in each project folder.
+1. **Fork & branch** — create a feature branch from `main`.
+2. **Scope your changes** — keep work focused on a single workspace.
+3. **Follow conventions** — each workspace has its own lint and format rules; run them before committing.
+4. **Write tests** — add or update tests for your changes.
+5. **Update docs** — if your change affects setup, architecture, or behavior, update the relevant README.
+6. **Open a PR** — describe what you've done and why. Link any related issues.
+
+Need inspiration? Check the [admin roadmap](admin/README.md#-recommended-next-modules) or the [Soroban contract packages](soroban/README.md#-contract-packages) for areas ready for contribution.
+
+---
+
+## License
+
+MIT © Stellar‑LumenMint
+
+---
+
+<p align="center">
+  Built with ❤️ on <a href="https://stellar.org">Stellar</a>
+</p>

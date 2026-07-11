@@ -1,13 +1,13 @@
 # 🌍 Stellar-LumenMint Internationalization (i18n) Implementation
 
-This document describes the comprehensive internationalization setup for Stellar-LumenMint, supporting English and French languages with full SEO optimization and locale-specific formatting.
+This document describes the comprehensive internationalization setup for Stellar-LumenMint, supporting English, French, Spanish, and German with full SEO optimization and locale-specific formatting.
 
 ## 📋 Features
 
-- ✅ **Next.js i18n Configuration** - Built-in support with EN/FR locales
+- ✅ **Next.js i18n Configuration** - Built-in support with EN, FR, ES, DE locales
 - ✅ **Translation Management** - Organized by features with fallback handling
 - ✅ **Language Switcher** - Elegant UI component with accessibility support
-- ✅ **URL-based Locale Routing** - Clean URLs with locale prefixes (/en/, /fr/)
+- ✅ **URL-based Locale Routing** - Clean URLs with locale prefixes (/en/, /fr/, /es/, /de/)
 - ✅ **Locale-specific Formatting** - Numbers, currency, dates, and relative time
 - ✅ **SEO Optimization** - Hreflang tags and meta descriptions
 - ✅ **Fallback Handling** - Graceful degradation for missing translations
@@ -19,11 +19,15 @@ This document describes the comprehensive internationalization setup for Stellar
 ### File Structure
 
 ```
-apps/frontend/
+frontend/
 ├── locales/
 │   ├── en/
 │   │   └── common.json
-│   └── fr/
+│   ├── fr/
+│   │   └── common.json
+│   ├── es/
+│   │   └── common.json
+│   └── de/
 │       └── common.json
 ├── hooks/
 │   └── useTranslation.ts
@@ -198,7 +202,7 @@ t('items', { count: 5 }) // "5 items"
 ```javascript
 const nextConfig = {
   i18n: {
-    locales: ["en", "fr"],
+    locales: ["en", "fr", "es", "de"],
     defaultLocale: "en",
     localeDetection: true,
   },
@@ -218,7 +222,7 @@ NEXT_PUBLIC_BASE_URL=https://Stellar-LumenMint.com
 ### Run Translation Validation
 
 ```bash
-pnpm validate-translations
+npm run validate-translations
 ```
 
 This script checks for:
@@ -230,11 +234,13 @@ This script checks for:
 
 ### Manual Testing
 
-1. Start the development server: `pnpm dev`
+1. Start the development server: `npm run dev`
 2. Navigate to `http://localhost:3000/en` (English)
 3. Navigate to `http://localhost:3000/fr` (French)
-4. Test language switching via the language switcher
-5. Verify SEO meta tags and hreflang attributes
+4. Navigate to `http://localhost:3000/es` (Spanish)
+5. Navigate to `http://localhost:3000/de` (German)
+6. Test language switching via the language switcher
+7. Verify SEO meta tags and hreflang attributes
 
 ## 📊 Performance Metrics
 
@@ -256,8 +262,8 @@ This script checks for:
 
 ### Adding New Languages
 
-1. Create new locale directory: `locales/es/`
-2. Add translation file: `locales/es/common.json`
+1. Create new locale directory: `locales/xx/`
+2. Add translation file: `locales/xx/common.json`
 3. Update `next.config.js` locales array
 4. Add language to `LanguageSwitcher` component
 5. Update pluralization rules in `useTranslation` hook
@@ -311,8 +317,8 @@ NEXT_PUBLIC_I18N_DEBUG=true
 
 When adding new features:
 
-1. Add translations to both English and French files
-2. Run validation script: `pnpm validate-translations`
+1. Add translations to all locale files (EN, FR, ES, DE)
+2. Run validation script: `npm run validate-translations`
 3. Test language switching functionality
 4. Update documentation if needed
 5. Ensure SEO meta tags are translated

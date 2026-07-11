@@ -1,8 +1,8 @@
 # Stellar-LumenMint Mobile App
 **Expo Mobile Client for Wallet and Marketplace Flows**
 
-![Expo](https://img.shields.io/badge/Expo-53-1b1f23)
-![React%20Native](https://img.shields.io/badge/React%20Native-0.79-149eca)
+![Expo](https://img.shields.io/badge/Expo-54-1b1f23)
+![React%20Native](https://img.shields.io/badge/React%20Native-0.73-149eca)
 ![Stellar](https://img.shields.io/badge/Stellar-Mobile%20Wallets-111827)
 ![Zustand](https://img.shields.io/badge/Zustand-State-4338ca)
 ![Jest](https://img.shields.io/badge/Jest-Tested-c21325)

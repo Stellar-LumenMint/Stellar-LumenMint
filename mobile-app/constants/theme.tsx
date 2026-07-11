@@ -1,54 +1,53 @@
 /**
- * Stellar-LumenMint — Mobile App Theme (v2.0)
+ * Stellar-LumenMint — Mobile App Theme (v3.0)
  * Brand: Stellar-LumenMint
- * Theme: Cosmic Midnight
+ * Theme: Lumen Minimal — Gallery Fintech
  */
 
 export const LMTheme = {
   colors: {
     // Backgrounds
-    bg: '#0D1117',
-    surface: '#141B24',
-    surface2: '#1C2433',
-    surface3: '#243044',
+    bg: '#FAFAFA',
+    surface: '#FFFFFF',
+    surface2: '#F5F5F5',
+    surface3: '#E5E5E5',
 
     // Brand
-    teal: '#00D4FF',
-    tealDim: '#00A8CC',
-    tealDark: '#0088A8',
-    violet: '#7B6FFF',
-    violetDim: '#5E52D4',
-    pink: '#FF6B9D',
+    primary: '#0A0A0A',
+    indigo: '#4F46E5',
+    mint: '#10B981',
+    amber: '#F59E0B',
+    rose: '#F43F5E',
 
     // Text
-    textPrimary: '#EEF2F7',
-    textSecondary: '#8A9BB0',
-    textMuted: '#6B7A8D',
-    textLight: '#0D1117',
+    textPrimary: '#0A0A0A',
+    textSecondary: '#737373',
+    textMuted: '#A3A3A3',
+    textLight: '#FAFAFA',
 
     // Structural
-    border: '#1E2D3D',
-    borderBright: '#00D4FF',
-    divider: '#1E2D3D',
+    border: '#E5E5E5',
+    borderStrong: '#D4D4D4',
+    divider: '#E5E5E5',
 
     // Status
-    success: '#34D399',
-    warning: '#FBBF24',
-    error: '#F87171',
-    info: '#60A5FA',
+    success: '#10B981',
+    warning: '#F59E0B',
+    error: '#F43F5E',
+    info: '#4F46E5',
 
     // Gradient presets
-    gradientPrimary: ['#00D4FF', '#7B6FFF'] as const,
-    gradientViolet: ['#7B6FFF', '#5E52D4'] as const,
-    gradientWarm: ['#00D4FF', '#FF6B9D', '#7B6FFF'] as const,
-    gradientDark: ['#0D1117', '#0A1628'] as const,
-    gradientCard: ['#141B24', '#1C2433'] as const,
+    gradientPrimary: ['#0A0A0A', '#262626'] as const,
+    gradientIndigo: ['#4F46E5', '#6366F1'] as const,
+    gradientWarm: ['#0A0A0A', '#4F46E5'] as const,
+    gradientDark: ['#0A0A0A', '#141414'] as const,
+    gradientCard: ['#FFFFFF', '#FAFAFA'] as const,
 
     // Transparency helpers
     tealAlpha: (opacity: number) => `rgba(0, 212, 255, ${opacity})`,
     violetAlpha: (opacity: number) => `rgba(123, 111, 255, ${opacity})`,
     pinkAlpha: (opacity: number) => `rgba(255, 107, 157, ${opacity})`,
-    whiteAlpha: (opacity: number) => `rgba(238, 242, 247, ${opacity})`,
+    whiteAlpha: (opacity: number) => `rgba(250, 250, 250, ${opacity})`,
     blackAlpha: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
   },
 
@@ -63,11 +62,11 @@ export const LMTheme = {
   },
 
   borderRadius: {
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 20,
-    '2xl': 24,
+    sm: 4,
+    md: 6,
+    lg: 8,
+    xl: 12,
+    '2xl': 16,
     full: 9999,
   },
 
@@ -93,38 +92,38 @@ export const LMTheme = {
   shadow: {
     sm: {
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.04,
+      shadowRadius: 2,
+      elevation: 1,
     },
     md: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.06,
       shadowRadius: 8,
-      elevation: 4,
+      elevation: 3,
     },
     lg: {
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.4,
-      shadowRadius: 16,
-      elevation: 8,
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.08,
+      shadowRadius: 24,
+      elevation: 6,
     },
     glow: {
-      shadowColor: '#00D4FF',
+      shadowColor: '#4F46E5',
       shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
-      elevation: 6,
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 4,
     },
     glowViolet: {
-      shadowColor: '#7B6FFF',
+      shadowColor: '#4F46E5',
       shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
-      elevation: 6,
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 4,
     },
   },
 } as const;

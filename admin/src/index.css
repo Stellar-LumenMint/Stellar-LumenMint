@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
@@ -13,28 +13,30 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background-color: #0D1117;
-  color: #EEF2F7;
+  background-color: #FAFAFA;
+  color: #0A0A0A;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Premium scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #0D1117;
+  background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(0, 212, 255, 0.35), rgba(123, 111, 255, 0.35));
+  background: #D4D4D4;
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(0, 212, 255, 0.6), rgba(123, 111, 255, 0.6));
+  background: #A3A3A3;
 }
 
 ::selection {
-  background: rgba(0, 212, 255, 0.25);
-  color: #EEF2F7;
+  background: rgba(79, 70, 229, 0.15);
 }

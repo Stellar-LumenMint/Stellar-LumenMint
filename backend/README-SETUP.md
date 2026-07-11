@@ -28,8 +28,6 @@ cd backend
 2. Install dependencies:
 ```bash
 npm install
-# or
-pnpm install
 ```
 
 3. Configure environment variables:
@@ -50,8 +48,6 @@ CORS_ORIGIN=http://localhost:3001
 ### Development Mode
 ```bash
 npm run start:dev
-# or
-pnpm start:dev
 ```
 
 The application will start in watch mode and automatically reload on file changes.
@@ -60,16 +56,11 @@ The application will start in watch mode and automatically reload on file change
 ```bash
 npm run build
 npm run start:prod
-# or
-pnpm build
-pnpm start:prod
 ```
 
 ### Debug Mode
 ```bash
 npm run start:debug
-# or
-pnpm start:debug
 ```
 
 ## API Endpoints
@@ -133,29 +124,21 @@ backend/
 ### Unit Tests
 ```bash
 npm run test
-# or
-pnpm test
 ```
 
 ### Watch Mode
 ```bash
 npm run test:watch
-# or
-pnpm test:watch
 ```
 
 ### Coverage Report
 ```bash
 npm run test:cov
-# or
-pnpm test:cov
 ```
 
 ### E2E Tests
 ```bash
 npm run test:e2e
-# or
-pnpm test:e2e
 ```
 
 ## Development Commands
@@ -163,15 +146,11 @@ pnpm test:e2e
 ### Linting
 ```bash
 npm run lint
-# or
-pnpm lint
 ```
 
 ### Code Formatting
 ```bash
 npm run format
-# or
-pnpm format
 ```
 
 ## Configuration
@@ -205,16 +184,17 @@ npx @nestjs/cli generate service features/your-module
 - **CORS Handling:** Properly configured CORS prevents cross-origin issues
 - **Error Handling:** Centralized exception handling through NestJS filters
 
-## Future Enhancements
+## Current Capabilities
 
-- [ ] Database integration (PostgreSQL with TypeORM)
-- [ ] Authentication & JWT tokens
-- [ ] Stellar/Soroban smart contract integration
-- [ ] API rate limiting
-- [ ] Request logging and monitoring
-- [ ] Caching layer (Redis)
-- [ ] Message queues (BullMQ)
-- [ ] API documentation (Swagger/OpenAPI)
+The backend now includes these features (previously listed as future work):
+
+- ✅ Database integration (PostgreSQL with TypeORM)
+- ✅ Authentication & JWT tokens
+- ✅ Stellar/Soroban smart contract integration
+- ✅ API rate limiting (Redis-backed guards)
+- ✅ Request logging (Pino with header redaction)
+- ✅ Caching layer (Redis)
+- ✅ API documentation (Swagger/OpenAPI)
 
 ## Troubleshooting
 
@@ -250,7 +230,7 @@ When adding new features:
 
 ## License
 
-UNLICENSED - Internal use only
+MIT
 
 ## Support
 
@@ -259,8 +239,8 @@ For issues or questions about the backend setup, please create an issue in the r
 ## Next Steps
 
 1. ✅ Health check endpoint is running
-2. 📦 Set up database integration (PostgreSQL + TypeORM)
-3. 🔐 Implement authentication (JWT)
-4. 🌐 Connect to Stellar/Soroban contracts
-5. 📚 Generate API documentation with Swagger
+2. ✅ Database integration (PostgreSQL + TypeORM)
+3. ✅ Authentication (JWT + Stellar wallet)
+4. ✅ Stellar/Soroban contracts integration
+5. ✅ API documentation (Swagger/OpenAPI)
 6. 🧪 Expand test coverage
