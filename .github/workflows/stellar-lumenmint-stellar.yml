@@ -3,10 +3,10 @@ name: Stellar-LumenMint Contracts CI
 on:
   push:
     paths:
-      - 'contracts/**'
+      - "contracts/**"
   pull_request:
     paths:
-      - 'contracts/**'
+      - "contracts/**"
 
 jobs:
   build-and-test:

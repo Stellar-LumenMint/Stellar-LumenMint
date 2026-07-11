@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LMTheme } from '@/constants/theme';
 
 export default function SplashScreen() {
@@ -50,8 +50,7 @@ export default function SplashScreen() {
   );
 }
 
-// Need to import Text for the subtitle
-import { Text } from 'react-native';
+
 
 const styles = StyleSheet.create({
   container: {
