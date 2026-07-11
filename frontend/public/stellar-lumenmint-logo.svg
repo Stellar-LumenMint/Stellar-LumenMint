@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 48" fill="none">
-  <!-- Diamond mark -->
-  <path d="M14 4L24 14L14 24L4 14Z" fill="#4F46E5" fill-opacity="0.92"/>
-  <path d="M14 4L24 14L14 24L4 14Z" stroke="#4F46E5" stroke-width="0.5" stroke-opacity="0.4"/>
+  <!-- 4-point star mark (✦) -->
+  <path d="M14 2L16.5 11.5L26 14L16.5 16.5L14 26L11.5 16.5L2 14L11.5 11.5Z" fill="#4F46E5" fill-opacity="0.92"/>
   <!-- Wordmark -->
   <text x="40" y="33" font-family="'Geist', 'Inter', system-ui, -apple-system, sans-serif" font-weight="700" font-size="22" letter-spacing="-0.5" fill="#0A0A0A">Stellar‑LumenMint</text>
 </svg>
