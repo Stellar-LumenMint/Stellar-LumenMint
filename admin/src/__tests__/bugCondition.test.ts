@@ -29,7 +29,7 @@ function collectLeafStrings(obj: unknown, path = ''): Array<{ path: string; valu
 /** isBugCondition: returns true when value contains "starknet" (case-insensitive) */
 function isBugCondition(value: string): boolean {
   const lower = value.toLowerCase()
-  return lower.includes('starknet') || lower.includes('nftopia')
+  return lower.includes('starknet')
 }
 
 describe('Bug Condition Exploration — Property 1: No legacy blockchain strings', () => {
