@@ -5,6 +5,8 @@ import type { AuthStackParamList } from '@/navigation/AuthNavigator';
 import { useAuthStore } from '@/stores/authStore';
 import FormInput from './components/FormInput';
 import { validateEmail, validatePassword } from './utils/validation';
+import { LMTheme } from '@/constants/theme';
+import { ChevronLeft } from 'lucide-react-native';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'EmailLogin'>;
 
@@ -17,18 +19,15 @@ export default function EmailLoginScreen({ navigation }: Props) {
   const { setUser, setError: setAuthError } = useAuthStore();
 
   const validateForm = (): boolean => {
-    // Clear previous errors
     setEmailError(null);
     setPasswordError(null);
 
-    // Validate email
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
       setEmailError(emailValidation.error);
       return false;
     }
 
-    // Validate password
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
       setPasswordError(passwordValidation.error);
@@ -39,29 +38,18 @@ export default function EmailLoginScreen({ navigation }: Props) {
   };
 
   const handleLogin = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setIsLoading(true);
       setAuthError(null);
-      
-      // TODO: Implement actual login logic with backend
-      // For now, just simulate login
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate user data
       setUser({
         id: Date.now().toString(),
         email: email,
         createdAt: new Date(),
       });
-
       Alert.alert('Success', 'Logged in successfully!');
-      
-      // Navigate to main app (to be implemented)
-      // navigation.reset({ routes: [{ name: 'Main' }] });
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to login';
@@ -74,7 +62,12 @@ export default function EmailLoginScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.glowTop} />
       <View style={styles.content}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <ChevronLeft size={20} color={LMTheme.colors.textSecondary} />
+        </TouchableOpacity>
+
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>
           Sign in to continue to Stellar-LumenMint
@@ -112,14 +105,12 @@ export default function EmailLoginScreen({ navigation }: Props) {
             testID="password-input"
           />
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.forgotPassword}
-            onPress={() => Alert.alert('Feature coming soon!', 'Password reset will be implemented in the next update.')}
+            onPress={() => Alert.alert('Coming Soon', 'Password reset will be available soon.')}
             disabled={isLoading}
           >
-            <Text style={[styles.forgotPasswordText, isLoading && styles.disabledLink]}>
-              Forgot Password?
-            </Text>
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -132,7 +123,7 @@ export default function EmailLoginScreen({ navigation }: Props) {
           testID="login-button"
         >
           {isLoading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={LMTheme.colors.textLight} />
           ) : (
             <Text style={styles.primaryButtonText}>Sign In</Text>
           )}
@@ -144,14 +135,6 @@ export default function EmailLoginScreen({ navigation }: Props) {
             <Text style={styles.linkText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          disabled={isLoading}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -160,63 +143,65 @@ export default function EmailLoginScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 24,
+    backgroundColor: LMTheme.colors.bg,
+    paddingHorizontal: LMTheme.spacing.lg,
+  },
+  glowTop: {
+    position: 'absolute',
+    top: -80,
+    left: -80,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: LMTheme.colors.tealAlpha(0.05),
   },
   content: {
     flex: 1,
     justifyContent: 'center',
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: LMTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: LMTheme.colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
+    fontWeight: '700',
+    color: LMTheme.colors.textPrimary,
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: LMTheme.colors.textSecondary,
     marginBottom: 32,
+    lineHeight: 24,
   },
   form: {
     gap: 20,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  input: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
   },
   forgotPassword: {
     alignItems: 'flex-end',
     marginTop: -8,
   },
   forgotPasswordText: {
-    color: '#007AFF',
+    color: LMTheme.colors.teal,
     fontSize: 14,
-    fontWeight: '600',
-  },
-  disabledLink: {
-    opacity: 0.5,
+    fontWeight: '500',
   },
   footer: {
     paddingBottom: 32,
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
+    backgroundColor: LMTheme.colors.teal,
+    borderRadius: LMTheme.borderRadius.lg,
     paddingVertical: 16,
     alignItems: 'center',
   },
@@ -224,7 +209,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: LMTheme.colors.textLight,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -234,20 +219,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    color: '#666',
+    color: LMTheme.colors.textMuted,
     fontSize: 14,
   },
   linkText: {
-    color: '#007AFF',
+    color: LMTheme.colors.teal,
     fontSize: 14,
     fontWeight: '600',
-  },
-  backButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    color: '#666',
-    fontSize: 16,
   },
 });
