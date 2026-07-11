@@ -42,9 +42,10 @@ The project supports 4 locales (EN, FR, ES, DE), but the Spanish and German tran
 
 ### 3. 🟡 Backend — Replace `synchronize: true` with migration-driven schema control
 
-**Workspace:** `backend/`  
-**Difficulty:** Intermediate  
-**Time estimate:** 6–10 hours
+**Workspace:** `backend/`**Difficulty:** Advanced
+**Time estimate:** 8–12 hours
+
+**Prerequisite:** Experience with TypeORM migrations required.
 
 The backend currently uses TypeORM's `synchronize: true`, which auto‑creates tables from entity definitions. This is convenient for development but unsafe for production. Replace it with a proper migration workflow using TypeORM CLI migrations.
 
@@ -139,6 +140,8 @@ As listed in the admin's "Recommended Next Modules," build a collection moderati
 **Time estimate:** 10–20 hours
 
 The `soroban/contracts/nft_contract` package (`soroban/README.md`) is scaffold‑level compared to the more developed `collection_factory`, `marketplace_settlement`, and `transaction_contract` packages. Expand it into a fully‑functional NFT contract.
+
+**Note:** The workspace uses `edition = "2021"` (stable Rust). Do not use edition 2024 features like `let` chains.
 
 - Implement mint, burn, transfer, approve, and metadata update functions
 - Add access control (owner, minter, burner roles)

@@ -267,7 +267,7 @@ We welcome contributions. Here's how:
 5. **Update docs** — if your change affects setup, architecture, or behavior, update the relevant README.
 6. **Open a PR** — describe what you've done and why. Link any related issues.
 
-Need inspiration? Check the [admin roadmap](admin/README.md#-recommended-next-modules) or the [Soroban contract packages](soroban/README.md#-contract-packages) for areas ready for contribution.
+Need inspiration? See [CONTRIBUTING.md](CONTRIBUTING.md) for 10 ready-to-claim issues across all workspaces, or check the [admin roadmap](admin/README.md#-recommended-next-modules) and [Soroban contract packages](soroban/README.md#-contract-packages).
 
 ---
 
