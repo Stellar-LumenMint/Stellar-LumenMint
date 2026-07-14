@@ -12,6 +12,7 @@ import { Toast } from "@/components/ui/toast";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ClientBody } from "@/components/layout/ClientBody";
+import { SkipToContent } from "@/components/a11y/SkipToContent";
 
 const inter = localFont({
   src: "../../public/fonts/inter-var.woff2",
@@ -94,6 +95,7 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
         )}
       </head>
       <body className={inter.className}>
+        <SkipToContent />
         <StoreProvider>
           <StellarWalletProvider>
             {isCreatorDashboard ? (
@@ -103,7 +105,7 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
               </ClientBody>
             ) : (
               <div className="min-h-screen bg-[#0D1117] text-white relative contain-layout">
-                <main className="relative z-10 pt-16 md:pt-20">
+                <main className="relative z-10 pt-16 md:pt-20" id="main-content">
                   {!isAuthPage && <Navbar />}
                   {!isAuthPage && <CircuitBackground />}
                   <WebVitals />
