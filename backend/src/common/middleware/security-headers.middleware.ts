@@ -8,14 +8,14 @@ import { Request, Response, NextFunction } from 'express';
 @Injectable()
 export class SecurityHeadersMiddleware implements NestMiddleware {
   use(_req: Request, res: Response, next: NextFunction): void {
-    // Prevent MIME type sniffing
+    // Enable browser XSS filter (legacy; CSP is the modern approach below)
     res.setHeader('X-Content-Type-Options', 'nosniff');
 
-    // Prevent clickjacking
-    res.setHeader('X-Frame-Options', 'DENY');
-
-    // Enable browser XSS filter
-    res.setHeader('X-XSS-Protection', '1; mode=block');
+    // Content Security Policy
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+    );
 
     // Referrer policy
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');

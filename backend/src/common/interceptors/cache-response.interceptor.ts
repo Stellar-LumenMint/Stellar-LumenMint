@@ -106,8 +106,8 @@ export class CacheResponseInterceptor implements NestInterceptor {
 
   private buildCacheKey(request: Request, prefix?: string): string {
     const base = `${request.method}:${request.originalUrl || request.url}`;
-    const auth =
-      (request.headers['authorization'] as string)?.slice(-12) ?? 'anon';
-    return `cache:${prefix ?? 'api'}:${base}:${auth}`;
+    // Use authenticated user ID for per-user cache isolation, fall back to anonymous
+    const userId = (request as any).user?.id ?? 'anon';
+    return `cache:${prefix ?? 'api'}:${base}:user:${userId}`;
   }
 }

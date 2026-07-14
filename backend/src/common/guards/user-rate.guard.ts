@@ -27,6 +27,11 @@ export interface RateLimitOptions {
 export const RateLimit = (points: number, durationSeconds = 60) =>
   Reflect.metadata(RATE_LIMIT_KEY, { points, duration: durationSeconds });
 
+interface RateWindow {
+  count: number;
+  windowStart: number;
+}
+
 /**
  * UserRateGuard — Per-user (or per-IP) rate limiting using Redis.
  *
@@ -66,15 +71,31 @@ export class UserRateGuard implements CanActivate {
     const key = this.buildKey(request);
 
     try {
-      const current = await this.cacheManager.get<number>(key);
-      const count = (current ?? 0) + 1;
+      const now = Date.now();
+      const windowDurationMs = limit.duration * 1000;
+
+      const cached = await this.cacheManager.get<RateWindow>(key);
+
+      if (!cached || now - cached.windowStart >= windowDurationMs) {
+        // New window — start fresh with count 1
+        const window: RateWindow = { count: 1, windowStart: now };
+        await this.cacheManager.set(key, window, limit.duration * 1000);
+
+        response.setHeader('X-RateLimit-Limit', String(limit.points));
+        response.setHeader('X-RateLimit-Remaining', String(Math.max(0, limit.points - 1)));
+        return true;
+      }
+
+      const count = cached.count + 1;
 
       if (count > limit.points) {
-        const ttl = await this.getTtl(key);
+        const retryAfter = Math.ceil(
+          (cached.windowStart + windowDurationMs - now) / 1000,
+        );
 
         response.setHeader('X-RateLimit-Limit', String(limit.points));
         response.setHeader('X-RateLimit-Remaining', '0');
-        response.setHeader('Retry-After', String(Math.ceil((ttl ?? 1) / 1000)));
+        response.setHeader('Retry-After', String(retryAfter));
 
         throw new HttpException(
           'Too Many Requests',
@@ -82,17 +103,19 @@ export class UserRateGuard implements CanActivate {
         );
       }
 
-      // Set with TTL on first request in window
-      if (current === undefined || current === null) {
-        await this.cacheManager.set(key, count, limit.duration * 1000);
-      } else {
-        // Update count preserving the remaining TTL
-        const remainingTtl = await this.getTtl(key);
-        await this.cacheManager.set(key, count, remainingTtl ?? limit.duration * 1000);
-      }
+      // Update count, preserve window
+      cached.count = count;
+      const remainingTtl = Math.max(
+        0,
+        cached.windowStart + windowDurationMs - now,
+      );
+      await this.cacheManager.set(key, cached, remainingTtl);
 
       response.setHeader('X-RateLimit-Limit', String(limit.points));
-      response.setHeader('X-RateLimit-Remaining', String(Math.max(0, limit.points - count)));
+      response.setHeader(
+        'X-RateLimit-Remaining',
+        String(Math.max(0, limit.points - count)),
+      );
 
       return true;
     } catch (error) {

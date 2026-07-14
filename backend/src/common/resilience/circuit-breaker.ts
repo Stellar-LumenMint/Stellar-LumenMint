@@ -1,3 +1,5 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
+
 /**
  * CircuitBreaker — Protects against cascading failures from external
  * service calls (e.g., Soroban RPC) by failing fast when the circuit is open.
@@ -141,9 +143,16 @@ export class CircuitBreaker {
   }
 }
 
-export class CircuitOpenError extends Error {
+export class CircuitOpenError extends HttpException {
   constructor(message: string) {
-    super(message);
+    super(
+      {
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        error: 'Service Unavailable',
+        message,
+      },
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
     this.name = 'CircuitOpenError';
   }
 }
