@@ -33,15 +33,6 @@ export const deepLinkConfig: LinkingOptions<Record<string, unknown>> = {
       Home: "",
       Marketplace: "marketplace",
       Profile: "profile",
-
-      // Deep-linked content
-      NFTDetail: "nft/:nftId",
-      CollectionDetail: "collection/:collectionId",
-      CreatorProfile: "creator/:creatorId",
-
-      // Auth actions
-      ResetPassword: "auth/reset-password/:token",
-      VerifyEmail: "auth/verify-email/:token",
     },
   },
 };

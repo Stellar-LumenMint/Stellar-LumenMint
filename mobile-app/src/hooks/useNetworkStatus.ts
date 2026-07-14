@@ -66,7 +66,7 @@ export function useNetworkStatus(): NetworkStatus & {
       setStatus({
         isConnected: state.isConnected ?? false,
         isInternetReachable: state.isInternetReachable,
-        quality: mapConnectionTypeToQuality(state.type),
+        quality: mapConnectionTypeToQuality(state.type, state.details),
         lastChecked: Date.now(),
       });
     } catch {
@@ -102,7 +102,7 @@ export function useNetworkStatus(): NetworkStatus & {
         setStatus({
           isConnected: state.isConnected ?? false,
           isInternetReachable: state.isInternetReachable,
-          quality: mapConnectionTypeToQuality(state.type),
+          quality: mapConnectionTypeToQuality(state.type, state.details),
           lastChecked: Date.now(),
         });
       });
@@ -123,17 +123,23 @@ export function useNetworkStatus(): NetworkStatus & {
 
 function mapConnectionTypeToQuality(
   type: string | undefined | null,
+  details?: { cellularGeneration?: string } | null,
 ): NetworkQuality {
+  // NetInfo's type field is "wifi", "cellular", etc.
+  // Cellular generation (4g, 5g) is in details.cellularGeneration
   switch (type) {
     case "wifi":
     case "ethernet":
       return "excellent";
-    case "cellular":
-    case "4g":
-    case "5g":
-      return "good";
-    case "3g":
+    case "cellular": {
+      const gen = details?.cellularGeneration;
+      if (gen === "5g") return "excellent";
+      if (gen === "4g" || gen === "4g-lte") return "good";
+      if (gen === "3g") return "poor";
+      return "good"; // default cellular is at least "good"
+    }
     case "2g":
+    case "3g":
       return "poor";
     case "none":
     case "unknown":

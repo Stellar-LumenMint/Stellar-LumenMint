@@ -37,8 +37,21 @@ export class NotificationService {
   private notificationHandlers = new Set<
     (payload: NotificationPayload) => void
   >();
+  private handlersSetup = false;
+  private baseUrl: string;
 
-  private constructor() {}
+  private constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl ?? "http://localhost:3000";
+  }
+
+  /** Lazy getter for expo-notifications — avoids repeated require() calls */
+  private get Notifications() {
+    try {
+      return require("expo-notifications");
+    } catch {
+      return null;
+    }
+  }
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -66,9 +79,15 @@ export class NotificationService {
    * Returns the resulting permission status.
    */
   async requestPermissions(): Promise<NotificationPermissionStatus> {
+    const Notifications = this.Notifications;
+    if (!Notifications) {
+      console.warn(
+        "expo-notifications is not installed. Push notifications are disabled.",
+      );
+      return "undetermined";
+    }
+
     try {
-      // Dynamically import expo-notifications to avoid crash if not installed
-      const Notifications = require("expo-notifications");
 
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
@@ -100,7 +119,8 @@ export class NotificationService {
    */
   private async registerForPushNotifications(): Promise<void> {
     try {
-      const Notifications = require("expo-notifications");
+      const Notifications = this.Notifications;
+      if (!Notifications) return;
 
       // Android-specific channel setup
       if (Platform.OS === "android") {
@@ -127,8 +147,14 @@ export class NotificationService {
    * Call this once during app initialization.
    */
   setupHandlers(): void {
+    // Guard against double-registration
+    if (this.handlersSetup) return;
+
+    const Notifications = this.Notifications;
+    if (!Notifications) return;
+
     try {
-      const Notifications = require("expo-notifications");
+      this.handlersSetup = true;
 
       // How to present notifications when app is in foreground
       Notifications.setNotificationHandler({
@@ -174,7 +200,7 @@ export class NotificationService {
     if (!this.state.pushToken) return;
 
     try {
-      await fetch("http://localhost:3000/api/v1/notifications/register", {
+      await fetch(`${this.baseUrl}/api/v1/notifications/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
