@@ -1,0 +1,19 @@
+{
+  "name": "@stellar-lumenmint/ai",
+  "version": "0.1.0",
+  "description": "AI utilities for Stellar LumenMint — NFT metadata generation, description enrichment, search enhancement",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stellar-lumenmint/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
