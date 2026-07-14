@@ -231,9 +231,9 @@ royalties, disputes, rate limiting, reentrancy guards, and edge cases.
 
 1. **Storage reads are cached** — Read once, use multiple times.
 2. **Batch operations** — Use `batch_mint`, `batch_transfer` for multi-item ops.
-3. **Vec capacity** — Pre-allocate Vec capacity when size is known.
-4. **Instance storage** — Use `instance()` storage for frequently accessed data.
-5. **Persistent storage** — Use `persistent()` for large, infrequently accessed data.
+3. **Instance storage** — Use `instance()` storage for frequently accessed data (lower gas).
+4. **Persistent storage** — Use `persistent()` for large, infrequently accessed data (higher gas).
+5. **Minimize storage writes** — Each write incurs ledger entry costs; batch writes when possible.
 
 ---
 

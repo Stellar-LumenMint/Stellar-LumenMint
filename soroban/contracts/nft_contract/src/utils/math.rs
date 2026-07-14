@@ -51,14 +51,12 @@ pub fn checked_sub_i128(env: &Env, a: i128, b: i128) -> Result<i128, ContractErr
     })
 }
 
-/// Divide a by b with division-by-zero protection.
+/// Divide a by b with division-by-zero and overflow protection.
+/// Note: `i128::checked_div` returns None for both division by zero
+/// and overflow (i128::MIN / -1).
 pub fn checked_div_i128(env: &Env, a: i128, b: i128) -> Result<i128, ContractError> {
-    if b == 0 {
-        soroban_sdk::log!(env, "checked_div_i128: division by zero");
-        return Err(ContractError::ArithmeticError);
-    }
     a.checked_div(b).ok_or_else(|| {
-        soroban_sdk::log!(env, "checked_div_i128 overflow: {} / {}", a, b);
+        soroban_sdk::log!(env, "checked_div_i128 error: {} / {}", a, b);
         ContractError::ArithmeticError
     })
 }
@@ -77,6 +75,8 @@ pub fn compute_royalty(
 
 /// Compute platform fee: (amount * fee_bps) / 10000
 /// Clamped between minimum_fee and maximum_fee.
+/// Compute platform fee: (amount * fee_bps) / 10000, clamped between min/max.
+/// fee_bps must be ≤ 10000 (100%). Panics in debug if fee_bps exceeds u32::MAX.
 pub fn compute_platform_fee(
     env: &Env,
     amount: i128,
@@ -84,6 +84,7 @@ pub fn compute_platform_fee(
     minimum_fee: i128,
     maximum_fee: i128,
 ) -> Result<i128, ContractError> {
+    assert!(fee_bps <= u32::MAX as u64, "fee_bps must fit in u32");
     let fee = compute_royalty(env, amount, fee_bps as u32)?;
     Ok(fee.clamp(minimum_fee, maximum_fee))
 }

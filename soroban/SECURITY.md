@@ -138,7 +138,7 @@ This document covers the four Soroban smart contracts in this workspace:
 3. **Single admin** — Admin is a single address; no multisig or timelock on critical operations.
 4. **Commit-reveal uses simple hash** — Bids are hashed with `env.crypto().sha256()`; a malicious sequencer could theoretically enumerate bid values for small ranges.
 5. **No slashing** — Malicious bidders who don't reveal face no economic penalty.
-6. **XOR-based wallet encryption** — The mobile app's `SecureStorage._encrypt` uses XOR; should be replaced with AES-GCM for production.
+6. **Commit-reveal bid enumeration** — For small bid ranges, an attacker could precompute hashes. Consider using a domain-separated hash with a contract-specific nonce.
 
 ---
 
