@@ -72,6 +72,8 @@ fn mint_one(
         attributes,
         edition_number: None,
         total_editions: None,
+        transfer_count: 0,
+        last_transfer_at: 0,
     };
 
     env.storage()
