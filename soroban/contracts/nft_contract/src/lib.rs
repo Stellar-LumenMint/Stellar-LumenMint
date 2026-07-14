@@ -10,12 +10,14 @@ pub mod storage;
 pub mod token;
 pub mod transfer;
 pub mod types;
+pub mod upgrade;
 pub mod version;
 
 use crate::access_control as ac;
 use crate::error::ContractError;
 use crate::storage::DataKey;
 use crate::types::{CollectionConfig, RoyaltyInfo, TokenAttribute, TokenData};
+use crate::upgrade::{self, UpgradeInfo};
 use soroban_sdk::{Address, Env, String, Vec, contract, contractimpl, panic_with_error};
 
 #[contract]
@@ -281,6 +283,39 @@ impl NftContract {
             .instance()
             .get::<_, bool>(&DataKey::IsPaused)
             .unwrap_or(false)
+    }
+
+    // -------------------------------------------------------------------------
+    // Upgrade & migration
+    // -------------------------------------------------------------------------
+
+    /// Set the upgrade admin address. Requires current upgrade admin or
+    /// contract admin authorization. Enables key rotation for upgrade authority.
+    pub fn set_upgrade_admin(
+        env: Env,
+        caller: Address,
+        new_admin: Address,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+        upgrade::set_upgrade_admin(&env, &caller, new_admin)
+    }
+
+    /// Perform a storage layout upgrade. Runs any necessary migration
+    /// functions to transform state from the current version to the target.
+    /// Requires upgrade admin authorization.
+    pub fn perform_upgrade(
+        env: Env,
+        caller: Address,
+        target_version: u32,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+        upgrade::perform_upgrade(&env, &caller, target_version)
+    }
+
+    /// Get the current upgrade state including storage version,
+    /// latest available version, and admin addresses.
+    pub fn get_upgrade_info(env: Env) -> UpgradeInfo {
+        upgrade::get_upgrade_info(&env)
     }
 
     // -------------------------------------------------------------------------
