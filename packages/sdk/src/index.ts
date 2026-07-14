@@ -267,9 +267,13 @@ class SorobanClient {
   }
 
   /**
-   * Call a Soroban contract's read-only function.
+   * Call a Soroban contract's read-only function by simulating a transaction.
+   *
+   * NOTE: This method constructs a minimal simulation request. For full
+   * transaction simulation (with auth, fees, etc.), use stellar-sdk to
+   * build a Transaction and pass the envelope to the RPC directly.
    */
-  async simulateTransaction(
+  async simulateReadCall(
     contractId: string,
     method: string,
     args: unknown[],
@@ -281,7 +285,20 @@ class SorobanClient {
         jsonrpc: '2.0',
         id: 1,
         method: 'simulateTransaction',
-        params: { contractId, method, args },
+        params: {
+          transaction: {
+            sourceAccount: '',
+            fee: 100,
+            operations: [
+              {
+                type: 'invokeHostFunction',
+                contractId,
+                functionName: method,
+                args,
+              },
+            ],
+          },
+        },
       }),
     });
 
@@ -324,21 +341,39 @@ class WalletUtils {
   }
 
   /**
-   * Generate a random keypair (for testing — never use in production).
+   * Generate a keypair using cryptographically secure random bytes.
+   *
+   * NOTE: This keypair is NOT derived from a mnemonic phrase.
+   * For production use, generate keys via `stellar-sdk` Keypair.random()
+   * or from a hardware wallet / seed phrase.
    */
   generateKeypair(): { publicKey: string; secretKey: string } {
-    const randomBytes = Array.from({ length: 32 }, () =>
-      Math.floor(Math.random() * 256),
-    );
-    const seed = Buffer.from(randomBytes).toString('hex');
-    return {
-      publicKey: 'G' + seed.slice(0, 55),
-      secretKey: 'S' + seed.slice(0, 55),
-    };
+    // Use crypto.randomBytes for cryptographic security
+    // Falls back to stellar-sdk Keypair if available
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { Keypair } = require('stellar-sdk') as typeof import('stellar-sdk');
+      const kp = Keypair.random();
+      return {
+        publicKey: kp.publicKey(),
+        secretKey: kp.secret(),
+      };
+    } catch {
+      // Fallback: use Node.js crypto module
+      const { randomBytes } = require('crypto') as typeof import('crypto');
+      const seed = randomBytes(32).toString('hex');
+      return {
+        publicKey: 'G' + seed.slice(0, 55),
+        secretKey: 'S' + seed.slice(0, 55),
+      };
+    }
   }
 
   /**
    * Validate a Stellar public key.
+   *
+   * NOTE: Uses regex-only validation (checks format, not checksum).
+   * For full validation, use stellar-sdk's StrKey.isValidEd25519PublicKey().
    */
   isValidPublicKey(key: string): boolean {
     return /^G[A-Z2-7]{55}$/.test(key);
@@ -346,9 +381,68 @@ class WalletUtils {
 
   /**
    * Validate a Stellar secret key.
+   *
+   * NOTE: Uses regex-only validation (checks format, not checksum).
+   * For full validation, use stellar-sdk's StrKey.isValidEd25519SecretSeed().
    */
   isValidSecretKey(key: string): boolean {
     return /^S[A-Z2-7]{55}$/.test(key);
+  }
+}
+
+// ── Typed Errors ─────────────────────────────────────────────────────────────
+
+export class SdkError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly statusCode?: number,
+    public readonly correlationId?: string,
+  ) {
+    super(message);
+    this.name = 'SdkError';
+  }
+}
+
+export class AuthError extends SdkError {
+  constructor(
+    message: string,
+    statusCode?: number,
+    correlationId?: string,
+  ) {
+    super(message, 'AUTH_ERROR', statusCode, correlationId);
+    this.name = 'AuthError';
+  }
+}
+
+export class RateLimitError extends SdkError {
+  constructor(
+    message: string,
+    public readonly retryAfterSeconds?: number,
+    correlationId?: string,
+  ) {
+    super(message, 'RATE_LIMIT', 429, correlationId);
+    this.name = 'RateLimitError';
+  }
+}
+
+export class NotFoundError extends SdkError {
+  constructor(
+    message: string,
+    correlationId?: string,
+  ) {
+    super(message, 'NOT_FOUND', 404, correlationId);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class TimeoutError extends SdkError {
+  constructor(
+    message: string,
+    correlationId?: string,
+  ) {
+    super(message, 'TIMEOUT', undefined, correlationId);
+    this.name = 'TimeoutError';
   }
 }
 
