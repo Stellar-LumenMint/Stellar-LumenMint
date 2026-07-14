@@ -28,4 +28,7 @@ pub enum ContractError {
     MismatchedArrays = 22,
     AlreadyBurned = 23,
     BurnNotAllowed = 24,
+    InvalidUpgradeTarget = 25,
+    UnsupportedStorageVersion = 26,
+    UpgradeInProgress = 27,
 }
