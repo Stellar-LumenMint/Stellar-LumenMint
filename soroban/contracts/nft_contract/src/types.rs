@@ -8,9 +8,34 @@ pub struct TokenAttribute {
     pub display_type: Option<String>,
 }
 
+/// Current token data schema (v2).
+///
+/// Added in v2:
+/// - `transfer_count`: number of times the token has been transferred
+/// - `last_transfer_at`: ledger timestamp of the most recent transfer (0 if never transferred)
 #[derive(Clone, Debug)]
 #[contracttype]
 pub struct TokenData {
+    pub id: u64,
+    pub owner: Address,
+    pub metadata_uri: String,
+    pub created_at: u64,
+    pub creator: Address,
+    pub royalty_percentage: u32,
+    pub royalty_recipient: Address,
+    pub attributes: Vec<TokenAttribute>,
+    pub edition_number: Option<u32>,
+    pub total_editions: Option<u32>,
+    // ── v2 fields ──────────────────────────────────────────────────────────
+    pub transfer_count: u32,
+    pub last_transfer_at: u64,
+}
+
+/// Legacy token data schema (v1) — used only during v1→v2 migration.
+/// Must exactly match the original TokenData shape before v2 fields were added.
+#[derive(Clone, Debug)]
+#[contracttype]
+pub struct LegacyTokenDataV1 {
     pub id: u64,
     pub owner: Address,
     pub metadata_uri: String,
