@@ -12,6 +12,7 @@ export class OutboxService {
   private readonly logger = new Logger(OutboxService.name);
   private readonly MAX_ATTEMPTS = 10;
   private readonly BATCH_SIZE = 50;
+  private relayProcessing = false;
 
   constructor(
     @InjectRepository(OutboxEvent)
@@ -176,22 +177,30 @@ export class OutboxService {
   /** Relays pending outbox events every 5 seconds. */
   @Cron(CronExpression.EVERY_5_SECONDS)
   async relayPendingEvents(): Promise<void> {
-    const events = await this.getPendingEvents();
-    if (events.length === 0) return;
+    // Guard against overlapping cron executions
+    if (this.relayProcessing) return;
+    this.relayProcessing = true;
 
-    let published = 0;
-    let failed = 0;
+    try {
+      const events = await this.getPendingEvents();
+      if (events.length === 0) return;
 
-    for (const event of events) {
-      const success = await this.publishEvent(event);
-      if (success) published++;
-      else failed++;
-    }
+      let published = 0;
+      let failed = 0;
 
-    if (published > 0 || failed > 0) {
-      this.logger.debug(
-        `Outbox relay: published=${published}, failed=${failed}, pending=${events.length - published - failed}`,
-      );
+      for (const event of events) {
+        const success = await this.publishEvent(event);
+        if (success) published++;
+        else failed++;
+      }
+
+      if (published > 0 || failed > 0) {
+        this.logger.debug(
+          `Outbox relay: published=${published}, failed=${failed}, pending=${events.length - published - failed}`,
+        );
+      }
+    } finally {
+      this.relayProcessing = false;
     }
   }
 

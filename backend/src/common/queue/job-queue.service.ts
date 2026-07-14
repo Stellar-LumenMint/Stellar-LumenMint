@@ -213,6 +213,8 @@ export class JobQueueService implements OnModuleDestroy {
     const config = this.configs.get(queueName);
     if (!config) return;
 
+    let jobId: string | undefined;
+
     try {
       // Atomically pop the highest-priority pending job
       const result = await this.redis.zpopmin(
@@ -221,7 +223,7 @@ export class JobQueueService implements OnModuleDestroy {
       );
       if (!result || result.length === 0) return;
 
-      const jobId = result[0];
+      jobId = result[0];
       const job = await this.getJob(queueName, jobId);
       if (!job) return;
 
@@ -249,10 +251,16 @@ export class JobQueueService implements OnModuleDestroy {
       // Success
       await this.markCompleted(queueName, jobId, config);
     } catch (err) {
-      // The jobId might not be available if zpopmin failed
-      this.logger.error(
-        `Error processing job in queue '${queueName}': ${(err as Error).message}`,
-      );
+      const error = err as Error;
+      if (jobId) {
+        // Job was popped — apply retry/DLQ logic
+        await this.markFailed(queueName, jobId, error, config);
+      } else {
+        // Error before jobId was extracted (e.g. Redis failure on zpopmin)
+        this.logger.error(
+          `Error before job extraction in queue '${queueName}': ${error.message}`,
+        );
+      }
     }
   }
 
@@ -274,15 +282,20 @@ export class JobQueueService implements OnModuleDestroy {
           redisKey(queueName, `job:${jobId}`),
           JSON.stringify(job),
         );
-        await this.redis.zadd(
-          redisKey(queueName, 'completed'),
-          Date.now(),
-          jobId,
-        );
-        await this.redis.expire(
-          redisKey(queueName, `job:${jobId}`),
-          config.completedJobTtlSeconds,
-        );
+      await this.redis.zadd(
+        redisKey(queueName, 'completed'),
+        Date.now(),
+        jobId,
+      );
+      await this.redis.expire(
+        redisKey(queueName, `job:${jobId}`),
+        config.completedJobTtlSeconds,
+      );
+      // Also set TTL on the completed sorted-set member (cleanup cron as safety net)
+      await this.redis.expire(
+        redisKey(queueName, 'completed'),
+        config.completedJobTtlSeconds + 3600,
+      );
       }
     }
   }

@@ -84,8 +84,9 @@ export class IdempotencyService implements OnModuleDestroy {
         createdAt: undefined,
       };
     } catch (err) {
-      this.logger.error(
-        `Idempotency check failed for key '${key}': ${(err as Error).message}`,
+      this.logger.warn(
+        `Idempotency check failed for key '${key}': ${(err as Error).message}. ` +
+          `Allowing request through (fail-open) to avoid blocking legitimate traffic.`,
       );
       // On Redis failure, assume NOT a duplicate (fail open to avoid
       // blocking legitimate requests due to infrastructure issues)
