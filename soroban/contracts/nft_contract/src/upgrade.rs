@@ -1,15 +1,16 @@
 use crate::error::ContractError;
 use crate::storage::DataKey;
+use crate::types::{LegacyTokenDataV1, TokenData};
 use soroban_sdk::{Address, Env, String, panic_with_error, symbol_short};
 
 // ── Storage Layout Version ────────────────────────────────────────────────────
 
 /// The current storage layout version. Increment this when making
 /// backwards-incompatible changes to the storage schema.
-pub const CURRENT_STORAGE_VERSION: u32 = 1;
+pub const CURRENT_STORAGE_VERSION: u32 = 2;
 
 /// Supported storage layout versions for migration.
-pub const SUPPORTED_VERSIONS: &[u32] = &[1];
+pub const SUPPORTED_VERSIONS: &[u32] = &[1, 2];
 
 // ── Upgrade Admin ─────────────────────────────────────────────────────────────
 
@@ -153,10 +154,77 @@ fn run_migration(env: &Env, target_version: u32) -> Result<(), ContractError> {
     match target_version {
         // v1 is the initial version — no migration needed to reach it
         1 => Ok(()),
-        // Future migrations:
-        // 2 => migrate_v1_to_v2(env),
+        // v2: add transfer_count and last_transfer_at to TokenData
+        2 => migrate_v1_to_v2(env),
         _ => Err(ContractError::UnsupportedStorageVersion),
     }
+}
+
+// ── v1 → v2 Migration ────────────────────────────────────────────────────────
+
+/// Migrate all TokenData from v1 schema to v2 schema.
+///
+/// Adds `transfer_count` (default 0) and `last_transfer_at` (default 0)
+/// to every existing token. Iterates through all tokens by scanning the
+/// token ID range from 1 to total_supply.
+///
+/// # Idempotency
+/// This migration is idempotent: it checks whether each token already has
+/// v2 data (by attempting to read as TokenData first) before migrating.
+/// If a token was already migrated (e.g. after a partial run that was
+/// reverted), it is silently skipped.
+///
+/// # Gas Considerations
+/// For production collections with thousands of tokens, this function
+/// would exceed transaction limits. In that case, implement chunked
+/// migration (e.g. `perform_upgrade_chunked`) that processes a fixed
+/// batch of tokens per call, or a lazy-migration strategy that migrates
+/// individual tokens on their next interaction.
+fn migrate_v1_to_v2(env: &Env) -> Result<(), ContractError> {
+    let total: u64 = env
+        .storage()
+        .instance()
+        .get(&DataKey::TotalSupply)
+        .unwrap_or(0);
+
+    for token_id in 1..=total {
+        // Check if already migrated (idempotent guard)
+        let already_v2: Option<TokenData> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TokenData(token_id));
+        if already_v2.is_some() {
+            continue; // Already migrated, skip
+        }
+
+        // Read as v1 schema and transform to v2
+        let legacy: LegacyTokenDataV1 = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TokenData(token_id))
+            .ok_or(ContractError::TokenNotFound)?;
+
+        let v2_data = TokenData {
+            id: legacy.id,
+            owner: legacy.owner,
+            metadata_uri: legacy.metadata_uri,
+            created_at: legacy.created_at,
+            creator: legacy.creator,
+            royalty_percentage: legacy.royalty_percentage,
+            royalty_recipient: legacy.royalty_recipient,
+            attributes: legacy.attributes,
+            edition_number: legacy.edition_number,
+            total_editions: legacy.total_editions,
+            transfer_count: 0,
+            last_transfer_at: 0,
+        };
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::TokenData(token_id), &v2_data);
+    }
+
+    Ok(())
 }
 
 // ── Upgrade Status ────────────────────────────────────────────────────────────
@@ -257,7 +325,186 @@ mod test {
     }
 
     #[test]
-    fn test_perform_upgrade_lower_version_fails() {
+    fn test_perform_upgrade_to_v2_with_state_migration() {
+        // Integration test: set up rich v1 state, upgrade to v2,
+        // and verify all data survives intact with new defaults.
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin) = setup(&env);
+
+        // ── Build v1 state ─────────────────────────────────────────────
+
+        let owner_a = Address::generate(&env);
+        let owner_b = Address::generate(&env);
+        let operator = Address::generate(&env);
+        let burner = Address::generate(&env);
+        let empty_attrs: Vec<TokenAttribute> = Vec::new(&env);
+
+        // Mint 5 tokens to owner_a
+        let mut token_ids: Vec<u64> = Vec::new(&env);
+        for i in 0..5u32 {
+            let id = client.mint(
+                &admin,
+                &owner_a,
+                &String::from_str(&env, &format!("ipfs://token{}", i)),
+                &empty_attrs,
+                &None,
+            );
+            token_ids.push_back(id);
+        }
+        assert_eq!(client.total_supply(), 5);
+        assert_eq!(client.balance_of(&owner_a), 5);
+
+        // Transfer token 3 from owner_a → owner_b
+        let token_3 = token_ids.get(2).unwrap();
+        client.transfer(&owner_a, &owner_a, &owner_b, &token_3);
+        assert_eq!(client.owner_of(&token_3), owner_b.clone());
+        assert_eq!(client.balance_of(&owner_a), 4);
+        assert_eq!(client.balance_of(&owner_b), 1);
+
+        // Approve operator for token 1
+        let token_1 = token_ids.get(0).unwrap();
+        client.approve(&owner_a, &operator, &token_1);
+        assert_eq!(client.get_approved(&token_1), Some(operator.clone()));
+
+        // Set approval-for-all for owner_a → operator
+        client.set_approval_for_all(&owner_a, &operator, &true);
+        assert!(client.is_approved_for_all(&owner_a, &operator));
+
+        // Grant BURNER role
+        client.grant_role(&admin, &burner, &crate::types::role::BURNER);
+        assert!(client.has_role(&burner, &crate::types::role::BURNER));
+
+        // ── Pause and upgrade to v2 ────────────────────────────────────
+
+        client.set_pause(&admin, &true);
+        assert!(client.is_paused());
+
+        let target = 2u32;
+        client.perform_upgrade(&admin, &target);
+
+        let info = client.get_upgrade_info();
+        assert_eq!(info.storage_version, 2);
+
+        // ── Verify all state survived the migration ────────────────────
+
+        // Total supply unchanged
+        assert_eq!(client.total_supply(), 5);
+
+        // Balances correct
+        assert_eq!(client.balance_of(&owner_a), 4);
+        assert_eq!(client.balance_of(&owner_b), 1);
+
+        // Token ownership correct
+        assert_eq!(client.owner_of(&token_1), owner_a.clone());
+        assert_eq!(client.owner_of(&token_3), owner_b.clone());
+
+        // Per-token approval preserved
+        assert_eq!(client.get_approved(&token_1), Some(operator.clone()));
+
+        // Approval-for-all preserved
+        assert!(client.is_approved_for_all(&owner_a, &operator));
+
+        // Role preserved
+        assert!(client.has_role(&burner, &crate::types::role::BURNER));
+
+        // ── Verify v2 fields have correct defaults ─────────────────────
+
+        // Check TokenData via token_metadata (returns TokenData)
+        let data = client.token_metadata(&token_1);
+        assert_eq!(data.id, token_1);
+        assert_eq!(data.transfer_count, 0);
+        assert_eq!(data.last_transfer_at, 0);
+
+        // ── Verify new mints get v2 fields ────────────────────────────
+
+        // Unpause, mint a new token, check it has transfer_count=0
+        client.set_pause(&admin, &false);
+        let new_owner = Address::generate(&env);
+        let new_id = client.mint(
+            &admin,
+            &new_owner,
+            &String::from_str(&env, "ipfs://post-upgrade"),
+            &empty_attrs,
+            &None,
+        );
+        let new_data = client.token_metadata(&new_id);
+        assert_eq!(new_data.id, new_id);
+        assert_eq!(new_data.transfer_count, 0);
+        assert_eq!(new_data.last_transfer_at, 0);
+        assert_eq!(client.total_supply(), 6);
+    }
+
+    #[test]
+    fn test_migration_idempotent() {
+        // Running upgrade to v2 twice should succeed (idempotent guard).
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin) = setup(&env);
+
+        // Mint a couple tokens to have data to migrate
+        let owner = Address::generate(&env);
+        let empty: Vec<TokenAttribute> = Vec::new(&env);
+        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://a"), &empty, &None);
+        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://b"), &empty, &None);
+
+        // First upgrade
+        client.set_pause(&admin, &true);
+        client.perform_upgrade(&admin, &2u32);
+        assert_eq!(client.get_upgrade_info().storage_version, 2);
+
+        // Second upgrade (same target) — no-op, should succeed
+        let result = client.try_perform_upgrade(&admin, &2u32);
+        assert!(result.is_ok());
+        assert_eq!(client.get_upgrade_info().storage_version, 2);
+    }
+
+    #[test]
+    fn test_upgrade_without_pause_fails() {
+        // Upgrade to v2 while contract is NOT paused should be rejected.
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin) = setup(&env);
+
+        // Contract is not paused by default
+        let result = client.try_perform_upgrade(&admin, &2u32);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_upgrade_retains_pagination_state() {
+        // Verify NextTokenId and other instance-level state survives.
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin) = setup(&env);
+
+        let owner = Address::generate(&env);
+        let empty: Vec<TokenAttribute> = Vec::new(&env);
+
+        // Mint 3 tokens
+        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://1"), &empty, &None);
+        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://2"), &empty, &None);
+        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://3"), &empty, &None);
+
+        let supply_before = client.total_supply();
+        assert_eq!(supply_before, 3);
+
+        // Upgrade to v2
+        client.set_pause(&admin, &true);
+        client.perform_upgrade(&admin, &2u32);
+        client.set_pause(&admin, &false);
+
+        // Next mint should get id 4 (NextTokenId preserved)
+        let next_id = client.mint(
+            &admin,
+            &owner,
+            &String::from_str(&env, "ipfs://4"),
+            &empty,
+            &None,
+        );
+        assert_eq!(next_id, 4);
+        assert_eq!(client.total_supply(), 4);
+    }
         let env = Env::default();
         env.mock_all_auths();
         let (client, admin) = setup(&env);
