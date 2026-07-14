@@ -35,6 +35,10 @@ import { AuditModule } from './common/audit/audit.module';
 import { MetricsModule } from './common/metrics/metrics.module';
 import { SocialModule } from './modules/social/social.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { JobQueueModule } from './common/queue';
+import { IdempotencyModule } from './common/idempotency';
+import { PipelineModule } from './common/pipeline';
+import { OutboxModule } from './common/outbox';
 // import { CorsConfig } from './config/cors.config';
 
 @Module({
@@ -146,6 +150,10 @@ import { PaymentModule } from './modules/payment/payment.module';
     MetricsModule,
     SocialModule,
     PaymentModule,
+    JobQueueModule,
+    IdempotencyModule,
+    PipelineModule,
+    OutboxModule,
   ],
   controllers: [AppController],
   providers: [
