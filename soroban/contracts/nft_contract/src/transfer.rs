@@ -1,6 +1,7 @@
 use crate::error::ContractError;
 use crate::events;
 use crate::storage::DataKey;
+use crate::types::TokenData;
 use soroban_sdk::{Address, Env};
 
 pub fn approve(
@@ -103,6 +104,18 @@ pub fn do_transfer(
     env.storage()
         .persistent()
         .remove(&DataKey::TokenApproved(token_id));
+
+    // Update TokenData: increment transfer_count and record timestamp
+    let mut token_data: TokenData = env
+        .storage()
+        .persistent()
+        .get(&DataKey::TokenData(token_id))
+        .ok_or(ContractError::TokenNotFound)?;
+    token_data.transfer_count = token_data.transfer_count.saturating_add(1);
+    token_data.last_transfer_at = env.ledger().timestamp();
+    env.storage()
+        .persistent()
+        .set(&DataKey::TokenData(token_id), &token_data);
 
     env.storage()
         .persistent()
