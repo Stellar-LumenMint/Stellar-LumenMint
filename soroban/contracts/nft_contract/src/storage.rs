@@ -31,6 +31,10 @@ pub enum DataKey {
     // Rate limiting: tracks last batch timestamp per caller
     LastBatchTime(Address),
     BatchCount(Address),
+
+    // Upgrade & migration
+    StorageVersion,      // u32: current storage layout version
+    UpgradeAdmin,        // Address: admin authorized to perform upgrades
 }
 
 pub const MAX_BATCH_SIZE: u32 = 50;
