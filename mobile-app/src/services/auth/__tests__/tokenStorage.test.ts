@@ -1,12 +1,4 @@
-import * as SecureStore from "expo-secure-store";
 import { TokenStorage } from "../tokenStorage";
-
-// Tests for TokenStorage using Jest
-// tests cover saveTokens, getAccessToken, getRefreshToken, and clearTokens methods
-
-jest.mock("expo-secure-store");
-
-const mockSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
 
 describe("TokenStorage", () => {
   let storage: TokenStorage;
@@ -16,61 +8,76 @@ describe("TokenStorage", () => {
     jest.clearAllMocks();
   });
 
-  it("saves both tokens to secure storage", async () => {
-    mockSecureStore.setItemAsync.mockResolvedValue(undefined);
+  it("saves access and refresh tokens to SecureStore", async () => {
+    const SecureStore = require("expo-secure-store");
+    SecureStore.setItemAsync.mockResolvedValue(undefined);
 
-    await storage.saveTokens("access-abc", "refresh-xyz");
+    await storage.saveTokens("access-token-123", "refresh-token-456");
 
-    expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       "stellar_lumenmint_access_token",
-      "access-abc",
+      "access-token-123",
     );
-    expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       "stellar_lumenmint_refresh_token",
-      "refresh-xyz",
+      "refresh-token-456",
     );
   });
 
-  it("reads the access token from storage", async () => {
-    mockSecureStore.getItemAsync.mockResolvedValue("access-abc");
+  it("retrieves access token from SecureStore", async () => {
+    const SecureStore = require("expo-secure-store");
+    SecureStore.getItemAsync.mockResolvedValue("access-token-123");
 
     const token = await storage.getAccessToken();
-
-    expect(token).toBe("access-abc");
-    expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith(
+    expect(token).toBe("access-token-123");
+    expect(SecureStore.getItemAsync).toHaveBeenCalledWith(
       "stellar_lumenmint_access_token",
     );
   });
 
-  it("reads the refresh token from storage", async () => {
-    mockSecureStore.getItemAsync.mockResolvedValue("refresh-xyz");
-
-    const token = await storage.getRefreshToken();
-
-    expect(token).toBe("refresh-xyz");
-    expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith(
-      "stellar_lumenmint_refresh_token",
-    );
-  });
-
-  it("returns null when there is no token stored", async () => {
-    mockSecureStore.getItemAsync.mockResolvedValue(null);
+  it("returns null when access token is not stored", async () => {
+    const SecureStore = require("expo-secure-store");
+    SecureStore.getItemAsync.mockResolvedValue(null);
 
     const token = await storage.getAccessToken();
-
     expect(token).toBeNull();
   });
 
-  it("deletes both tokens when clearing", async () => {
-    mockSecureStore.deleteItemAsync.mockResolvedValue(undefined);
+  it("retrieves refresh token from SecureStore", async () => {
+    const SecureStore = require("expo-secure-store");
+    SecureStore.getItemAsync.mockResolvedValue("refresh-token-456");
+
+    const token = await storage.getRefreshToken();
+    expect(token).toBe("refresh-token-456");
+  });
+
+  it("clears both tokens from SecureStore", async () => {
+    const SecureStore = require("expo-secure-store");
+    SecureStore.deleteItemAsync.mockResolvedValue(undefined);
 
     await storage.clearTokens();
 
-    expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith(
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(
       "stellar_lumenmint_access_token",
     );
-    expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith(
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(
       "stellar_lumenmint_refresh_token",
     );
+  });
+
+  it("re-throws SecureStore errors on save", async () => {
+    const SecureStore = require("expo-secure-store");
+    SecureStore.setItemAsync.mockRejectedValue(new Error("storage full"));
+
+    await expect(
+      storage.saveTokens("a", "b"),
+    ).rejects.toThrow("storage full");
+  });
+
+  it("re-throws SecureStore errors on clear", async () => {
+    const SecureStore = require("expo-secure-store");
+    SecureStore.deleteItemAsync.mockRejectedValue(new Error("delete failed"));
+
+    await expect(storage.clearTokens()).rejects.toThrow("delete failed");
   });
 });
