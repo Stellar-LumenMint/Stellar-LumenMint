@@ -57,12 +57,14 @@ pub fn require_upgrade_admin(env: &Env, caller: &Address) -> Result<(), Contract
 // ── Storage Version Tracking ──────────────────────────────────────────────────
 
 /// Get the currently active storage layout version.
-/// Defaults to CURRENT_STORAGE_VERSION if not yet set (first deployment).
+/// Defaults to 1 if not yet set, so old v1 contracts that upgrade
+/// their wasm to a newer version are correctly detected as needing migration.
+/// Fresh deployments set StorageVersion explicitly in initialize.
 pub fn get_storage_version(env: &Env) -> u32 {
     env.storage()
         .instance()
         .get(&DataKey::StorageVersion)
-        .unwrap_or(CURRENT_STORAGE_VERSION)
+        .unwrap_or(1)
 }
 
 /// Set the storage layout version (only callable during upgrade).
@@ -252,7 +254,7 @@ pub struct UpgradeInfo {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::types::CollectionConfig;
+    use crate::types::{CollectionConfig, LegacyTokenDataV1, TokenAttribute, TokenData};
     use crate::{NftContract, NftContractClient};
     use soroban_sdk::testutils::Address as _;
     use soroban_sdk::{Env, String, Vec};
@@ -272,6 +274,44 @@ mod test {
         };
         client.initialize(&admin, &config, &None);
         (client, admin)
+    }
+
+    /// Helper: downgrade the contract to v1 storage state by setting
+    /// StorageVersion = 1 and overwriting each token's TokenData with
+    /// LegacyTokenDataV1 format. This simulates a contract that was
+    /// deployed with v1 and then upgraded its wasm to v2.
+    fn downgrade_to_v1(env: &Env, token_ids: &Vec<u64>) {
+        // Set storage version to 1 (simulate old deployment)
+        env.storage()
+            .instance()
+            .set(&DataKey::StorageVersion, &1u32);
+
+        // Overwrite each token's data with LegacyTokenDataV1 format
+        for i in 0..token_ids.len() {
+            let token_id = token_ids.get(i).unwrap();
+            let v2_data: TokenData = env
+                .storage()
+                .persistent()
+                .get(&DataKey::TokenData(token_id))
+                .unwrap();
+
+            let v1_data = LegacyTokenDataV1 {
+                id: v2_data.id,
+                owner: v2_data.owner,
+                metadata_uri: v2_data.metadata_uri,
+                created_at: v2_data.created_at,
+                creator: v2_data.creator,
+                royalty_percentage: v2_data.royalty_percentage,
+                royalty_recipient: v2_data.royalty_recipient,
+                attributes: v2_data.attributes,
+                edition_number: v2_data.edition_number,
+                total_editions: v2_data.total_editions,
+            };
+
+            env.storage()
+                .persistent()
+                .set(&DataKey::TokenData(token_id), &v1_data);
+        }
     }
 
     #[test]
@@ -325,14 +365,62 @@ mod test {
     }
 
     #[test]
-    fn test_perform_upgrade_to_v2_with_state_migration() {
-        // Integration test: set up rich v1 state, upgrade to v2,
-        // and verify all data survives intact with new defaults.
+    fn test_perform_upgrade_lower_version_fails() {
         let env = Env::default();
         env.mock_all_auths();
         let (client, admin) = setup(&env);
 
-        // ── Build v1 state ─────────────────────────────────────────────
+        // Cannot downgrade via perform_upgrade
+        let result = client.try_perform_upgrade(&admin, &0u32);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_perform_upgrade_unsupported_version_fails() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin) = setup(&env);
+
+        // Version 99 is not in SUPPORTED_VERSIONS
+        let result = client.try_perform_upgrade(&admin, &99u32);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_upgrade_admin_key_rotation() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin) = setup(&env);
+
+        let admin_a = Address::generate(&env);
+        let admin_b = Address::generate(&env);
+
+        // Admin sets upgrade admin to A
+        client.set_upgrade_admin(&admin, &admin_a);
+        assert_eq!(client.get_upgrade_info().upgrade_admin, Some(admin_a.clone()));
+
+        // A rotates to B
+        client.set_upgrade_admin(&admin_a, &admin_b);
+        assert_eq!(client.get_upgrade_info().upgrade_admin, Some(admin_b.clone()));
+
+        // Original admin can no longer set upgrade admin
+        let admin_c = Address::generate(&env);
+        let result = client.try_set_upgrade_admin(&admin_a, &admin_c);
+        assert!(result.is_err());
+    }
+
+    // ── v1 → v2 Migration Integration Tests ─────────────────────────────
+
+    #[test]
+    fn test_perform_upgrade_to_v2_with_state_migration() {
+        // Integration test: set up genuine v1 state (via downgrade),
+        // upgrade to v2, and verify all data survives intact with
+        // correct v2 field defaults.
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin) = setup(&env);
+
+        // ── Build state ────────────────────────────────────────────────
 
         let owner_a = Address::generate(&env);
         let owner_b = Address::generate(&env);
@@ -375,13 +463,19 @@ mod test {
         client.grant_role(&admin, &burner, &crate::types::role::BURNER);
         assert!(client.has_role(&burner, &crate::types::role::BURNER));
 
+        // ── Simulate v1 contract state (the critical step) ─────────────
+
+        downgrade_to_v1(&env, &token_ids);
+
+        // Verify storage version is now 1
+        assert_eq!(client.get_upgrade_info().storage_version, 1);
+
         // ── Pause and upgrade to v2 ────────────────────────────────────
 
         client.set_pause(&admin, &true);
         assert!(client.is_paused());
 
-        let target = 2u32;
-        client.perform_upgrade(&admin, &target);
+        client.perform_upgrade(&admin, &2u32);
 
         let info = client.get_upgrade_info();
         assert_eq!(info.storage_version, 2);
@@ -437,36 +531,63 @@ mod test {
 
     #[test]
     fn test_migration_idempotent() {
-        // Running upgrade to v2 twice should succeed (idempotent guard).
+        // Upgrade to v2, downgrade back to v1 (rewriting data as v1),
+        // upgrade again — the migration function should handle already-
+        // migrated tokens gracefully (idempotent guard).
         let env = Env::default();
         env.mock_all_auths();
         let (client, admin) = setup(&env);
 
-        // Mint a couple tokens to have data to migrate
         let owner = Address::generate(&env);
         let empty: Vec<TokenAttribute> = Vec::new(&env);
-        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://a"), &empty, &None);
-        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://b"), &empty, &None);
 
-        // First upgrade
+        let mut token_ids: Vec<u64> = Vec::new(&env);
+        let id1 = client.mint(&admin, &owner, &String::from_str(&env, "ipfs://a"), &empty, &None);
+        token_ids.push_back(id1);
+        let id2 = client.mint(&admin, &owner, &String::from_str(&env, "ipfs://b"), &empty, &None);
+        token_ids.push_back(id2);
+
+        // Downgrade to v1
+        downgrade_to_v1(&env, &token_ids);
+
+        // First upgrade — should run migration
         client.set_pause(&admin, &true);
         client.perform_upgrade(&admin, &2u32);
         assert_eq!(client.get_upgrade_info().storage_version, 2);
 
-        // Second upgrade (same target) — no-op, should succeed
-        let result = client.try_perform_upgrade(&admin, &2u32);
-        assert!(result.is_ok());
+        // Downgrade again to simulate partial failure scenario
+        downgrade_to_v1(&env, &token_ids);
+
+        // Second upgrade — migration should handle already-migrated
+        // tokens that now appear as v1 format again
+        client.perform_upgrade(&admin, &2u32);
         assert_eq!(client.get_upgrade_info().storage_version, 2);
+
+        // Data should still be intact
+        assert_eq!(client.total_supply(), 2);
+        assert_eq!(client.balance_of(&owner), 2);
+        let data = client.token_metadata(&id1);
+        assert_eq!(data.transfer_count, 0);
     }
 
     #[test]
     fn test_upgrade_without_pause_fails() {
-        // Upgrade to v2 while contract is NOT paused should be rejected.
+        // Upgrade to v2 from v1 while contract is NOT paused should be
+        // rejected by the pause guard.
         let env = Env::default();
         env.mock_all_auths();
         let (client, admin) = setup(&env);
 
-        // Contract is not paused by default
+        let owner = Address::generate(&env);
+        let empty: Vec<TokenAttribute> = Vec::new(&env);
+        let mut token_ids: Vec<u64> = Vec::new(&env);
+        let id = client.mint(&admin, &owner, &String::from_str(&env, "ipfs://x"), &empty, &None);
+        token_ids.push_back(id);
+
+        // Downgrade to v1 so upgrade is actually needed
+        downgrade_to_v1(&env, &token_ids);
+
+        // Contract is not paused — upgrade should fail
         let result = client.try_perform_upgrade(&admin, &2u32);
         assert!(result.is_err());
     }
@@ -481,15 +602,17 @@ mod test {
         let owner = Address::generate(&env);
         let empty: Vec<TokenAttribute> = Vec::new(&env);
 
-        // Mint 3 tokens
-        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://1"), &empty, &None);
-        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://2"), &empty, &None);
-        client.mint(&admin, &owner, &String::from_str(&env, "ipfs://3"), &empty, &None);
+        let mut token_ids: Vec<u64> = Vec::new(&env);
+        for _ in 0..3u32 {
+            let id = client.mint(&admin, &owner, &String::from_str(&env, "ipfs://x"), &empty, &None);
+            token_ids.push_back(id);
+        }
 
         let supply_before = client.total_supply();
         assert_eq!(supply_before, 3);
 
-        // Upgrade to v2
+        // Downgrade to v1 and upgrade
+        downgrade_to_v1(&env, &token_ids);
         client.set_pause(&admin, &true);
         client.perform_upgrade(&admin, &2u32);
         client.set_pause(&admin, &false);
@@ -505,46 +628,5 @@ mod test {
         assert_eq!(next_id, 4);
         assert_eq!(client.total_supply(), 4);
     }
-        let env = Env::default();
-        env.mock_all_auths();
-        let (client, admin) = setup(&env);
-
-        // Cannot downgrade via perform_upgrade
-        let result = client.try_perform_upgrade(&admin, &0u32);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_perform_upgrade_unsupported_version_fails() {
-        let env = Env::default();
-        env.mock_all_auths();
-        let (client, admin) = setup(&env);
-
-        // Version 99 is not in SUPPORTED_VERSIONS
-        let result = client.try_perform_upgrade(&admin, &99u32);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_upgrade_admin_key_rotation() {
-        let env = Env::default();
-        env.mock_all_auths();
-        let (client, admin) = setup(&env);
-
-        let admin_a = Address::generate(&env);
-        let admin_b = Address::generate(&env);
-
-        // Admin sets upgrade admin to A
-        client.set_upgrade_admin(&admin, &admin_a);
-        assert_eq!(client.get_upgrade_info().upgrade_admin, Some(admin_a.clone()));
-
-        // A rotates to B
-        client.set_upgrade_admin(&admin_a, &admin_b);
-        assert_eq!(client.get_upgrade_info().upgrade_admin, Some(admin_b.clone()));
-
-        // Original admin can no longer set upgrade admin
-        let admin_c = Address::generate(&env);
-        let result = client.try_set_upgrade_admin(&admin_a, &admin_c);
-        assert!(result.is_err());
-    }
+}
 }

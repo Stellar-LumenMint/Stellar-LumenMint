@@ -50,6 +50,9 @@ impl NftContract {
         env.storage()
             .instance()
             .set(&DataKey::MetadataFrozen, &false);
+        env.storage()
+            .instance()
+            .set(&DataKey::StorageVersion, &upgrade::CURRENT_STORAGE_VERSION);
 
         ac::init_owner(&env, &admin);
 
