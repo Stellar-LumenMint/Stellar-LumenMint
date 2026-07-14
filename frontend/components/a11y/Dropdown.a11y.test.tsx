@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react";
+import { render, fireEvent, screen } from "@testing-library/react";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSeparator } from "../ui/dropdown";
 import "@testing-library/jest-dom";
@@ -29,7 +29,7 @@ describe("Dropdown accessibility (axe-core)", () => {
 
   it("has no violations when open", async () => {
     const { container } = render(<TestDropdown />);
-    fireEvent.click(container.querySelector("button")!);
+    fireEvent.click(screen.getByRole("button", { name: /options/i }));
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });

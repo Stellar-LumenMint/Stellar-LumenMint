@@ -45,6 +45,14 @@ jest.mock("@/components/Vault", () => ({
   Vault: () => <div>Vault</div>,
 }));
 
+jest.mock("@/lib/telemetry", () => ({
+  telemetry: { track: jest.fn() },
+}));
+
+jest.mock("@/lib/telemetry/sanitizer", () => ({
+  sanitizeTelemetryPayload: (p: any) => p,
+}));
+
 jest.mock("./image", () => ({
   OptimizedImage: (props: any) => <img {...props} alt={props.alt} />,
 }));

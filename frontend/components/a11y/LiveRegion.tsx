@@ -78,13 +78,12 @@ export function LiveRegion({
  */
 export function useAnnounce(politeness: LiveRegionPoliteness = "polite") {
   const [message, setMessage] = useState<string | undefined>(undefined);
-  const keyRef = useRef(0);
+  const [announceKey, setAnnounceKey] = useState(0);
 
   const announce = useCallback(
     (msg: string) => {
-      // Use a key change to force re-render with new message
-      keyRef.current += 1;
       setMessage(msg);
+      setAnnounceKey((k) => k + 1);
     },
     [],
   );
@@ -92,13 +91,12 @@ export function useAnnounce(politeness: LiveRegionPoliteness = "polite") {
   const LiveRegionElement = useCallback(
     () => (
       <LiveRegion
-        key={keyRef.current}
+        key={announceKey}
         politeness={politeness}
         message={message}
       />
     ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [politeness],
+    [politeness, announceKey, message],
   );
 
   return { announce, LiveRegionElement };
