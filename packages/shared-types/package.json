@@ -1,0 +1,16 @@
+{
+  "name": "@stellar-lumenmint/shared-types",
+  "version": "0.1.0",
+  "description": "Shared TypeScript types for the Stellar LumenMint ecosystem",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
