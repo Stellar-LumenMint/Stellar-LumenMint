@@ -105,12 +105,13 @@ pub fn do_transfer(
         .persistent()
         .remove(&DataKey::TokenApproved(token_id));
 
-    // Update TokenData: increment transfer_count and record timestamp
+    // Update TokenData: new owner, increment transfer_count, set timestamp
     let mut token_data: TokenData = env
         .storage()
         .persistent()
         .get(&DataKey::TokenData(token_id))
         .ok_or(ContractError::TokenNotFound)?;
+    token_data.owner = to.clone();
     token_data.transfer_count = token_data.transfer_count.saturating_add(1);
     token_data.last_transfer_at = env.ledger().timestamp();
     env.storage()
