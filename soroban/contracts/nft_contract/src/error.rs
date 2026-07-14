@@ -30,5 +30,4 @@ pub enum ContractError {
     BurnNotAllowed = 24,
     InvalidUpgradeTarget = 25,
     UnsupportedStorageVersion = 26,
-    UpgradeInProgress = 27,
 }

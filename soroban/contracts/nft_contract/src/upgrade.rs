@@ -79,15 +79,15 @@ fn set_storage_version(env: &Env, version: u32) {
 /// state from one version to the next.
 ///
 /// # Security
-/// - Requires upgrade admin authorization
+/// - Requires upgrade admin authorization (auth checked by contractimpl entry point)
+/// - Contract MUST be paused before calling this function
 /// - Migrations are run sequentially (v1→v2, v2→v3, etc.)
-/// - Contract should be paused during upgrade
 pub fn perform_upgrade(
     env: &Env,
     caller: &Address,
     target_version: u32,
 ) -> Result<(), ContractError> {
-    caller.require_auth();
+    // Auth is handled by the contractimpl entry point in lib.rs
     require_upgrade_admin(env, caller)?;
 
     let current = get_storage_version(env);
@@ -97,7 +97,18 @@ pub fn perform_upgrade(
     }
 
     if target_version == current {
-        return Ok(()); // No-op
+        return Ok(()); // No-op: no pause required since nothing changes
+    }
+
+    // Guard: contract must be paused for actual migrations to prevent
+    // concurrent state mutations during storage transformation
+    let is_paused: bool = env
+        .storage()
+        .instance()
+        .get(&DataKey::IsPaused)
+        .unwrap_or(false);
+    if !is_paused {
+        return Err(ContractError::ContractPaused);
     }
 
     if !SUPPORTED_VERSIONS.contains(&target_version) {
@@ -119,12 +130,23 @@ pub fn perform_upgrade(
 
 /// Run the migration function for a specific target version.
 ///
-/// Add new migration cases here as the storage layout evolves:
-/// ```rust
-/// match target_version {
-///     2 => migrate_v1_to_v2(env),
-///     3 => migrate_v2_to_v3(env),
-///     _ => Err(ContractError::UnsupportedStorageVersion),
+/// Add new migration cases here as the storage layout evolves.
+/// Example migration template for v1→v2 (keep in mind migrations
+/// should be idempotent since a partial failure leaves state at
+/// the last successful version):
+///
+/// ```ignore
+/// fn migrate_v1_to_v2(env: &Env) -> Result<(), ContractError> {
+///     let total: u64 = env.storage().instance().get(&DataKey::TotalSupply).unwrap_or(0);
+///     for token_id in 1..=total {
+///         let old_data = env.storage().persistent().get(&DataKey::TokenData(token_id));
+///         if let Some(data) = old_data {
+///             let new_data = transform(data);
+///             env.storage().persistent().set(&DataKey::TokenDataV2(token_id), &new_data);
+///             env.storage().persistent().remove(&DataKey::TokenData(token_id));
+///         }
+///     }
+///     Ok(())
 /// }
 /// ```
 fn run_migration(env: &Env, target_version: u32) -> Result<(), ContractError> {
@@ -135,55 +157,6 @@ fn run_migration(env: &Env, target_version: u32) -> Result<(), ContractError> {
         // 2 => migrate_v1_to_v2(env),
         _ => Err(ContractError::UnsupportedStorageVersion),
     }
-}
-
-// ── Future Migration Templates ────────────────────────────────────────────────
-
-/// Example migration from v1 to v2.
-/// Add actual migration logic when the storage layout changes.
-#[allow(dead_code)]
-fn migrate_v1_to_v2(_env: &Env) -> Result<(), ContractError> {
-    // Example: rename a storage key, add a new field to all TokenData, etc.
-    // for token_id in 1..=total_supply {
-    //     let old_data = env.storage().persistent().get(&DataKey::TokenData(token_id));
-    //     let new_data = transform(old_data);
-    //     env.storage().persistent().set(&DataKey::TokenDataV2(token_id), &new_data);
-    //     env.storage().persistent().remove(&DataKey::TokenData(token_id));
-    // }
-    Ok(())
-}
-
-// ── Emergency Rollback ────────────────────────────────────────────────────────
-
-/// Emergency rollback to a previous storage version.
-/// Only available when explicitly enabled by the upgrade admin.
-/// Use with extreme caution — may cause data loss for features
-/// introduced after the target version.
-#[allow(dead_code)]
-pub fn emergency_rollback(
-    env: &Env,
-    caller: &Address,
-    target_version: u32,
-) -> Result<(), ContractError> {
-    caller.require_auth();
-    require_upgrade_admin(env, caller)?;
-
-    let current = get_storage_version(env);
-
-    if target_version >= current {
-        return Err(ContractError::InvalidUpgradeTarget);
-    }
-
-    if !SUPPORTED_VERSIONS.contains(&target_version) {
-        return Err(ContractError::UnsupportedStorageVersion);
-    }
-
-    // Rollback is simpler: just set the version.
-    // The storage keys for newer features become orphaned but don't
-    // affect the contract's behavior since they're version-gated.
-    set_storage_version(env, target_version);
-
-    Ok(())
 }
 
 // ── Upgrade Status ────────────────────────────────────────────────────────────
