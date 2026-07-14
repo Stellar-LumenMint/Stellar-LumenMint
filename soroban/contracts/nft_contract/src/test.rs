@@ -737,3 +737,174 @@ fn test_batch_burn_with_non_existent_token_fails() {
     assert_eq!(client.total_supply(), 1);
     assert_eq!(client.owner_of(&id1), owner);
 }
+
+// ─── v2 transfer_count & last_transfer_at ────────────────────────────────
+
+#[test]
+fn test_mint_starts_with_zero_transfer_count() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, admin) = setup(&env);
+
+    let owner = Address::generate(&env);
+    let token_id = client.mint(
+        &admin,
+        &owner,
+        &String::from_str(&env, "ipfs://hash"),
+        &Vec::new(&env),
+        &None,
+    );
+
+    let data = client.token_metadata(&token_id);
+    assert_eq!(data.transfer_count, 0);
+    assert_eq!(data.last_transfer_at, 0);
+}
+
+#[test]
+fn test_transfer_increments_transfer_count() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, admin) = setup(&env);
+
+    let user1 = Address::generate(&env);
+    let user2 = Address::generate(&env);
+    let token_id = client.mint(
+        &admin,
+        &user1,
+        &String::from_str(&env, "ipfs://hash"),
+        &Vec::new(&env),
+        &None,
+    );
+
+    // First transfer: 0 → 1
+    client.transfer(&user1, &user1, &user2, &token_id);
+    let data = client.token_metadata(&token_id);
+    assert_eq!(data.transfer_count, 1);
+    assert!(data.last_transfer_at > 0);
+
+    // Second transfer back: 1 → 2
+    client.transfer(&user2, &user2, &user1, &token_id);
+    let data2 = client.token_metadata(&token_id);
+    assert_eq!(data2.transfer_count, 2);
+    assert!(data2.last_transfer_at >= data.last_transfer_at);
+}
+
+#[test]
+fn test_batch_transfer_increments_each_token() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, admin) = setup(&env);
+
+    let user1 = Address::generate(&env);
+    let user2 = Address::generate(&env);
+
+    let mut token_ids: Vec<u64> = Vec::new(&env);
+    for _ in 0..3u32 {
+        let id = client.mint(
+            &admin,
+            &user1,
+            &String::from_str(&env, "ipfs://hash"),
+            &Vec::new(&env),
+            &None,
+        );
+        token_ids.push_back(id);
+    }
+
+    client.batch_transfer(&user1, &user1, &user2, &token_ids);
+
+    // Each token should have transfer_count = 1
+    for i in 0..3u32 {
+        let token_id = token_ids.get(i).unwrap();
+        let data = client.token_metadata(&token_id);
+        assert_eq!(data.transfer_count, 1);
+        assert!(data.last_transfer_at > 0);
+    }
+}
+
+#[test]
+fn test_transfer_via_operator_increments_count() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, admin) = setup(&env);
+
+    let user1 = Address::generate(&env);
+    let user2 = Address::generate(&env);
+    let operator = Address::generate(&env);
+
+    let token_id = client.mint(
+        &admin,
+        &user1,
+        &String::from_str(&env, "ipfs://hash"),
+        &Vec::new(&env),
+        &None,
+    );
+
+    client.approve(&user1, &operator, &token_id);
+    client.transfer(&operator, &user1, &user2, &token_id);
+
+    let data = client.token_metadata(&token_id);
+    assert_eq!(data.transfer_count, 1);
+    assert!(data.last_transfer_at > 0);
+}
+
+#[test]
+fn test_transfer_count_survives_upgrade() {
+    // Mint, transfer twice, downgrade to v1 format, upgrade back to v2,
+    // verify transfer_count survives the round-trip migration.
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, admin) = setup(&env);
+
+    let user1 = Address::generate(&env);
+    let user2 = Address::generate(&env);
+    let user3 = Address::generate(&env);
+
+    let mut token_ids: Vec<u64> = Vec::new(&env);
+    let id = client.mint(
+        &admin,
+        &user1,
+        &String::from_str(&env, "ipfs://hash"),
+        &Vec::new(&env),
+        &None,
+    );
+    token_ids.push_back(id);
+
+    // Two transfers build up count
+    client.transfer(&user1, &user1, &user2, &id);
+    client.transfer(&user2, &user2, &user3, &id);
+
+    let data_before = client.token_metadata(&id);
+    assert_eq!(data_before.transfer_count, 2);
+    let ts_before = data_before.last_transfer_at;
+
+    // Downgrade: rewrite token as LegacyTokenDataV1 + set StorageVersion=1
+    use crate::storage::DataKey;
+    use crate::types::LegacyTokenDataV1;
+    let v1_data = LegacyTokenDataV1 {
+        id: data_before.id,
+        owner: data_before.owner,
+        metadata_uri: data_before.metadata_uri,
+        created_at: data_before.created_at,
+        creator: data_before.creator,
+        royalty_percentage: data_before.royalty_percentage,
+        royalty_recipient: data_before.royalty_recipient,
+        attributes: data_before.attributes,
+        edition_number: data_before.edition_number,
+        total_editions: data_before.total_editions,
+    };
+    env.storage()
+        .persistent()
+        .set(&DataKey::TokenData(id), &v1_data);
+    env.storage()
+        .instance()
+        .set(&DataKey::StorageVersion, &1u32);
+
+    // Upgrade to v2 — migration runs and restores transfer_count
+    client.set_pause(&admin, &true);
+    client.perform_upgrade(&admin, &2u32);
+    client.set_pause(&admin, &false);
+
+    let data_after = client.token_metadata(&id);
+    assert_eq!(data_after.transfer_count, 2);
+    assert_eq!(data_after.last_transfer_at, ts_before);
+}
