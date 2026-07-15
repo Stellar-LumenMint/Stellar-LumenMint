@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "mobile-app/**"
+      - ".github/workflows/stellar-lumenmint-mobile-app.yml"
     branches: [main, develop]
   pull_request:
     paths:
       - "mobile-app/**"
+      - ".github/workflows/stellar-lumenmint-mobile-app.yml"
     branches: [main, develop]
   workflow_dispatch:
 

@@ -35,6 +35,11 @@ concurrency:
 env:
   NODE_VERSION: "20"
 
+# Required for softprops/action-gh-release@v2 and docker/build-push-action@v6
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   changelog:
     name: Generate Changelog

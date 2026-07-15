@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "admin/**"
+      - ".github/workflows/stellar-lumenmint-admin.yml"
     branches: [main, develop]
   pull_request:
     paths:
       - "admin/**"
+      - ".github/workflows/stellar-lumenmint-admin.yml"
     branches: [main, develop]
   workflow_dispatch:
 

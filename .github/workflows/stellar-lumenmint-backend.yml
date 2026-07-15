@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "backend/**"
+      - ".github/workflows/stellar-lumenmint-backend.yml"
     branches: [main, develop]
   pull_request:
     paths:
       - "backend/**"
+      - ".github/workflows/stellar-lumenmint-backend.yml"
     branches: [main, develop]
   workflow_dispatch:
 
