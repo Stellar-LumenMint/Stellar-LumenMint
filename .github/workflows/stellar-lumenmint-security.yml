@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [javascript-typescript, python]
+        language: [javascript-typescript]
 
     steps:
       - name: Checkout repository
@@ -52,11 +52,6 @@ jobs:
     name: Dependency Audit
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        workspace: [backend, frontend, mobile-app, admin]
-      fail-fast: false
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -72,12 +67,10 @@ jobs:
           version: 10
 
       - name: Install dependencies
-        working-directory: ./${{ matrix.workspace }}
         run: pnpm install --frozen-lockfile
 
       - name: Audit dependencies
-        working-directory: ./${{ matrix.workspace }}
-        run: pnpm audit --audit-level=high || echo "::warning::High-severity vulnerabilities found in ${{ matrix.workspace }}"
+        run: pnpm audit --audit-level=high || echo "::warning::High-severity vulnerabilities found in dependencies"
 
   cargo-audit:
     name: Cargo Audit (Rust)
