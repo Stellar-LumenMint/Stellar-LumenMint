@@ -7,7 +7,10 @@ import {
   Inject,
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+// `Cache` is used only as a TYPE annotation in the @Inject(CACHE_MANAGER)
+// decorator constructor parameter below — TS1272 under isolatedModules +
+// emitDecoratorMetadata requires `import type` so the binding is erased.
+import type { Cache } from 'cache-manager';
 import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 
