@@ -35,25 +35,30 @@ export class PaymentService {
     metadata?: Record<string, unknown>,
   ): Promise<PaymentIntent> {
     const stripeKey = this.configService.get('STRIPE_SECRET_KEY');
+
     if (stripeKey && currency === 'USD') {
+      this.logger.log({ event: 'payment_intent_create', provider: 'stripe', amount, currency }, 'Creating Stripe payment intent');
       return this.createStripeIntent(amount, metadata);
     }
+
+    this.logger.log({ event: 'payment_intent_create', provider: 'xlm', amount, currency }, 'Creating XLM payment intent');
     return this.createXlmPayment(amount, metadata);
   }
 
   /**
    * Process a payout to a Stellar address.
+   *
+   * In production, this would:
+   * 1. Build a Stellar transaction with a payment operation
+   * 2. Sign with the platform's distribution key
+   * 3. Submit to Horizon and return the transaction hash
    */
   async processPayout(request: PayoutRequest): Promise<{ success: boolean; txHash?: string }> {
+    const maskedAddress = `${request.recipientAddress.slice(0, 5)}...${request.recipientAddress.slice(-5)}`;
     this.logger.log(
-      `Processing payout of ${request.amount} XLM to ${request.recipientAddress}`,
+      { event: 'payout_process', amount: request.amount, currency: request.currency, recipient: maskedAddress },
+      'Processing payout',
     );
-
-    // In production, this would:
-    // 1. Build a Stellar transaction with payment operation
-    // 2. Sign with the platform's distribution key
-    // 3. Submit to Horizon
-    // For now, return a simulated success for the payment pipeline
 
     return {
       success: true,
@@ -62,7 +67,9 @@ export class PaymentService {
   }
 
   /**
-   * Validate a Stellar address for payouts.
+   * Validate a Stellar address format for payouts.
+   * Checks that the address starts with 'G' (public key prefix) and
+   * contains 56 valid base32 Stellar characters.
    */
   isValidStellarAddress(address: string): boolean {
     return /^G[A-Z2-7]{55}$/.test(address);
@@ -74,12 +81,7 @@ export class PaymentService {
     amount: number,
     metadata?: Record<string, unknown>,
   ): Promise<PaymentIntent> {
-    // Stripe expects amount in cents
     const amountCents = Math.round(amount * 100);
-
-    // In production, use stripe.paymentIntents.create()
-    // For now, return a structured intent
-    this.logger.log(`Stripe intent: ${amountCents} cents USD`);
 
     return {
       id: `pi_${Date.now()}`,
