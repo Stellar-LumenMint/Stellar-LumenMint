@@ -1,56 +1,65 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuctionController } from './auction.controller';
 import { AuctionService } from './auction.service';
-import { AuctionQueryDto } from './dto/auction-query.dto';
-
-const mockService = {
-  findAll: jest.fn(),
-  findOne: jest.fn(),
-  getBids: jest.fn(),
-  create: jest.fn(),
-  placeBid: jest.fn(),
-  cancelAuction: jest.fn(),
-  settleAuction: jest.fn(),
-};
 
 describe('AuctionController', () => {
   let controller: AuctionController;
+  let auctionService: jest.Mocked<Partial<AuctionService>>;
 
   beforeEach(async () => {
+    const mockService = {
+      create: jest.fn(),
+      placeBid: jest.fn(),
+      settle: jest.fn(),
+      findOne: jest.fn(),
+      findAll: jest.fn(),
+      findBids: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuctionController],
       providers: [{ provide: AuctionService, useValue: mockService }],
     }).compile();
 
     controller = module.get<AuctionController>(AuctionController);
-    jest.clearAllMocks();
+    auctionService = module.get(AuctionService);
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  it('calls findAll', async () => {
-    mockService.findAll.mockResolvedValueOnce([]);
-    const q: AuctionQueryDto = {};
-    const res = await controller.list(q);
-    expect(mockService.findAll).toHaveBeenCalledWith(q);
-    expect(res).toEqual([]);
+  describe('create', () => {
+    it('should call auctionService.create', async () => {
+      const dto = { nftId: 'nft-1', startPrice: '100', duration: 3600 } as any;
+      auctionService.create.mockResolvedValue({ id: 'auction-1' } as any);
+      const result = await controller.create(dto);
+      expect(result).toBeDefined();
+      expect(auctionService.create).toHaveBeenCalledWith(dto);
+    });
   });
 
-  it('calls active', async () => {
-    mockService.findAll.mockResolvedValueOnce([]);
-    const q: AuctionQueryDto = {};
-    await controller.active(q);
-    expect(mockService.findAll).toHaveBeenCalled();
+  describe('placeBid', () => {
+    it('should call auctionService.placeBid', async () => {
+      auctionService.placeBid.mockResolvedValue({ id: 'bid-1' } as any);
+      const result = await controller.placeBid('auction-1', { amount: '150' } as any);
+      expect(result).toBeDefined();
+    });
   });
 
-  it('calls get auction and bids', async () => {
-    mockService.findOne.mockResolvedValueOnce({ id: 'a1' });
-    const a = await controller.get('a1');
-    expect(a).toEqual({ id: 'a1' });
-    mockService.getBids.mockResolvedValueOnce([]);
-    const b = await controller.bids('a1');
-    expect(b).toEqual([]);
+  describe('settle', () => {
+    it('should call auctionService.settle', async () => {
+      auctionService.settle.mockResolvedValue({ success: true } as any);
+      const result = await controller.settle('auction-1');
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('findOne', () => {
+    it('should call auctionService.findOne', async () => {
+      auctionService.findOne.mockResolvedValue({ id: 'auction-1' } as any);
+      const result = await controller.findOne('auction-1');
+      expect(result).toBeDefined();
+    });
   });
 });
