@@ -216,6 +216,94 @@ class RestClient {
   async getOrder(orderId: string): Promise<Order> {
     return this.request<Order>('GET', `/api/orders/${orderId}`);
   }
+
+  // ── Write Operations ───────────────────────────────────────────────────
+
+  /** Mint a new NFT (requires auth). */
+  async mintNft(input: {
+    tokenId: string;
+    contractAddress: string;
+    name: string;
+    description?: string;
+    image?: string;
+    ownerId: string;
+    creatorId: string;
+    collectionId?: string;
+  }): Promise<Nft> {
+    return this.request<Nft>('POST', '/api/nfts', input);
+  }
+
+  /** Create a new collection (requires auth). */
+  async createCollection(input: {
+    contractAddress: string;
+    name: string;
+    symbol: string;
+    description?: string;
+    image?: string;
+  }): Promise<Collection> {
+    return this.request<Collection>('POST', '/api/collections', input);
+  }
+
+  /** Create a marketplace listing for an NFT (requires auth). */
+  async createListing(input: {
+    nftId: string;
+    price: string;
+    currency?: string;
+    expiresAt?: string;
+  }): Promise<Listing> {
+    return this.request<Listing>('POST', '/api/listings', input);
+  }
+
+  /** Cancel an existing listing (requires auth, must own). */
+  async cancelListing(listingId: string): Promise<boolean> {
+    const result = await this.request<{ success: boolean }>(
+      'DELETE',
+      `/api/listings/${listingId}`,
+    );
+    return result.success;
+  }
+
+  /** Buy an NFT from a listing (requires auth). */
+  async buyNft(listingId: string): Promise<Order> {
+    return this.request<Order>('POST', `/api/listings/${listingId}/buy`);
+  }
+
+  /** Place a bid on an auction (requires auth). */
+  async placeBid(input: {
+    auctionId: string;
+    amount: string;
+  }): Promise<Bid> {
+    return this.request<Bid>('POST', `/api/auctions/${input.auctionId}/bids`, {
+      amount: input.amount,
+    });
+  }
+
+  /** Settle an auction (requires auth, must be seller). */
+  async settleAuction(auctionId: string): Promise<Order> {
+    return this.request<Order>(
+      'POST',
+      `/api/auctions/${auctionId}/settle`,
+    );
+  }
+
+  /** Transfer an NFT to another address (requires auth, must own). */
+  async transferNft(input: {
+    nftId: string;
+    toAddress: string;
+  }): Promise<void> {
+    await this.request('POST', `/api/nfts/${input.nftId}/transfer`, {
+      toAddress: input.toAddress,
+    });
+  }
+
+  /** Update user profile (requires auth). */
+  async updateProfile(input: {
+    displayName?: string;
+    bio?: string;
+    avatarUrl?: string;
+  }): Promise<UserProfile> {
+    return this.request<UserProfile>('PATCH', '/api/users/me', input);
+  }
 }
 
 // ── GraphQL Client (optional — requires graphql-request) ────────────────────
