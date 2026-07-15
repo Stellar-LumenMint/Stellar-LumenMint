@@ -35,6 +35,8 @@ export interface AiConfig {
   apiKey?: string;
   /** Model to use. Default: 'gpt-4o-mini'. */
   model?: string;
+  /** Request timeout in ms. Default: 30000. */
+  timeoutMs?: number;
 }
 
 // ── NFT Metadata Generator ───────────────────────────────────────────────────
@@ -71,32 +73,46 @@ async function generateWithAI(
   options: GenerateOptions,
 ): Promise<NftMetadata> {
   const prompt = buildMetadataPrompt(options);
-  const response = await fetch(config.apiEndpoint!, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model ?? 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: 'You are an NFT metadata generator. Respond with valid JSON only.' },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    }),
-  });
+  const timeoutMs = config.timeoutMs ?? 30000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  if (!response.ok) {
-    throw new Error(`AI API error: ${response.statusText}`);
+  try {
+    const response = await fetch(config.apiEndpoint!, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model ?? 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are an NFT metadata generator. Respond with valid JSON only.' },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      throw new Error(`AI API error: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as {
+      choices: [{ message: { content: string } }];
+    };
+    return JSON.parse(data.choices[0].message.content) as NftMetadata;
+  } catch (err) {
+    clearTimeout(timer);
+    if ((err as Error).name === 'AbortError') {
+      throw new Error(`AI request timed out after ${timeoutMs}ms`);
+    }
+    throw err;
   }
-
-  const data = (await response.json()) as {
-    choices: [{ message: { content: string } }];
-  };
-  const result = JSON.parse(data.choices[0].message.content) as NftMetadata;
-  return result;
 }
 
 function buildMetadataPrompt(options: GenerateOptions): string {
@@ -158,30 +174,67 @@ async function enrichWithAI(
   config: AiConfig,
   metadata: NftMetadata,
 ): Promise<AiNftEnrichment> {
-  const response = await fetch(config.apiEndpoint!, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model ?? 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: 'You analyze NFT metadata and return structured enrichment data as JSON.' },
-        { role: 'user', content: JSON.stringify(metadata) },
-      ],
-      temperature: 0.3,
-      max_tokens: 400,
-    }),
-  });
+  const timeoutMs = config.timeoutMs ?? 30000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  const data = (await response.json()) as {
-    choices: [{ message: { content: string } }];
-  };
-  return JSON.parse(data.choices[0].message.content) as AiNftEnrichment;
+  try {
+    const response = await fetch(config.apiEndpoint!, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model ?? 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You analyze NFT metadata and return structured enrichment data as JSON.' },
+          { role: 'user', content: JSON.stringify(metadata) },
+        ],
+        temperature: 0.3,
+        max_tokens: 400,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timer);
+
+    const data = (await response.json()) as {
+      choices: [{ message: { content: string } }];
+    };
+    return JSON.parse(data.choices[0].message.content) as AiNftEnrichment;
+  } catch (err) {
+    clearTimeout(timer);
+    if ((err as Error).name === 'AbortError') {
+      return enrichWithRules(metadata);
+    }
+    throw err;
+  }
+}
+
+function extractColorsFromName(name: string): {
+  style: string;
+  palette: string[];
+} {
+  const nameLower = name.toLowerCase();
+
+  if (nameLower.includes('pixel')) {
+    return { style: 'pixel art', palette: ['#FF5555', '#55FF55', '#5555FF'] };
+  }
+  if (nameLower.includes('gold') || nameLower.includes('legendary')) {
+    return { style: 'illustration', palette: ['#FFD700', '#FFA500', '#8B4513'] };
+  }
+  if (nameLower.includes('dark') || nameLower.includes('shadow')) {
+    return { style: 'dark art', palette: ['#1a1a2e', '#16213e', '#0f3460'] };
+  }
+
+  return { style: 'digital art', palette: ['#6366f1', '#8b5cf6', '#d946ef'] };
 }
 
 function enrichWithRules(metadata: NftMetadata): AiNftEnrichment {
+  const existingRarity = metadata.attributes.find(
+    (a) => a.traitType.toLowerCase() === 'rarity',
+  );
   const colors = extractColorsFromName(metadata.name);
   return {
     suggestedTitle: metadata.name,
@@ -189,7 +242,7 @@ function enrichWithRules(metadata: NftMetadata): AiNftEnrichment {
     extractedAttributes: metadata.attributes,
     confidence: 60,
     tags: [metadata.name.toLowerCase(), 'nft', 'stellar'],
-    category: 'art',
+    category: existingRarity ? existingRarity.value.toString() : 'art',
     styleVector: {
       artStyle: colors.style,
       colorPalette: colors.palette,
