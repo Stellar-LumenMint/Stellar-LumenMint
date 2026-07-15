@@ -56,21 +56,44 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Detect package manager
+        id: detect
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            echo "manager=pnpm" >> $GITHUB_OUTPUT
+          elif [ -f package-lock.json ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+          else
+            echo "No lockfile found. Skipping audit."
+            echo "manager=none" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup pnpm
+        if: steps.detect.outputs.manager == 'pnpm'
         uses: pnpm/action-setup@v3
         with:
           version: 10
 
-      - name: Install dependencies
+      - name: Install dependencies (pnpm)
+        if: steps.detect.outputs.manager == 'pnpm'
         run: pnpm install --frozen-lockfile
 
-      - name: Audit dependencies
-        run: pnpm audit --audit-level=high || echo "::warning::High-severity vulnerabilities found in dependencies"
+      - name: Install dependencies (npm)
+        if: steps.detect.outputs.manager == 'npm'
+        run: npm ci
+
+      - name: Audit dependencies (pnpm)
+        if: steps.detect.outputs.manager == 'pnpm'
+        run: pnpm audit --audit-level=high || echo "::warning::High-severity vulnerabilities found"
+
+      - name: Audit dependencies (npm)
+        if: steps.detect.outputs.manager == 'npm'
+        run: npm audit --omit=dev --audit-level=high || echo "::warning::High-severity vulnerabilities found"
 
   cargo-audit:
     name: Cargo Audit (Rust)
