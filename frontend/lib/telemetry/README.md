@@ -1,55 +1,38 @@
-# Telemetry Event Taxonomy & Payload Contracts
+# Telemetry
 
-## Overview
-This module defines the canonical, type-safe event catalog and payload contracts for all telemetry in the frontend. It ensures:
-- Consistent event names and payloads
-- Compile-time safety for all telemetry calls
-- Centralized event metadata for analytics and governance
+Client-side telemetry for the LumenMint frontend.
 
-## Event Naming Convention
-- Lowercase snake_case
-- Pattern: `subject_action_phase` or `subject_action_outcome`
-- No camelCase, provider suffixes, or environment prefixes
-- Use `failed` not `error` for outcomes
+## Navigation Tracking
 
-## Event Categories
-- `auth`, `wallet`, `creator`, `marketplace`, `navigation`, `engagement`, `system`
+Tracks page views, navigation clicks, and menu interactions:
 
-## Adding a New Event
-1. Add event constant in `events.ts`
-2. Add payload interface in `types.ts` map
-3. Add catalog metadata in `catalog.ts`
-4. Add or update unit tests in `__tests__/events.test.ts`
-5. Document meaning and ownership here
+```typescript
+import { emitNavItemClicked, NAV_ITEM_IDS } from './navigation-instrumentation';
 
-## File Structure
-- `events.ts`: Canonical event constants and union
-- `types.ts`: Payload map and type lookup
-- `catalog.ts`: Metadata for every event
-- `helpers.ts`: Typed helper for safe event construction
-- `__tests__/events.test.ts`: Contract tests
-
-## Versioning & Deprecation
-- Each event has a version and status
-- Deprecated events must be marked with replacement notes
-
-## Example Usage
-```ts
-import { telemetry } from "../client";
-import { EVENT_NAMES } from "./events";
-import { buildTelemetryEvent } from "./helpers";
-
-telemetry.track(
-  EVENT_NAMES.walletConnectSubmitted,
-  buildTelemetryEvent(EVENT_NAMES.walletConnectSubmitted, {
-    provider: "freighter",
-    surface: "modal"
-  }).payload
-);
+emitNavItemClicked({
+  nav_item_id: NAV_ITEM_IDS.MARKETPLACE,
+  placement: 'navbar_desktop',
+  destination_route: '/en/marketplace',
+  menu_state: 'expanded',
+  locale_source: 'en',
+  authenticated: true,
+});
 ```
 
-## Test Coverage
-- No duplicate event names
-- Every event has catalog metadata
-- Every event in EVENT_NAMES exists in TelemetryPayloadMap
-- Typed helper enforces compile-time payload compatibility
+## Auth Events
+
+Tracks authentication lifecycle:
+- Login/register submission, success, and failure
+- Wallet connection and disconnection
+- Token refresh events
+
+## Error Codes
+
+Maps errors to standardized codes for aggregation:
+
+| Error Pattern | Code |
+|---|---|
+| Invalid credentials | `AUTH_INVALID_CREDENTIALS` |
+| Network error | `AUTH_NETWORK_ERROR` |
+| Token expired | `AUTH_TOKEN_EXPIRED` |
+| Rate limited | `AUTH_RATE_LIMITED` |
