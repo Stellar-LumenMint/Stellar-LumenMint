@@ -129,28 +129,30 @@ Stellar LumenMint is a **production-grade Web3 NFT marketplace and creator platf
 
 ### Prerequisites
 - **Node.js** 20+ (see [`.nvmrc`](./.nvmrc))
-- **pnpm** 10+ (`npm install -g pnpm`)
 - **Docker** (for PostgreSQL, Redis, Meilisearch)
 - **Rust** 1.85+ (for Soroban contracts)
 
 ```bash
-# 1. Install dependencies
-pnpm install
+# 1. Install dependencies (per workspace)
+cd backend && npm ci
+cd ../frontend && npm ci
+cd ../admin && npm ci --legacy-peer-deps
+cd ../mobile-app && npm ci
 
 # 2. Start infrastructure services
-cd backend && docker-compose up -d
+cd ../backend && docker-compose up -d
 
 # 3. Start the backend API (http://localhost:3000)
-cd backend && pnpm start:dev
+npm run start:dev
 
 # 4. Start the frontend marketplace (http://localhost:5000)
-cd frontend && pnpm dev
+cd ../frontend && npm run dev
 
 # 5. (Optional) Start the admin dashboard
-cd admin && pnpm dev
+cd ../admin && npm run dev
 
 # 6. (Optional) Start the mobile app
-cd mobile-app && pnpm start
+cd ../mobile-app && npm start
 ```
 
 ---
@@ -159,17 +161,17 @@ cd mobile-app && pnpm start
 
 ```bash
 # Backend (Jest + Supertest)
-cd backend && pnpm test
+cd backend && npm test
 
 # Frontend (Jest + React Testing Library + Playwright E2E)
-cd frontend && pnpm test          # Unit & integration
-cd frontend && pnpm e2e           # Playwright E2E
+cd frontend && npm test           # Unit & integration
+cd frontend && npm run e2e        # Playwright E2E
 
 # Mobile (Jest)
-cd mobile-app && pnpm test
+cd mobile-app && npm test
 
 # Admin (Vitest)
-cd admin && pnpm test
+cd admin && npm test
 
 # Soroban (Cargo test)
 cd soroban && cargo test --workspace
@@ -219,7 +221,7 @@ Every workspace has automated CI triggered on push/PR:
 | **Admin** | lint, typecheck, test, Vite build | [![Admin](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-admin.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-admin.yml) |
 | **Soroban** | fmt, clippy, WASM build, cargo test | [![Soroban](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-soroban.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-soroban.yml) |
 | **Packages** | typecheck, test, build (matrix) | [![Packages](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-packages.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-packages.yml) |
-| **Security** | CodeQL, pnpm audit, cargo-audit (weekly) | [![Security](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml) |
+| **Security** | CodeQL, npm dependency audit, cargo-audit (weekly) | [![Security](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml) |
 | **Release** | Semver, changelog, Docker publish to GHCR | [![Release](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml) |
 | **Deploy** | Manual deploy/rollback with health checks | Manual |
 
