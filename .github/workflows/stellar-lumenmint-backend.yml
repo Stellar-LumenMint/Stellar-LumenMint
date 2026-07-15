@@ -81,6 +81,14 @@ jobs:
             npm run lint
           fi
 
+      - name: Format check
+        run: |
+          if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
+            pnpm exec prettier --check "src/**/*.ts" "test/**/*.ts" --if-present || echo "::warning::Formatting issues found"
+          else
+            npx prettier --check "src/**/*.ts" "test/**/*.ts" --if-present || echo "::warning::Formatting issues found"
+          fi
+
       - name: Run tests (if available)
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
