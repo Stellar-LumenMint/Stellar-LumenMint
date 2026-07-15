@@ -1,0 +1,154 @@
+name: Stellar-LumenMint Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      component:
+        description: "Component to release"
+        required: true
+        type: choice
+        options:
+          - all
+          - backend
+          - frontend
+          - soroban
+          - sdk
+          - cli
+          - mobile-app
+          - admin
+
+concurrency:
+  group: stellar-lumenmint-release
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            # Generate from conventional commits
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            BUMP="${{ github.event.inputs.bump || 'patch' }}"
+            MAJOR=$(echo $LATEST_TAG | sed 's/v\([0-9]*\)\..*/\1/')
+            MINOR=$(echo $LATEST_TAG | sed 's/v[0-9]*\.\([0-9]*\)\..*/\1/')
+            PATCH=$(echo $LATEST_TAG | sed 's/v[0-9]*\.[0-9]*\.\([0-9]*\).*/\1/')
+            if [ "$BUMP" = "major" ]; then MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0; fi
+            if [ "$BUMP" = "minor" ]; then MINOR=$((MINOR+1)); PATCH=0; fi
+            if [ "$BUMP" = "patch" ]; then PATCH=$((PATCH+1)); fi
+            TAG="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Release tag: $TAG"
+
+      - name: Generate changelog from conventional commits
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            LOG=$(git log --oneline --no-merges)
+          else
+            LOG=$(git log --oneline --no-merges ${PREVIOUS_TAG}..HEAD)
+          fi
+
+          # Generate changelog with conventional commit categories
+          {
+            echo "## Features"
+            echo "$LOG" | grep "^[a-f0-9]* feat" | sed 's/^[a-f0-9]* feat/  - feat/' || echo "  _(none)_"
+            echo ""
+            echo "## Fixes"
+            echo "$LOG" | grep "^[a-f0-9]* fix" | sed 's/^[a-f0-9]* fix/  - fix/' || echo "  _(none)_"
+            echo ""
+            echo "## Documentation"
+            echo "$LOG" | grep "^[a-f0-9]* docs" | sed 's/^[a-f0-9]* docs/  - docs/' || echo "  _(none)_"
+            echo ""
+            echo "## Tests"
+            echo "$LOG" | grep "^[a-f0-9]* test" | sed 's/^[a-f0-9]* test/  - test/' || echo "  _(none)_"
+            echo ""
+            echo "## Chores & Refactors"
+            echo "$LOG" | grep -E "^[a-f0-9]* (chore|refactor|perf|style|ci|build)" | sed 's/^[a-f0-9]* //' | sed 's/^/  - /' || echo "  _(none)_"
+          } > /tmp/changelog.md
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/changelog.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          body_path: /tmp/changelog.md
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.tag, '-rc') || contains(steps.version.outputs.tag, '-alpha') || contains(steps.version.outputs.tag, '-beta') }}
+
+  docker-publish:
+    name: Build & Publish Docker Images
+    runs-on: ubuntu-latest
+    needs: changelog
+    if: github.event.inputs.component == 'all' || github.event.inputs.component == 'backend'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/backend
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.changelog.outputs.tag }}
+            type=ref,event=branch
+            type=sha,prefix=
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
