@@ -11,7 +11,7 @@ import { UserRole } from '../common/enums/user-role.enum';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 56, unique: true, nullable: true })
   address?: string | null;
@@ -23,7 +23,7 @@ export class User {
   passwordHash?: string | null;
 
   @Column({ name: 'is_email_verified', type: 'boolean', default: false })
-  isEmailVerified: boolean;
+  isEmailVerified!: boolean;
 
   @Column({ name: 'last_login_at', type: 'timestamp', nullable: true })
   lastLoginAt?: Date | null;
@@ -64,10 +64,10 @@ export class User {
     enum: UserRole,
     default: UserRole.USER,
   })
-  role: UserRole;
+  role!: UserRole;
 
   @Column({ name: 'is_banned', type: 'boolean', default: false })
-  isBanned: boolean;
+  isBanned!: boolean;
 
   @Column({
     name: 'wallet_address',
@@ -101,5 +101,5 @@ export class User {
   wallets?: UserWallet[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
+  createdAt!: Date;
 }
