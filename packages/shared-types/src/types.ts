@@ -21,7 +21,7 @@ export interface NftAttribute {
 
 /** On-chain NFT data record. */
 export interface OnChainNftData {
-  tokenId: number;
+  tokenId: string; // u64 — use string to avoid JS Number precision loss
   contractId: string;
   owner: string;
   creator: string;
@@ -39,7 +39,7 @@ export interface OnChainNftData {
 export interface Nft {
   id: string;
   contractId: string;
-  tokenId: number;
+  tokenId: string; // u64-safe string
   owner: string;
   creator: string;
   metadataUri: string;
