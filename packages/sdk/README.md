@@ -1,98 +1,77 @@
 # @stellar-lumenmint/sdk
 
-TypeScript SDK for the Stellar LumenMint platform — unified REST, GraphQL, Soroban, and wallet utilities.
+Unified TypeScript SDK for the LumenMint platform — REST API, GraphQL, Soroban contracts, and wallet utilities.
+
+## Installation
+
+```bash
+pnpm add @stellar-lumenmint/sdk @stellar-lumenmint/shared-types
+```
 
 ## Quick Start
 
 ```typescript
 import LumenMintSDK from '@stellar-lumenmint/sdk';
 
-// Testnet
-const sdk = LumenMintSDK.testnet('https://api.testnet.lumenmint.com', 'your-api-key');
+const sdk = LumenMintSDK.testnet('https://api.testnet.lumenmint.com');
 
-// Mainnet
-const sdk = LumenMintSDK.mainnet('https://api.lumenmint.com', 'your-api-key');
-```
-
-## REST API
-
-```typescript
-// NFTs
-const nft = await sdk.rest.getNft('nft-123');
-const nfts = await sdk.rest.listNfts(1, 20, { collectionId: 'col-1' });
-const meta = await sdk.rest.getNftMetadata('nft-123');
-
-// Collections
+// Read operations
+const nfts = await sdk.rest.listNfts(1, 20);
 const collection = await sdk.rest.getCollection('col-1');
-const collections = await sdk.rest.listCollections();
 
-// Listings
-const listing = await sdk.rest.getListing('listing-1');
-const listings = await sdk.rest.listListings(1, 20, { type: 'fixed_price' });
-
-// Auctions
-const auction = await sdk.rest.getAuction('auc-1');
-const bids = await sdk.rest.getAuctionBids('auc-1');
-
-// Users
-const user = await sdk.rest.getUserProfile('user-1');
-const users = await sdk.rest.searchUsers('alice');
-
-// Search
-const results = await sdk.rest.search({ q: 'pixel art', page: 1, pageSize: 20 });
-
-// Orders
-const order = await sdk.rest.getOrder('order-1');
+// Write operations (requires auth)
+const sdkAuth = LumenMintSDK.testnet('https://api.testnet.lumenmint.com', 'your-jwt-token');
+await sdkAuth.rest.mintNft({ name: 'My NFT', metadataUri: 'ipfs://...' });
+await sdkAuth.rest.createListing({ nftId: 'nft-1', price: '100' });
 ```
 
-## GraphQL
+## API Reference
+
+### RestClient
+
+| Category | Methods |
+|---|---|
+| **NFTs** | `getNft`, `listNfts`, `getNftMetadata`, `mintNft`, `transferNft` |
+| **Collections** | `getCollection`, `listCollections`, `createCollection` |
+| **Listings** | `getListing`, `listListings`, `createListing`, `cancelListing`, `buyNft` |
+| **Auctions** | `getAuction`, `getAuctionBids`, `placeBid`, `settleAuction` |
+| **Users** | `getUserProfile`, `searchUsers`, `updateProfile` |
+| **Search** | `search` |
+
+### GraphQLClient
 
 ```typescript
-const response = await sdk.graphql.query<{ nfts: { id: string; name: string }[] }>(`
-  query GetNfts($collectionId: ID!) {
-    nfts(collectionId: $collectionId, first: 10) {
-      id
-      name
-      owner { id username }
-    }
-  }
-`, { collectionId: 'col-1' });
+const { data } = await sdk.graphql.query<{ nft: Nft }>(`
+  query GetNft($id: ID!) { nft(id: $id) { id name image } }
+`, { id: 'nft-1' });
 ```
 
-## Soroban Contract Interaction
+### SorobanClient
 
 ```typescript
-// Read-only contract calls
-const result = await sdk.soroban.simulateTransaction(
-  'C...contract-id...',
-  'owner_of',
-  [123]
-);
-
-// Health check
+const result = await sdk.soroban.simulateReadCall('CABC...', 'owner_of', [tokenId]);
 const health = await sdk.soroban.getHealth();
 ```
 
-## Wallet Utilities
+### WalletUtils
 
 ```typescript
-// Validate keys
-sdk.wallet.isValidPublicKey('G...'); // true/false
-sdk.wallet.isValidSecretKey('S...'); // true/false
-
-// Generate test keypair (testnet only!)
-const { publicKey, secretKey } = sdk.wallet.generateKeypair();
+const keypair = await sdk.wallet.generateKeypair();
+const valid = sdk.wallet.isValidPublicKey('GABC...');
 ```
 
-## Configuration
+## Error Handling
+
+All errors are typed:
 
 ```typescript
-const sdk = new LumenMintSDK({
-  apiBaseUrl: 'https://api.lumenmint.com',
-  apiKey: 'sk-...',
-  networkPassphrase: 'Public Global Stellar Network ; September 2015',
-  sorobanRpcUrl: 'https://soroban-rpc.creit.tech/',
-  timeoutMs: 30000,
-  maxRetries: 3,
-});
+try {
+  await sdk.rest.mintNft({ name: 'x' });
+} catch (err) {
+  if (err instanceof SdkError) {
+    console.error(err.code, err.statusCode, err.correlationId);
+  }
+}
 ```
+
+Error types: `SdkError`, `AuthError`, `RateLimitError`, `NotFoundError`, `TimeoutError`.
