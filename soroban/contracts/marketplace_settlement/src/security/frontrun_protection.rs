@@ -1,26 +1,44 @@
 use crate::error::SettlementError;
 use crate::events::{emit_front_running_detected, FrontRunningDetectedEvent};
 use crate::types::Bid;
-use soroban_sdk::{symbol_short, Address, Bytes, Env, Symbol, Vec};
+use soroban_sdk::{contracttype, symbol_short, Address, Bytes, Env, Symbol, Vec};
 
 // Storage keys
 const COMMITMENT_STORAGE: Symbol = symbol_short!("commits");
+
+/// Withdrawal record for on-chain pattern monitoring
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct WithdrawalRecord {
+    pub timestamp: u64,
+    pub amount: i128,
+    pub withdrawal_type: Bytes,
+}
 
 /// Commit-reveal scheme for bid protection
 pub struct CommitRevealScheme;
 
 impl CommitRevealScheme {
-    /// Create a commitment hash from bid details
+    /// Create a commitment hash from bid details using SHA-256
     pub fn create_commitment(
-        _bidder: &Address,
-        _auction_id: u64,
-        _bid_amount: i128,
+        env: &Env,
+        bidder: &Address,
+        auction_id: u64,
+        bid_amount: i128,
         salt: &Bytes,
     ) -> Bytes {
-        salt.clone()
+        // Build a deterministic preimage: bidder || auction_id || bid_amount || salt
+        let mut preimage = Bytes::new(env);
+        preimage.append(&bidder.to_xdr(env));
+        preimage.append(&Bytes::from_slice(env, &auction_id.to_be_bytes()));
+        preimage.append(&Bytes::from_slice(env, &bid_amount.to_be_bytes()));
+        preimage.append(salt);
+
+        // Hash with SHA-256 for a collision-resistant commitment
+        env.crypto().sha256(&preimage)
     }
 
-    /// Store a commitment
+    /// Store a sealed-bid commitment
     pub fn store_commitment(
         env: &Env,
         bidder: &Address,
@@ -47,7 +65,7 @@ impl CommitRevealScheme {
         Ok(())
     }
 
-    /// Reveal and verify a commitment
+    /// Reveal and verify a sealed-bid commitment
     pub fn reveal_commitment(
         env: &Env,
         bidder: &Address,
@@ -75,8 +93,8 @@ impl CommitRevealScheme {
             return Err(SettlementError::Expired);
         }
 
-        // Verify the commitment
-        let computed_hash = Self::create_commitment(bidder, auction_id, bid_amount, salt);
+        // Recompute the commitment hash from the revealed values and verify match
+        let computed_hash = Self::create_commitment(env, bidder, auction_id, bid_amount, salt);
         if computed_hash != stored_hash {
             return Err(SettlementError::CommitmentMismatch);
         }
@@ -246,26 +264,82 @@ impl FrontRunningDetector {
 pub struct WithdrawalPatternMonitor;
 
 impl WithdrawalPatternMonitor {
-    /// Monitor withdrawal patterns for security
+    /// Monitor withdrawal patterns for security — records timestamp, amount, and type for pattern analysis
     pub fn monitor_withdrawal(
-        _env: &Env,
-        _user: &Address,
-        _amount: i128,
-        _withdrawal_type: &str,
+        env: &Env,
+        user: &Address,
+        amount: i128,
+        withdrawal_type: &str,
     ) -> Result<(), SettlementError> {
-        // Store withdrawal pattern for analysis
-        // This would be expanded with more sophisticated monitoring
-        // For now, it's a placeholder
+        let key = Symbol::new(env, "wdrwl_log");
+        let mut logs: soroban_sdk::Map<Address, soroban_sdk::Vec<WithdrawalRecord>> = env
+            .storage()
+            .instance()
+            .get(&key)
+            .unwrap_or(soroban_sdk::Map::new(env));
+
+        let mut user_logs = logs
+            .get(user.clone())
+            .unwrap_or(soroban_sdk::Vec::new(env));
+
+        let entry = WithdrawalRecord {
+            timestamp: env.ledger().timestamp(),
+            amount,
+            withdrawal_type: Bytes::from_slice(env, withdrawal_type.as_bytes()),
+        };
+        user_logs.push_back(entry);
+
+        // Retain only the last 50 withdrawal records per user to bound storage
+        while user_logs.len() > 50 {
+            user_logs.remove(0);
+        }
+
+        logs.set(user.clone(), user_logs);
+        env.storage().instance().set(&key, &logs);
         Ok(())
     }
 
-    /// Check for unusual withdrawal patterns
+    /// Check for unusual withdrawal patterns — flags high-frequency or large-amount anomalies
     pub fn check_unusual_pattern(
-        _env: &Env,
-        _user: &Address,
-        _amount: i128,
+        env: &Env,
+        user: &Address,
+        amount: i128,
     ) -> Result<(), SettlementError> {
-        // Placeholder for pattern analysis
+        let key = Symbol::new(env, "wdrwl_log");
+        let logs: soroban_sdk::Map<Address, soroban_sdk::Vec<WithdrawalRecord>> = env
+            .storage()
+            .instance()
+            .get(&key)
+            .unwrap_or(soroban_sdk::Map::new(env));
+
+        let user_logs = match logs.get(user.clone()) {
+            Some(l) => l,
+            None => return Ok(()),
+        };
+
+        let current_time = env.ledger().timestamp();
+        let window = 3600u64; // 1 hour
+
+        let mut recent_count = 0u32;
+        let mut recent_volume: i128 = 0;
+
+        for entry in user_logs.iter() {
+            if current_time.saturating_sub(entry.timestamp) <= window {
+                recent_count += 1;
+                recent_volume = recent_volume.saturating_add(entry.amount);
+            }
+        }
+
+        // Flag: more than 10 withdrawals in 1 hour OR total volume exceeds 1M stroops
+        if recent_count > 10 || recent_volume > 1_000_000_000_000 {
+            let event = FrontRunningDetectedEvent {
+                suspicious_address: user.clone(),
+                pattern: Bytes::from_slice(env, "unusual_withdrawal".as_bytes()),
+                timestamp: current_time,
+            };
+            emit_front_running_detected(env, event);
+        }
+
         Ok(())
     }
 }
