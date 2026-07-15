@@ -1,9 +1,10 @@
 // ── Payment Controller ───────────────────────────────────────────────────────
 
 import { Controller, Post, Body, Get, Param, HttpStatus, HttpCode, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { PaymentService, PaymentIntent, PayoutRequest } from './payment.service';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { PaymentService, PaymentIntent } from './payment.service';
 import { SUPPORTED_PAYMENT_METHODS } from './enums/payment-method.enum';
+import { CreatePaymentIntentDto, ProcessPayoutDto } from './dto/payment.dto';
 
 @ApiTags('Payments')
 @Controller('api/payments')
@@ -18,7 +19,7 @@ export class PaymentController {
   @ApiResponse({ status: 401, description: 'Unauthorized — valid JWT required' })
   @HttpCode(HttpStatus.CREATED)
   async createIntent(
-    @Body() body: { amount: number; currency?: 'XLM' | 'USD'; nftId?: string },
+    @Body() body: CreatePaymentIntentDto,
   ): Promise<PaymentIntent> {
     if (body.amount <= 0) {
       throw new BadRequestException('Amount must be positive');
@@ -35,7 +36,7 @@ export class PaymentController {
   @ApiResponse({ status: 400, description: 'Invalid Stellar address or malformed request' })
   @ApiResponse({ status: 401, description: 'Unauthorized — valid JWT required' })
   async processPayout(
-    @Body() body: PayoutRequest,
+    @Body() body: ProcessPayoutDto,
   ): Promise<{ success: boolean; txHash?: string }> {
     if (!this.paymentService.isValidStellarAddress(body.recipientAddress)) {
       throw new Error('Invalid Stellar address');
