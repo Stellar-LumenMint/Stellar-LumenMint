@@ -83,8 +83,32 @@ program
   .option('--network <n>', 'Stellar network', 'testnet')
   .option('--source <key>', 'Source account secret key')
   .action(async (options) => {
+    const sourceKey = options.source || process.env.STELLAR_SECRET_KEY;
+    if (!sourceKey) {
+      console.error('❌ Source key required. Set --source or STELLAR_SECRET_KEY env var.');
+      process.exit(1);
+    }
+
     console.log(`Deploying contract from ${options.wasm} to ${options.network}...`);
-    console.log(`Run: soroban contract deploy --wasm ${options.wasm} --source ${options.source ?? '<SECRET>'} --network ${options.network}`);
+
+    const { execSync } = await import('child_process');
+    try {
+      const cmd = [
+        'soroban', 'contract', 'deploy',
+        '--wasm', options.wasm,
+        '--source', sourceKey,
+        '--network', options.network,
+      ].join(' ');
+
+      console.log(`  → ${cmd}`);
+      const result = execSync(cmd, { encoding: 'utf-8', stdio: ['inherit', 'pipe', 'pipe'] });
+      const contractId = result.trim();
+      console.log(`✅ Deployed: ${contractId}`);
+    } catch (err) {
+      const msg = (err as { stderr?: string; message?: string }).stderr || (err as Error).message;
+      console.error(`❌ Deployment failed: ${msg}`);
+      process.exit(1);
+    }
   });
 
 program
