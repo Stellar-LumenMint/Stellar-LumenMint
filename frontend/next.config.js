@@ -1,85 +1,49 @@
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/fonts\.(gstatic|googleapis)\.com\/.*/i,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'google-fonts',
-        expiration: {
-          maxEntries: 4,
-          maxAgeSeconds: 365 * 24 * 60 * 60 // 1 year
-        }
-      }
-    },
-    {
-      urlPattern: /\.(png|jpg|jpeg|svg|gif|webp|ico)$/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-images',
-        expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 24 * 60 * 60 // 24 hours
-        }
-      }
-    },
-    {
-      urlPattern: /\/api\/nft\/.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'nft-api',
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 60 * 60 // 1 hour
-        },
-        networkTimeoutSeconds: 10
-      }
-    },
-    {
-      urlPattern: /\/api\/.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-cache',
-        expiration: {
-          maxEntries: 16,
-          maxAgeSeconds: 5 * 60 // 5 minutes
-        },
-        networkTimeoutSeconds: 10
-      }
-    }
-  ]
-});
-
 /** @type {import('next').NextConfig} */
+
+// LumenMint Next.js Configuration
+// =====================================================================
+
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
+  // ── Image Optimization ─────────────────────────────────────────
   images: {
-    domains: ["localhost", "images.unsplash.com"],
+    // Allow external image sources (IPFS gateways, Stellar assets)
+    domains: [
+      'ipfs.io',
+      'cloudflare-ipfs.com',
+      'gateway.pinata.cloud',
+      'nftstorage.link',
+    ],
+    // Use modern sharp format for optimized images
+    formats: ['image/avif', 'image/webp'],
   },
-  experimental: {
-    forceSwcTransforms: true,
-  },
+
+  // ── Security Headers ───────────────────────────────────────────
   async headers() {
     return [
       {
-        source: "/(.*)",
+        source: '/(.*)',
         headers: [
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         ],
       },
     ];
   },
+
+  // ── Redirects ──────────────────────────────────────────────────
+  async redirects() {
+    return [
+      // Legacy route redirects
+      { source: '/nft/:id', destination: '/marketplace/:id', permanent: true },
+    ];
+  },
+
+  // ── Experimental ───────────────────────────────────────────────
+  experimental: {
+    // Enable server actions for form handling
+    serverActions: true,
+  },
 };
 
-module.exports = withPWA(nextConfig);
+module.exports = nextConfig;
