@@ -73,6 +73,22 @@ jobs:
             npx tsc --noEmit
           fi
 
+      - name: Lint
+        run: |
+          if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
+            pnpm run lint --if-present
+          else
+            npm run lint --if-present
+          fi
+
+      - name: Format check
+        run: |
+          if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
+            pnpm exec prettier --check "**/*.{ts,tsx,js,jsx}" --if-present || echo "::warning::Formatting issues found"
+          else
+            npx prettier --check "**/*.{ts,tsx,js,jsx}" --if-present || echo "::warning::Formatting issues found"
+          fi
+
       - name: Run tests (if available)
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
