@@ -244,4 +244,6 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full development guide.
 
 ---
 
+## License
 
+This project is licensed under the [MIT License](./LICENSE).
