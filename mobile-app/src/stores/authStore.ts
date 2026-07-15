@@ -94,8 +94,8 @@ export const useAuthStore = create<AuthState>()(
       checkAuth: async () => {
         set({ isLoading: true, error: null });
         try {
-          const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-          if (token) {
+          const sessionFlag = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+          if (sessionFlag) {
             const refreshToken = await tokenStorage.getRefreshToken();
             if (refreshToken) {
               try {
@@ -108,8 +108,8 @@ export const useAuthStore = create<AuthState>()(
                 await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
               }
             } else {
-              set({ isAuthenticated: true });
-              return true;
+              // Session flag exists but no refresh token — clear stale flag
+              await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
             }
           }
 
