@@ -68,7 +68,12 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./${{ matrix.workspace }}
-        run: npm ci
+        run: |
+          if [ "${{ matrix.workspace }}" = "admin" ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm ci
+          fi
 
       - name: Audit dependencies
         working-directory: ./${{ matrix.workspace }}
