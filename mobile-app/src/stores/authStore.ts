@@ -4,6 +4,8 @@ import * as SecureStore from 'expo-secure-store';
 import { Wallet } from '../services/stellar/types';
 import { SecureStorage } from '../services/stellar/secureStorage';
 import { AuthState, User } from './types';
+import { authService } from '../services/auth/auth.service';
+import { tokenStorage } from '../services/auth/tokenStorage';
 
 const secureStorage = new SecureStorage();
 
@@ -32,13 +34,13 @@ export const useAuthStore = create<AuthState>()(
         if (get().isLoading) return;
         set({ isLoading: true, error: null });
         try {
-          // TODO: replace with real auth service call when available
-          // const { user, token } = await authService.loginWithEmail(email, password);
-          // await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
-          // set({ user, isAuthenticated: true });
-          throw new Error('Email login not yet implemented');
+          const { user } = await authService.emailLogin(email, password);
+          await SecureStore.setItemAsync(AUTH_TOKEN_KEY, 'true');
+          set({ user, isAuthenticated: true });
         } catch (err) {
-          set({ error: (err as Error).message });
+          const message = (err as { message?: string })?.message ?? 'Email login failed';
+          set({ error: message });
+          throw err;
         } finally {
           set({ isLoading: false });
         }
@@ -63,13 +65,13 @@ export const useAuthStore = create<AuthState>()(
         if (get().isLoading) return;
         set({ isLoading: true, error: null });
         try {
-          // TODO: replace with real auth service call when available
-          // const { user, token } = await authService.register(email, password, username);
-          // await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
-          // set({ user, isAuthenticated: true });
-          throw new Error('Email registration not yet implemented');
+          const { user } = await authService.emailRegister(email, password, username);
+          await SecureStore.setItemAsync(AUTH_TOKEN_KEY, 'true');
+          set({ user, isAuthenticated: true });
         } catch (err) {
-          set({ error: (err as Error).message });
+          const message = (err as { message?: string })?.message ?? 'Email registration failed';
+          set({ error: message });
+          throw err;
         } finally {
           set({ isLoading: false });
         }
@@ -94,11 +96,21 @@ export const useAuthStore = create<AuthState>()(
         try {
           const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
           if (token) {
-            // TODO: validate token with auth service when available
-            // const user = await authService.validateToken(token);
-            // set({ user, isAuthenticated: true });
-            set({ isAuthenticated: true });
-            return true;
+            const refreshToken = await tokenStorage.getRefreshToken();
+            if (refreshToken) {
+              try {
+                const { user } = await authService.refreshToken(refreshToken);
+                set({ user, isAuthenticated: true });
+                return true;
+              } catch {
+                // Token refresh failed — clear stale session
+                await tokenStorage.clearTokens();
+                await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+              }
+            } else {
+              set({ isAuthenticated: true });
+              return true;
+            }
           }
 
           const hasWallet = await secureStorage.hasWallet();
