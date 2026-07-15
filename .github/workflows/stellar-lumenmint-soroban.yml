@@ -46,15 +46,12 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy (lint)
-        run: cargo clippy --all-targets -- -D warnings || echo "::warning::Clippy warnings found (non-fatal)"
+        run: cargo clippy --workspace -- -D warnings || echo "::warning::Clippy warnings found (non-fatal)"
 
       - name: Build all contracts
         run: |
-          for contract in nft_contract marketplace_settlement collection_factory transaction_contract; do
-            echo "Building $contract..."
-            (cd contracts/$contract && cargo build --release --target wasm32-unknown-unknown) || exit 1
-            echo "  $contract built successfully"
-          done
+          # Build the entire workspace in one shot so any contract compile error fails the run
+          cargo build --workspace --release --target wasm32-unknown-unknown
 
       - name: Run tests
         run: cargo test --workspace

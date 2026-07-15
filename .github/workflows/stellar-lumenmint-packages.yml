@@ -26,10 +26,6 @@ jobs:
         package: [shared-types, sdk, cli, ai]
       fail-fast: false
 
-    defaults:
-      run:
-        working-directory: ./packages/${{ matrix.package }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,15 +34,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: packages/package-lock.json
 
-      - name: Install dependencies
+      - name: Install workspace dependencies
+        working-directory: ./packages
         run: npm install
 
       - name: Type check
+        working-directory: ./packages/${{ matrix.package }}
         run: npx tsc --noEmit || echo "::warning::Type check issues found (non-blocking)"
 
       - name: Run tests
+        working-directory: ./packages/${{ matrix.package }}
         run: npm run test --if-present || echo "::warning::No tests configured for ${{ matrix.package }}"
 
       - name: Build
+        working-directory: ./packages/${{ matrix.package }}
         run: npm run build --if-present || echo "::warning::No build configured for ${{ matrix.package }}"
