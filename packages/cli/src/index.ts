@@ -3,6 +3,7 @@
 // Usage: lumenmint <command> [options]
 
 import { Command } from 'commander';
+import { execSync } from 'child_process';
 
 const program = new Command();
 
@@ -91,7 +92,6 @@ program
 
     console.log(`Deploying contract from ${options.wasm} to ${options.network}...`);
 
-    const { execSync } = await import('child_process');
     try {
       const cmd = [
         'soroban', 'contract', 'deploy',

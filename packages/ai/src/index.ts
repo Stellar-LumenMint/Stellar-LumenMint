@@ -242,7 +242,7 @@ function enrichWithRules(metadata: NftMetadata): AiNftEnrichment {
     extractedAttributes: metadata.attributes,
     confidence: 60,
     tags: [metadata.name.toLowerCase(), 'nft', 'stellar'],
-    category: existingRarity ? existingRarity.value.toString() : 'art',
+    category: 'art',
     styleVector: {
       artStyle: colors.style,
       colorPalette: colors.palette,
@@ -312,22 +312,3 @@ function ruleBasedSuggestions(
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function extractColorsFromName(name: string): {
-  style: string;
-  palette: string[];
-} {
-  const nameLower = name.toLowerCase();
-
-  if (nameLower.includes('pixel')) {
-    return { style: 'pixel art', palette: ['#FF5555', '#55FF55', '#5555FF'] };
-  }
-  if (nameLower.includes('gold') || nameLower.includes('legendary')) {
-    return { style: 'illustration', palette: ['#FFD700', '#FFA500', '#8B4513'] };
-  }
-  if (nameLower.includes('dark') || nameLower.includes('shadow')) {
-    return { style: 'dark art', palette: ['#1a1a2e', '#16213e', '#0f3460'] };
-  }
-
-  return { style: 'digital art', palette: ['#6366f1', '#8b5cf6', '#d946ef'] };
-}
