@@ -19,6 +19,12 @@ export interface NftLifecycleContext {
   attributes?: Record<string, string>[];
   /** Steps completed so far (for rollback awareness). */
   completedSteps: string[];
+  /**
+   * Source address for transfer lifecycle operations. Optional because
+   * it is only meaningful when an NFT is being moved from one owner to
+   * another (see {@link NftLifecyclePipeline.onNftTransferred}).
+   */
+  fromAddress?: string;
 }
 
 @Injectable()
@@ -84,7 +90,7 @@ export class NftLifecyclePipeline {
    *   3. emitTransferEvent
    */
   async onNftTransferred(
-    context: NftLifecycleContext & { fromAddress: string },
+    context: NftLifecycleContext,
   ): Promise<PipelineResult<NftLifecycleContext>> {
     const steps: PipelineStep<NftLifecycleContext>[] = [
       {
@@ -179,8 +185,15 @@ export class NftLifecyclePipeline {
   }
 
   private async updateOwnership(
-    ctx: NftLifecycleContext & { fromAddress: string },
+    ctx: NftLifecycleContext,
   ): Promise<NftLifecycleContext> {
+    // Runtime guard mirrors emitTransferEvent so the transfer pipeline
+    // fails fast and loudly if a caller invokes it without fromAddress.
+    if (!ctx.fromAddress) {
+      throw new Error(
+        'NftLifecycleContext.fromAddress is required for the transfer pipeline step',
+      );
+    }
     this.eventEmitter.emit('search.nft.upsert', { nftId: ctx.nftId });
     this.logger.debug(
       `Ownership updated: NFT ${ctx.nftId} ${ctx.fromAddress} → ${ctx.ownerAddress}`,
@@ -190,8 +203,18 @@ export class NftLifecyclePipeline {
   }
 
   private async emitTransferEvent(
-    ctx: NftLifecycleContext & { fromAddress: string },
+    ctx: NftLifecycleContext,
   ): Promise<NftLifecycleContext> {
+    // Runtime guard: the type system treats fromAddress as optional now
+    // (it was moved to the base NftLifecycleContext interface to satisfy
+    // strict typing under the new build tsconfig). For a transfer event,
+    // the previous owner must be known — silently substituting
+    // `ownerAddress` would corrupt downstream analytics/audit logs.
+    if (!ctx.fromAddress) {
+      throw new Error(
+        'NftLifecycleContext.fromAddress is required for the transfer pipeline step',
+      );
+    }
     this.eventEmitter.emit('nft.transferred', {
       nftId: ctx.nftId,
       from: ctx.fromAddress,

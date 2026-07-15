@@ -6,7 +6,11 @@ import {
   Inject,
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+// Use `import type` because Cache is only referenced in the @Inject()
+// decorator signature — tsconfig.build.json enables isolatedModules +
+// emitDecoratorMetadata, which requires types-only references to be
+// explicitly marked so the import is erased at runtime.
+import type { Cache } from 'cache-manager';
 import { Reflector } from '@nestjs/core';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
