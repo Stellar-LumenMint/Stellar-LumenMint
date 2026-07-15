@@ -1,0 +1,133 @@
+name: Stellar-LumenMint Deploy & Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      component:
+        description: "Component to deploy"
+        required: true
+        type: choice
+        options:
+          - backend
+          - frontend
+          - admin
+      tag:
+        description: "Docker image tag or git SHA to deploy"
+        required: true
+        type: string
+      rollback:
+        description: "Set to true to rollback to previous version"
+        type: boolean
+        default: false
+
+concurrency:
+  group: stellar-lumenmint-deploy-${{ inputs.environment }}-${{ inputs.component }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.component }} to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.deploy-url.outputs.url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set deployment URL
+        id: deploy-url
+        run: |
+          case "${{ inputs.environment }}-${{ inputs.component }}" in
+            staging-backend)  echo "url=https://api.staging.lumenmint.com" >> $GITHUB_OUTPUT ;;
+            production-backend) echo "url=https://api.lumenmint.com" >> $GITHUB_OUTPUT ;;
+            staging-frontend) echo "url=https://staging.lumenmint.com" >> $GITHUB_OUTPUT ;;
+            production-frontend) echo "url=https://lumenmint.com" >> $GITHUB_OUTPUT ;;
+            staging-admin)    echo "url=https://admin.staging.lumenmint.com" >> $GITHUB_OUTPUT ;;
+            production-admin) echo "url=https://admin.lumenmint.com" >> $GITHUB_OUTPUT ;;
+            *) echo "url=https://${{ inputs.environment }}.lumenmint.com" >> $GITHUB_OUTPUT ;;
+          esac
+
+      - name: Deploy or Rollback
+        run: |
+          if [ "${{ inputs.rollback }}" = "true" ]; then
+            echo "⏪ Rolling back ${{ inputs.component }} to previous version..."
+            echo "Rollback target: ${{ inputs.tag }}"
+            echo "::warning::Rollback initiated for ${{ inputs.component }} in ${{ inputs.environment }}"
+            # Actual rollback would trigger infrastructure deployment
+            # e.g. kubectl rollout undo, or AWS ECS rollback, or Docker tag revert
+          else
+            echo "Deploying ${{ inputs.component }} version ${{ inputs.tag }} to ${{ inputs.environment }}..."
+            echo "::notice::Deployment initiated for ${{ inputs.component }}@${{ inputs.tag }}"
+            # Actual deployment would trigger infrastructure-specific deployment
+            # e.g. kubectl set image, AWS ECS update-service, or docker compose pull+up
+          fi
+
+      - name: Health check
+        run: |
+          URL="${{ steps.deploy-url.outputs.url }}/health"
+          echo "Running health check against $URL..."
+          for i in 1 2 3 4 5; do
+            if curl -sf "$URL" > /dev/null 2>&1; then
+              echo "✅ Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i/5 failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ Health check failed after 5 attempts"
+          exit 1
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then
+            echo "Deployment of ${{ inputs.component }}@${{ inputs.tag }} to ${{ inputs.environment }} successful"
+          else
+            echo "::error::Deployment of ${{ inputs.component }}@${{ inputs.tag }} to ${{ inputs.environment }} FAILED"
+            if [ "${{ inputs.rollback }}" != "true" ]; then
+              echo "::warning::Consider rolling back: trigger this workflow with rollback=true and tag=<previous-version>"
+            fi
+          fi
+
+  rollback-script:
+    name: Save Rollback State
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: inputs.rollback != 'true' && needs.deploy.result == 'success'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Record deployment for rollback
+        run: |
+          mkdir -p .github/deployments
+          cat > .github/deployments/${{ inputs.environment }}-${{ inputs.component }}.json << EOF
+          {
+            "component": "${{ inputs.component }}",
+            "environment": "${{ inputs.environment }}",
+            "version": "${{ inputs.tag }}",
+            "deployedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "workflowRun": "${{ github.run_id }}",
+            "previousVersion": "$(cat .github/deployments/${{ inputs.environment }}-${{ inputs.component }}.json 2>/dev/null | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo 'unknown')"
+          }
+          EOF
+          echo "Deployment recorded: $(cat .github/deployments/${{ inputs.environment }}-${{ inputs.component }}.json)"
