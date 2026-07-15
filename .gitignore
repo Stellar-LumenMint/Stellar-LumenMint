@@ -51,8 +51,7 @@ Thumbs.db
 *.tar
 
 # ── Package managers ──────────────────────────────────────────────────────
-pnpm-lock.yaml
-package-lock.json
+# Lockfiles are committed for reproducible CI builds
 yarn.lock
 
 # ── Misc ──────────────────────────────────────────────────────────────────

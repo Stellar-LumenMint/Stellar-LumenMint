@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@stellar-lumenmint/shared-types": "workspace:*",
+    "@stellar-lumenmint/shared-types": "*",
     "stellar-sdk": "^13.0.0"
   },
   "peerDependencies": {

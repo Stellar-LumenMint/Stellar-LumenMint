@@ -1,0 +1,10 @@
+{
+  "name": "stellar-lumenmint-packages",
+  "private": true,
+  "workspaces": [
+    "shared-types",
+    "sdk",
+    "cli",
+    "ai"
+  ]
+}
