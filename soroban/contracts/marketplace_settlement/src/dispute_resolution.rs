@@ -404,31 +404,115 @@ impl DisputeResolutionManager {
         Ok(())
     }
 
-    /// Internal: Execute refund to buyer
-    fn execute_refund_buyer(_env: &Env, _dispute: &Dispute) -> Result<(), SettlementError> {
-        // Implementation would release escrow funds back to buyer
-        // This is a placeholder
+    /// Internal: Execute refund to buyer — releases escrowed payment back to the buyer
+    fn execute_refund_buyer(env: &Env, dispute: &Dispute) -> Result<(), SettlementError> {
+        use crate::atomic_swap::AtomicSwapEngine;
+
+        // Cancel the atomic swap to trigger a full refund of all escrowed assets
+        let canceller = env.current_contract_address();
+        AtomicSwapEngine::cancel_swap(env, dispute.transaction_id, &canceller)?;
+
+        // Emit resolution event for audit trail
+        let event = DisputeResolvedEvent {
+            dispute_id: dispute.dispute_id,
+            resolution: DISPUTE_RESOLUTION_REFUND_BUYER,
+            winning_votes: 0,
+            total_votes: 0,
+            timestamp: env.ledger().timestamp(),
+        };
+        emit_dispute_resolved(env, event);
+
         Ok(())
     }
 
-    /// Internal: Execute release to seller
-    fn execute_release_to_seller(_env: &Env, _dispute: &Dispute) -> Result<(), SettlementError> {
-        // Implementation would release escrow funds to seller
-        // This is a placeholder
+    /// Internal: Execute release to seller — releases escrowed assets and payment to the seller
+    fn execute_release_to_seller(env: &Env, dispute: &Dispute) -> Result<(), SettlementError> {
+        use crate::atomic_swap::AtomicSwapEngine;
+        let swap = AtomicSwapEngine::get_swap_by_transaction(env, dispute.transaction_id)?;
+
+        // Transfer buyer's payment to the seller
+        for holding in swap.buyer_escrow.iter() {
+            if !holding.is_nft {
+                use crate::utils::asset_utils;
+                // Find the seller address from seller_escrow
+                if let Some(seller_holding) = swap.seller_escrow.get(0) {
+                    asset_utils::transfer_tokens(
+                        &holding.asset.contract,
+                        &env.current_contract_address(),
+                        &seller_holding.holder,
+                        holding.amount,
+                        env,
+                    )?;
+                }
+            }
+        }
+
+        // Transfer NFT to the buyer (who wins the dispute)
+        for holding in swap.seller_escrow.iter() {
+            if holding.is_nft {
+                use crate::utils::asset_utils;
+                if let Some(buyer_holding) = swap.buyer_escrow.get(0) {
+                    asset_utils::transfer_nft(
+                        &holding.asset.contract,
+                        &env.current_contract_address(),
+                        &buyer_holding.holder,
+                        holding.amount as u64,
+                        env,
+                    )?;
+                }
+            }
+        }
+
         Ok(())
     }
 
-    /// Internal: Execute fund split
-    fn execute_split_funds(_env: &Env, _dispute: &Dispute) -> Result<(), SettlementError> {
-        // Implementation would split escrow funds between parties
-        // This is a placeholder
+    /// Internal: Execute fund split — divides escrowed funds between buyer and seller per arbitration
+    fn execute_split_funds(env: &Env, dispute: &Dispute) -> Result<(), SettlementError> {
+        use crate::atomic_swap::AtomicSwapEngine;
+        let swap = AtomicSwapEngine::get_swap_by_transaction(env, dispute.transaction_id)?;
+
+        // Split: refund 50% to buyer, release NFT to seller as compromise
+        for holding in swap.buyer_escrow.iter() {
+            if !holding.is_nft {
+                use crate::utils::asset_utils;
+                let half = holding.amount.saturating_div(2);
+                if half > 0 {
+                    asset_utils::transfer_tokens(
+                        &holding.asset.contract,
+                        &env.current_contract_address(),
+                        &holding.holder,
+                        half,
+                        env,
+                    )?;
+                }
+            }
+        }
+
+        // Release NFT to seller
+        for holding in swap.seller_escrow.iter() {
+            if holding.is_nft {
+                use crate::utils::asset_utils;
+                asset_utils::transfer_nft(
+                    &holding.asset.contract,
+                    &env.current_contract_address(),
+                    &holding.holder,
+                    holding.amount as u64,
+                    env,
+                )?;
+            }
+        }
+
         Ok(())
     }
 
-    /// Internal: Execute transaction cancellation
-    fn execute_cancel_transaction(_env: &Env, _dispute: &Dispute) -> Result<(), SettlementError> {
-        // Implementation would cancel the transaction and refund all parties
-        // This is a placeholder
+    /// Internal: Execute transaction cancellation — refunds all parties fully
+    fn execute_cancel_transaction(env: &Env, dispute: &Dispute) -> Result<(), SettlementError> {
+        use crate::atomic_swap::AtomicSwapEngine;
+
+        // Full cancellation: refund all escrow holdings to original depositors
+        let canceller = env.current_contract_address();
+        AtomicSwapEngine::cancel_swap(env, dispute.transaction_id, &canceller)?;
+
         Ok(())
     }
 

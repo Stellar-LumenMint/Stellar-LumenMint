@@ -44,12 +44,38 @@ jest.mock('expo-crypto', () => ({
   digestStringAsync: jest.fn().mockResolvedValue('mockedhash'),
 }));
 
+// Mock auth service
+const mockEmailLogin = jest.fn();
+const mockEmailRegister = jest.fn();
+const mockRefreshToken = jest.fn();
+
+jest.mock('../../services/auth/auth.service', () => ({
+  authService: {
+    emailLogin: (...args: any[]) => mockEmailLogin(...args),
+    emailRegister: (...args: any[]) => mockEmailRegister(...args),
+    refreshToken: (...args: any[]) => mockRefreshToken(...args),
+  },
+}));
+
+// Mock token storage
+const mockGetRefreshToken = jest.fn();
+const mockClearTokens = jest.fn();
+
+jest.mock('../../services/auth/tokenStorage', () => ({
+  tokenStorage: {
+    getRefreshToken: () => mockGetRefreshToken(),
+    clearTokens: () => mockClearTokens(),
+  },
+}));
+
 // ── Imports (after mocks) ─────────────────────────────────────────────────────
 
 import { useAuthStore } from '../authStore';
 import { Wallet } from '../../services/stellar/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+const mockUser = { id: '1', email: 'a@b.com', username: 'alice' };
 
 const makeWallet = (): Wallet => {
   const kp = Keypair.random();
@@ -73,6 +99,11 @@ describe('useAuthStore', () => {
     });
     Object.keys(secureStoreData).forEach((k) => delete secureStoreData[k]);
     Object.keys(asyncStorageStore).forEach((k) => delete asyncStorageStore[k]);
+    mockEmailLogin.mockReset();
+    mockEmailRegister.mockReset();
+    mockRefreshToken.mockReset();
+    mockGetRefreshToken.mockReset();
+    mockClearTokens.mockReset();
   });
 
   // ── Initial state ───────────────────────────────────────────────────────────
@@ -187,36 +218,106 @@ describe('useAuthStore', () => {
   // ── loginWithEmail ──────────────────────────────────────────────────────────
 
   describe('loginWithEmail', () => {
-    it('sets an error because the service is not yet implemented', async () => {
+    it('calls authService.emailLogin and sets user on success', async () => {
+      mockEmailLogin.mockResolvedValueOnce({ user: mockUser, tokens: { accessToken: 'at', refreshToken: 'rt' } });
+
       await getStore().loginWithEmail('user@example.com', 'password123');
-      expect(getStore().error).toBe('Email login not yet implemented');
+
+      expect(mockEmailLogin).toHaveBeenCalledWith('user@example.com', 'password123');
+      expect(getStore().user).toEqual(mockUser);
+      expect(getStore().isAuthenticated).toBe(true);
+      expect(getStore().isLoading).toBe(false);
+      expect(getStore().error).toBeNull();
+    });
+
+    it('saves session flag to SecureStore on success', async () => {
+      const SecureStore = require('expo-secure-store');
+      mockEmailLogin.mockResolvedValueOnce({ user: mockUser, tokens: { accessToken: 'at', refreshToken: 'rt' } });
+
+      await getStore().loginWithEmail('user@example.com', 'password123');
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith('stellar_lumenmint_auth_token', 'true');
+    });
+
+    it('sets error and re-throws when authService fails', async () => {
+      mockEmailLogin.mockRejectedValueOnce({ message: 'Invalid credentials', statusCode: 401 });
+
+      await expect(
+        getStore().loginWithEmail('user@example.com', 'wrongpass'),
+      ).rejects.toEqual({ message: 'Invalid credentials', statusCode: 401 });
+
+      expect(getStore().error).toBe('Invalid credentials');
       expect(getStore().isAuthenticated).toBe(false);
+      expect(getStore().isLoading).toBe(false);
+    });
+
+    it('sets fallback error message when error has no message', async () => {
+      mockEmailLogin.mockRejectedValueOnce({});
+
+      await expect(
+        getStore().loginWithEmail('user@example.com', 'password123'),
+      ).rejects.toEqual({});
+
+      expect(getStore().error).toBe('Email login failed');
       expect(getStore().isLoading).toBe(false);
     });
 
     it('does not run if isLoading is true', async () => {
       useAuthStore.setState({ isLoading: true });
-      const before = getStore().error;
       await getStore().loginWithEmail('user@example.com', 'password123');
-      expect(getStore().error).toBe(before);
+      expect(mockEmailLogin).not.toHaveBeenCalled();
     });
   });
 
   // ── registerWithEmail ───────────────────────────────────────────────────────
 
   describe('registerWithEmail', () => {
-    it('sets an error because the service is not yet implemented', async () => {
+    it('calls authService.emailRegister and sets user on success', async () => {
+      mockEmailRegister.mockResolvedValueOnce({ user: mockUser, tokens: { accessToken: 'at', refreshToken: 'rt' } });
+
       await getStore().registerWithEmail('user@example.com', 'password123', 'alice');
-      expect(getStore().error).toBe('Email registration not yet implemented');
+
+      expect(mockEmailRegister).toHaveBeenCalledWith('user@example.com', 'password123', 'alice');
+      expect(getStore().user).toEqual(mockUser);
+      expect(getStore().isAuthenticated).toBe(true);
+      expect(getStore().isLoading).toBe(false);
+      expect(getStore().error).toBeNull();
+    });
+
+    it('saves session flag to SecureStore on success', async () => {
+      const SecureStore = require('expo-secure-store');
+      mockEmailRegister.mockResolvedValueOnce({ user: mockUser, tokens: { accessToken: 'at', refreshToken: 'rt' } });
+
+      await getStore().registerWithEmail('user@example.com', 'password123', 'alice');
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith('stellar_lumenmint_auth_token', 'true');
+    });
+
+    it('sets error and re-throws when authService fails', async () => {
+      mockEmailRegister.mockRejectedValueOnce({ message: 'Email already taken', statusCode: 409 });
+
+      await expect(
+        getStore().registerWithEmail('user@example.com', 'password123', 'alice'),
+      ).rejects.toEqual({ message: 'Email already taken', statusCode: 409 });
+
+      expect(getStore().error).toBe('Email already taken');
       expect(getStore().isAuthenticated).toBe(false);
+      expect(getStore().isLoading).toBe(false);
+    });
+
+    it('sets fallback error message when error has no message', async () => {
+      mockEmailRegister.mockRejectedValueOnce(new Error());
+
+      await expect(
+        getStore().registerWithEmail('user@example.com', 'password123', 'alice'),
+      ).rejects.toThrow();
+
+      expect(getStore().error).toBe('Email registration failed');
       expect(getStore().isLoading).toBe(false);
     });
 
     it('does not run if isLoading is true', async () => {
       useAuthStore.setState({ isLoading: true });
-      const before = getStore().error;
       await getStore().registerWithEmail('user@example.com', 'password123', 'alice');
-      expect(getStore().error).toBe(before);
+      expect(mockEmailRegister).not.toHaveBeenCalled();
     });
   });
 
@@ -247,12 +348,12 @@ describe('useAuthStore', () => {
       expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('stellar_lumenmint_wallet');
     });
 
-    it('removes auth token from AsyncStorage', async () => {
-      const AsyncStorage = require('@react-native-async-storage/async-storage');
-      asyncStorageStore['stellar_lumenmint_auth_token'] = 'some-token';
+    it('removes auth token from secure storage', async () => {
+      const SecureStore = require('expo-secure-store');
+      secureStoreData['stellar_lumenmint_auth_token'] = 'true';
 
       await getStore().logout();
-      expect(AsyncStorage.removeItem).toHaveBeenCalledWith('stellar_lumenmint_auth_token');
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('stellar_lumenmint_auth_token');
     });
 
     it('still clears state even when storage throws', async () => {
@@ -277,13 +378,39 @@ describe('useAuthStore', () => {
       expect(getStore().isLoading).toBe(false);
     });
 
-    it('returns true and sets isAuthenticated when auth token exists', async () => {
-      asyncStorageStore['stellar_lumenmint_auth_token'] = 'valid-token';
+    it('refreshes token and sets user when session flag and refresh token exist', async () => {
+      secureStoreData['stellar_lumenmint_auth_token'] = 'true';
+      mockGetRefreshToken.mockResolvedValueOnce('valid-refresh-token');
+      mockRefreshToken.mockResolvedValueOnce({ user: mockUser, tokens: { accessToken: 'new-at', refreshToken: 'new-rt' } });
 
       const result = await getStore().checkAuth();
       expect(result).toBe(true);
       expect(getStore().isAuthenticated).toBe(true);
+      expect(getStore().user).toEqual(mockUser);
+      expect(mockRefreshToken).toHaveBeenCalledWith('valid-refresh-token');
       expect(getStore().isLoading).toBe(false);
+    });
+
+    it('clears stale session when flag exists but no refresh token', async () => {
+      const SecureStore = require('expo-secure-store');
+      secureStoreData['stellar_lumenmint_auth_token'] = 'true';
+      mockGetRefreshToken.mockResolvedValueOnce(null);
+
+      const result = await getStore().checkAuth();
+      expect(result).toBe(false);
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('stellar_lumenmint_auth_token');
+      expect(getStore().isAuthenticated).toBe(false);
+    });
+
+    it('clears stale session when token refresh fails', async () => {
+      secureStoreData['stellar_lumenmint_auth_token'] = 'true';
+      mockGetRefreshToken.mockResolvedValueOnce('expired-token');
+      mockRefreshToken.mockRejectedValueOnce(new Error('Token expired'));
+
+      const result = await getStore().checkAuth();
+      expect(result).toBe(false);
+      expect(mockClearTokens).toHaveBeenCalled();
+      expect(getStore().isAuthenticated).toBe(false);
     });
 
     it('returns true and restores wallet when wallet is stored but no token', async () => {
@@ -298,8 +425,8 @@ describe('useAuthStore', () => {
     });
 
     it('returns false and sets error when storage throws', async () => {
-      const AsyncStorage = require('@react-native-async-storage/async-storage');
-      AsyncStorage.getItem.mockRejectedValueOnce(new Error('read error'));
+      const SecureStore = require('expo-secure-store');
+      SecureStore.getItemAsync.mockRejectedValueOnce(new Error('read error'));
 
       const result = await getStore().checkAuth();
       expect(result).toBe(false);

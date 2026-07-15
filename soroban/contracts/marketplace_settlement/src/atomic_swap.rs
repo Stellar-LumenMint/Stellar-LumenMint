@@ -174,7 +174,7 @@ impl AtomicSwapEngine {
         })
     }
 
-    /// Cancel a swap and refund all parties
+    /// Cancel a swap and refund all parties (with optional admin override)
     pub fn cancel_swap(
         env: &Env,
         transaction_id: u64,
@@ -182,9 +182,10 @@ impl AtomicSwapEngine {
     ) -> Result<(), SettlementError> {
         let mut swap = Self::get_swap_by_transaction(env, transaction_id)?;
 
-        // Only seller or buyer can cancel
+        // Allow cancellation by seller, buyer, or the contract itself (admin/dispute resolution)
         let is_authorized = swap.seller_escrow.iter().any(|h| h.holder == *canceller)
-            || swap.buyer_escrow.iter().any(|h| h.holder == *canceller);
+            || swap.buyer_escrow.iter().any(|h| h.holder == *canceller)
+            || *canceller == env.current_contract_address();
 
         if !is_authorized {
             return Err(SettlementError::Unauthorized);
@@ -426,8 +427,8 @@ impl AtomicSwapEngine {
         Ok(())
     }
 
-    /// Internal: Get swap by transaction ID
-    fn get_swap_by_transaction(
+    /// Get swap by transaction ID (public for cross-module use)
+    pub fn get_swap_by_transaction(
         env: &Env,
         transaction_id: u64,
     ) -> Result<AtomicSwap, SettlementError> {
@@ -453,13 +454,27 @@ pub struct EscrowManager;
 impl EscrowManager {
     /// Check escrow balance for a transaction
     pub fn check_escrow_balance(
-        _env: &Env,
-        _transaction_id: u64,
-        _asset: &Asset,
+        env: &Env,
+        transaction_id: u64,
+        asset: &Asset,
     ) -> Result<i128, SettlementError> {
-        // This would query the escrow holdings
-        // For now, return a placeholder
-        Ok(0)
+        use crate::atomic_swap::AtomicSwapEngine;
+        let swap = AtomicSwapEngine::get_swap_by_transaction(env, transaction_id)?;
+
+        // Sum holdings matching the requested asset across both escrow sides
+        let mut total: i128 = 0;
+        for holding in swap.seller_escrow.iter() {
+            if holding.asset.contract == asset.contract {
+                total = total.saturating_add(holding.amount);
+            }
+        }
+        for holding in swap.buyer_escrow.iter() {
+            if holding.asset.contract == asset.contract {
+                total = total.saturating_add(holding.amount);
+            }
+        }
+
+        Ok(total)
     }
 
     /// Release escrow to specific address
@@ -481,8 +496,20 @@ impl EscrowManager {
     }
 
     /// Get escrow holdings for a transaction
-    pub fn get_escrow_holdings(_env: &Env, _transaction_id: u64) -> Vec<EscrowHolding> {
-        // This would return all escrow holdings for the transaction
-        Vec::new(_env)
+    pub fn get_escrow_holdings(env: &Env, transaction_id: u64) -> Vec<EscrowHolding> {
+        use crate::atomic_swap::AtomicSwapEngine;
+        match AtomicSwapEngine::get_swap_by_transaction(env, transaction_id) {
+            Ok(swap) => {
+                let mut holdings = Vec::new(env);
+                for h in swap.seller_escrow.iter() {
+                    holdings.push_back(h);
+                }
+                for h in swap.buyer_escrow.iter() {
+                    holdings.push_back(h);
+                }
+                holdings
+            }
+            Err(_) => Vec::new(env),
+        }
     }
 }
