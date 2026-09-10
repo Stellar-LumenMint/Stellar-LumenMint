@@ -24,6 +24,35 @@ describe('Telemetry Reliability Layer', () => {
     expect(queue.peek()?.id).toBe('1'); 
   });
 
+  it('drops events older than maxEventAgeMs at dequeue time', () => {
+    const now = Date.now();
+    const config = {
+      ...DEFAULT_RELIABILITY_CONFIG,
+      queueCapacity: 10,
+      maxEventAgeMs: 1000,
+      debug: false,
+    };
+    const queue = new TelemetryQueue(config);
+    queue.enqueue({
+      id: 'stale',
+      eventName: 'test',
+      payload: {},
+      enqueuedAt: now - 5000, // older than 1s TTL
+      attempts: 1,
+      nextRetryAt: now,
+    });
+    queue.enqueue({
+      id: 'fresh',
+      eventName: 'test',
+      payload: {},
+      enqueuedAt: now,
+      attempts: 1,
+      nextRetryAt: now,
+    });
+    const batch = queue.dequeueBatch(10);
+    expect(batch.map((e) => e.id)).toEqual(['fresh']);
+  });
+
   it('computes exponential backoff with jitter', () => {
     const config = DEFAULT_RELIABILITY_CONFIG;
     const delays = Array.from({ length: 5 }, (_, i) => computeNextRetryDelayMs(i + 1, config));

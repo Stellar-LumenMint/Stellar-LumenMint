@@ -12,11 +12,32 @@ export interface QueuedTelemetryEvent {
 export class TelemetryQueue {
   private queue: QueuedTelemetryEvent[] = [];
   private capacity: number;
+  private maxEventAgeMs: number;
   private debug: boolean;
 
   constructor(config: ReliabilityConfig) {
     this.capacity = config.queueCapacity;
+    this.maxEventAgeMs = config.maxEventAgeMs;
     this.debug = config.debug;
+  }
+
+  /**
+   * Drop events that have been queued past maxEventAgeMs. Called on
+   * dequeue so expired events are never dispatched after an offline gap.
+   */
+  private dropExpired(now: number) {
+    const expired = this.queue.filter(
+      (event) => now - event.enqueuedAt > this.maxEventAgeMs
+    );
+    if (expired.length > 0) {
+      this.queue = this.queue.filter((event) => !expired.includes(event));
+      if (this.debug) {
+        // eslint-disable-next-line no-console
+        console.log(
+          `[telemetry][queue_drop_expired] count=${expired.length} maxAgeMs=${this.maxEventAgeMs}`
+        );
+      }
+    }
   }
 
   enqueue(event: QueuedTelemetryEvent) {
@@ -35,6 +56,7 @@ export class TelemetryQueue {
   }
 
   dequeueBatch(batchSize: number): QueuedTelemetryEvent[] {
+    this.dropExpired(Date.now());
     return this.queue.splice(0, batchSize);
   }
 

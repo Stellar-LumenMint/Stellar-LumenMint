@@ -13,6 +13,9 @@ export interface DebounceRule {
 export interface ReliabilityConfig {
   enabled: boolean;
   queueCapacity: number;
+  // Events older than this are dropped at dequeue time instead of being
+  // dispatched: a stale event from a previous session has no value.
+  maxEventAgeMs: number;
   flushIntervalMs: number;
   batchSize: number;
   retry: {
@@ -30,6 +33,9 @@ export interface ReliabilityConfig {
 export const DEFAULT_RELIABILITY_CONFIG: ReliabilityConfig = {
   enabled: process.env.NEXT_PUBLIC_TELEMETRY_RELIABILITY_ENABLED === 'true',
   queueCapacity: 500,
+  // 24h: long enough to survive a brief offline period, short enough that
+  // a stale session can never pollute analytics.
+  maxEventAgeMs: 24 * 60 * 60 * 1000,
   flushIntervalMs: 5000,
   batchSize: 20,
   retry: {
