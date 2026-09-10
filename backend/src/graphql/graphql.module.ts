@@ -26,6 +26,7 @@ import { UsersModule } from '../users/users.module';
 import { GraphqlContextFactory } from './context/context.factory';
 import { GraphqlAuthMiddleware } from './middleware/auth.middleware';
 import { GraphqlLoggingMiddleware } from './middleware/logging.middleware';
+import { CacheLockModule } from '../common/locks';
 import { graphqlResolvers, graphqlScalarClasses } from './resolvers';
 
 const jwtAccessExpiresInSeconds = parseInt(
@@ -42,6 +43,9 @@ const jwtAccessExpiresInSeconds = parseInt(
       useFactory: (config: ConfigService) =>
         createCacheModuleOptions(cacheEnvFromConfig(config)),
     }),
+    // CollectionModule instantiates AnalyticsCronJob, which depends on the
+    // distributed lock; it must be available in this app too.
+    CacheLockModule,
     PassportModule,
     GraphQLSchemaBuilderModule,
     EventEmitterModule.forRoot(),

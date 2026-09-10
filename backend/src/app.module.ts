@@ -44,6 +44,7 @@ import { JobQueueModule } from './common/queue';
 import { IdempotencyModule } from './common/idempotency';
 import { PipelineModule } from './common/pipeline';
 import { OutboxModule } from './common/outbox';
+import { CacheLockModule } from './common/locks';
 // import { CorsConfig } from './config/cors.config';
 
 @Module({
@@ -76,6 +77,7 @@ import { OutboxModule } from './common/outbox';
     }),
     ConfigModule.forRoot({ isGlobal: true }),
     EventEmitterModule.forRoot(),
+    CacheLockModule,
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],
