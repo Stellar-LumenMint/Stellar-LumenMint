@@ -3,6 +3,58 @@ import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { PreferencesStore } from './types';
 
+/**
+ * Migration + normalization for persisted preferences.
+ *
+ * Merges whatever was stored with the current defaults field-by-field so a
+ * legacy or partially corrupted payload can never crash rehydration or wipe
+ * the user's preferences. Exported for direct unit testing.
+ */
+export function migratePreferences(
+  persistedState: unknown,
+  _version: number
+): typeof initialState {
+  const legacy = (persistedState as Partial<typeof initialState>) ?? {};
+  return {
+    ...initialState,
+    theme: {
+      ...initialState.theme,
+      ...(legacy.theme && typeof legacy.theme === 'object'
+        ? legacy.theme
+        : {}),
+    },
+    notifications: {
+      ...initialState.notifications,
+      ...(legacy.notifications && typeof legacy.notifications === 'object'
+        ? legacy.notifications
+        : {}),
+    },
+    display: {
+      ...initialState.display,
+      ...(legacy.display && typeof legacy.display === 'object'
+        ? legacy.display
+        : {}),
+    },
+    language:
+      typeof legacy.language === 'string'
+        ? legacy.language
+        : initialState.language,
+    timezone:
+      typeof legacy.timezone === 'string'
+        ? legacy.timezone
+        : initialState.timezone,
+    recentSearches: Array.isArray(legacy.recentSearches)
+      ? legacy.recentSearches
+      : initialState.recentSearches,
+    favoriteCollections: Array.isArray(legacy.favoriteCollections)
+      ? legacy.favoriteCollections
+      : initialState.favoriteCollections,
+    watchlist: Array.isArray(legacy.watchlist)
+      ? legacy.watchlist
+      : initialState.watchlist,
+  };
+}
+
 const initialState = {
   theme: {
     mode: 'dark' as const,
@@ -130,7 +182,11 @@ export const usePreferencesStore = create<PreferencesStore>()(
       })),
       {
         name: 'stellar-lumenmint-preferences',
-        version: 1,
+        // Bump the version whenever the persisted schema changes and add a
+        // migration step below. Without this, zustand silently drops all
+        // stored preferences on schema mismatch.
+        version: 2,
+        migrate: migratePreferences,
         onRehydrateStorage: () => (state) => {
           state?.setHydrated(true);
         },

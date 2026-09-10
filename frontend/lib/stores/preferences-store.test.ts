@@ -1,5 +1,5 @@
 import { act } from "@testing-library/react";
-import { usePreferencesStore } from "./preferences-store";
+import { usePreferencesStore, migratePreferences } from "./preferences-store";
 
 describe("Preferences Store", () => {
   beforeEach(() => {
@@ -206,6 +206,53 @@ describe("Preferences Store", () => {
         store.addToWatchlist("nft-1");
       });
       expect(usePreferencesStore.getState().watchlist).toEqual(["nft-1"]);
+    });
+  });
+
+  // ===========================================================================
+  // Persistence migration
+  // ===========================================================================
+  describe("persistence migration", () => {
+    it("merges legacy persisted state with defaults instead of wiping it", () => {
+      const legacyState = {
+        theme: { mode: "light" },
+        display: { itemsPerPage: 24 },
+        language: "fr",
+        timezone: "Europe/Paris",
+        // Corrupted: must not crash migration or be trusted as-is
+        recentSearches: "not-an-array",
+        favoriteCollections: null,
+      };
+      const migrated = migratePreferences(legacyState, 1);
+      // Legacy values are kept...
+      expect(migrated.theme.mode).toBe("light");
+      expect(migrated.display.itemsPerPage).toBe(24);
+      expect(migrated.language).toBe("fr");
+      expect(migrated.timezone).toBe("Europe/Paris");
+      // ...malformed fields fall back to defaults...
+      expect(migrated.recentSearches).toEqual([]);
+      expect(migrated.favoriteCollections).toEqual([]);
+      // ...and missing fields are filled from defaults.
+      expect(migrated.notifications.push).toBe(true);
+      expect(migrated.theme.primaryColor).toBe("#8B5CF6");
+      expect(migrated.display.gridView).toBe("grid");
+      expect(migrated.watchlist).toEqual([]);
+    });
+
+    it("returns pure defaults for a completely empty payload", () => {
+      const migrated = migratePreferences(undefined, 0);
+      const { theme, notifications, display } =
+        usePreferencesStore.getInitialState();
+      expect(migrated).toMatchObject({
+        theme,
+        notifications,
+        display,
+        language: "en",
+        timezone: expect.any(String),
+        recentSearches: [],
+        favoriteCollections: [],
+        watchlist: [],
+      });
     });
   });
 
