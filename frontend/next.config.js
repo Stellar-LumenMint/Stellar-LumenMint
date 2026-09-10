@@ -3,6 +3,10 @@
 // LumenMint Next.js Configuration
 // =====================================================================
 
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const nextConfig = {
   // ── Server Identity ────────────────────────────────────────────
   // Do not advertise that this is a Next.js application.
@@ -58,4 +62,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withBundleAnalyzer(nextConfig);
