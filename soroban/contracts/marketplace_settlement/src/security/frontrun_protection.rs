@@ -1,7 +1,7 @@
 use crate::error::SettlementError;
 use crate::events::{emit_front_running_detected, FrontRunningDetectedEvent};
 use crate::types::Bid;
-use soroban_sdk::{contracttype, symbol_short, Address, Bytes, Env, Symbol, Vec};
+use soroban_sdk::{contracttype, symbol_short, Address, Bytes, Env, Symbol, Vec, xdr::ToXdr};
 
 // Storage keys
 const COMMITMENT_STORAGE: Symbol = symbol_short!("commits");
@@ -35,7 +35,7 @@ impl CommitRevealScheme {
         preimage.append(salt);
 
         // Hash with SHA-256 for a collision-resistant commitment
-        env.crypto().sha256(&preimage)
+        env.crypto().sha256(&preimage).into()
     }
 
     /// Store a sealed-bid commitment
