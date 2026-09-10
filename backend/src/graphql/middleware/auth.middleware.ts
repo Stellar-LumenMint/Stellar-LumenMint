@@ -27,14 +27,23 @@ export class GraphqlAuthMiddleware {
         username?: string;
         email?: string;
         walletAddress?: string;
+        role?: string;
         type?: string;
       }>(token);
+
+      // Reject refresh tokens on GraphQL: only access tokens may act as
+      // credentials for protected operations. The GraphQL gateway shares
+      // the JWT secret with the REST API, so this mirrors jwt.strategy.
+      if (payload.type && payload.type !== 'access') {
+        return undefined;
+      }
 
       return {
         userId: payload.sub,
         username: payload.username,
         email: payload.email,
         walletAddress: payload.walletAddress,
+        role: payload.role,
         tokenType: payload.type,
       };
     } catch (error) {
