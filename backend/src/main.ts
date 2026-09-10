@@ -36,6 +36,9 @@ import {
   logRejectedOrigin,
   CorsConfig,
 } from './config/cors.config';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
+import { ResponseTimeMiddleware } from './common/middleware/response-time.middleware';
+import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
 
 /**
  * Get CORS configuration based on environment
@@ -199,6 +202,13 @@ async function bootstrapRestApi() {
   // Apply branding and CORS middleware
   app.use(brandResponse);
   app.use(createCorsMiddleware());
+
+  // Request tracing, latency instrumentation, and security headers were
+  // implemented as middleware classes but never registered, so requests
+  // carried no correlation ID and responses lacked the OWASP header set.
+  app.use(new CorrelationIdMiddleware(app.get(PinoLogger)));
+  app.use(new ResponseTimeMiddleware());
+  app.use(new SecurityHeadersMiddleware());
 
   // Also enable Cors for preflight handling
   app.enableCors({
