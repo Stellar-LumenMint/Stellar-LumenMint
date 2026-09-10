@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, type EntityManager } from 'typeorm';
 import { MarketplaceSettlementClient } from '../modules/stellar/marketplace-settlement.client';
 import { SystemSettings } from './system-settings.entity';
 import { ContractEvent } from './entities/contract-event.entity';
@@ -10,6 +10,19 @@ import { ContractEventDlq } from './entities/contract-event-dlq.entity';
 /** SystemSettings key used to persist the contract-event cursor. */
 export const LAST_CONTRACT_EVENT_LEDGER_KEY =
   'last_contract_event_indexed_ledger';
+
+/**
+ * Atomic, monotonic cursor update: inserts the checkpoint or bumps it only
+ * when the new ledger is strictly higher. Doing the comparison in SQL (rather
+ * than read-then-write) means two concurrent indexers can never move the
+ * cursor backwards, and a replay after a crash is idempotent.
+ */
+export const ADVANCE_CURSOR_SQL = `
+INSERT INTO system_settings (key, value)
+VALUES ($1, $2)
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+WHERE CAST(system_settings.value AS BIGINT) < CAST(EXCLUDED.value AS BIGINT)
+`;
 
 @Injectable()
 export class ContractEventIndexerJob {
@@ -47,7 +60,10 @@ export class ContractEventIndexerJob {
     }
 
     try {
-      await this.persistEvents(events);
+      // Events and the cursor checkpoint commit in one transaction, so a
+      // crash can only lose the whole batch (which is then re-fetched), never
+      // record a cursor past events that were not stored.
+      await this.persistEvents(events, latestLedger);
     } catch (err) {
       this.logger.error(
         `Failed to persist ${events.length} event(s). Cursor NOT advanced.`,
@@ -55,8 +71,6 @@ export class ContractEventIndexerJob {
       );
       return;
     }
-
-    await this.advanceCursor(latestLedger);
 
     this.logger.log(
       `Contract event indexing completed. ` +
@@ -74,27 +88,29 @@ export class ContractEventIndexerJob {
   }
 
   async advanceCursor(newLedger: number): Promise<void> {
-    const current = await this.loadCursor();
-    if (newLedger <= current) {
-      this.logger.debug(
-        `Cursor not advanced: newLedger=${newLedger} <= current=${current}`,
-      );
-      return;
-    }
-    await this.settingsRepo.save({
-      key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-      value: String(newLedger),
-    });
-    this.logger.debug(`Cursor advanced: ${current} -> ${newLedger}`);
+    await this.advanceCursorWith(this.dataSource, newLedger);
+  }
+
+  /**
+   * Advances the cursor using an explicit runner (the DataSource, or a
+   * transaction manager so the checkpoint shares the events' transaction).
+   */
+  private async advanceCursorWith(
+    runner: Pick<EntityManager, 'query'>,
+    newLedger: number,
+  ): Promise<void> {
+    await runner.query(ADVANCE_CURSOR_SQL, [
+      LAST_CONTRACT_EVENT_LEDGER_KEY,
+      String(newLedger),
+    ]);
   }
 
   // Event persistence
 
   private async persistEvents(
     events: Record<string, unknown>[],
+    latestLedger: number,
   ): Promise<void> {
-    if (events.length === 0) return;
-
     let persistedCount = 0;
     let duplicateCount = 0;
     let failedCount = 0;
@@ -184,6 +200,10 @@ export class ContractEventIndexerJob {
           );
         }
       }
+
+      // Persist the checkpoint inside the same transaction as the events it
+      // covers, keeping the cursor and the stored data consistent.
+      await this.advanceCursorWith(manager, latestLedger);
     });
 
     this.logger.log(

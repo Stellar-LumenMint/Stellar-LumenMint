@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import {
+  ADVANCE_CURSOR_SQL,
   ContractEventIndexerJob,
   LAST_CONTRACT_EVENT_LEDGER_KEY,
 } from './contract-event-indexer.job';
@@ -15,6 +16,14 @@ describe('ContractEventIndexerJob', () => {
     Pick<Repository<SystemSettings>, 'findOne' | 'save'>
   >;
   let settlementClient: { getEventsSince: jest.Mock };
+  let dataSource: { transaction: jest.Mock; query: jest.Mock };
+  let manager: {
+    create: jest.Mock;
+    createQueryBuilder: jest.Mock;
+    save: jest.Mock;
+    query: jest.Mock;
+  };
+  let insertExecute: jest.Mock;
 
   beforeEach(async () => {
     settingsRepo = {
@@ -24,6 +33,27 @@ describe('ContractEventIndexerJob', () => {
 
     settlementClient = {
       getEventsSince: jest.fn(),
+    };
+
+    insertExecute = jest.fn().mockResolvedValue({ identifiers: [{}] });
+    manager = {
+      create: jest.fn((_entity: unknown, input: unknown) => input),
+      createQueryBuilder: jest.fn(() => ({
+        insert: jest.fn().mockReturnThis(),
+        into: jest.fn().mockReturnThis(),
+        values: jest.fn().mockReturnThis(),
+        orIgnore: jest.fn().mockReturnThis(),
+        execute: insertExecute,
+      })),
+      save: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn().mockResolvedValue([]),
+    };
+
+    dataSource = {
+      transaction: jest.fn(async (cb: (m: unknown) => Promise<void>) =>
+        cb(manager),
+      ),
+      query: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -37,14 +67,8 @@ describe('ContractEventIndexerJob', () => {
           provide: getRepositoryToken(ContractEvent),
           useValue: { create: jest.fn() },
         },
-        {
-          provide: DataSource,
-          useValue: { transaction: jest.fn() },
-        },
-        {
-          provide: MarketplaceSettlementClient,
-          useValue: settlementClient,
-        },
+        { provide: DataSource, useValue: dataSource },
+        { provide: MarketplaceSettlementClient, useValue: settlementClient },
       ],
     }).compile();
 
@@ -54,121 +78,99 @@ describe('ContractEventIndexerJob', () => {
   // loadCursor
 
   describe('loadCursor', () => {
-    it('should return 0 when no cursor is stored', async () => {
+    it('returns 0 when no cursor is stored', async () => {
       settingsRepo.findOne.mockResolvedValue(null);
 
-      const result = await job.loadCursor();
-
-      expect(result).toBe(0);
+      await expect(job.loadCursor()).resolves.toBe(0);
       expect(settingsRepo.findOne).toHaveBeenCalledWith({
         where: { key: LAST_CONTRACT_EVENT_LEDGER_KEY },
       });
     });
 
-    it('should return the stored ledger value', async () => {
+    it('returns the stored ledger value', async () => {
       settingsRepo.findOne.mockResolvedValue({
         key: LAST_CONTRACT_EVENT_LEDGER_KEY,
         value: '42',
       });
 
-      const result = await job.loadCursor();
-
-      expect(result).toBe(42);
+      await expect(job.loadCursor()).resolves.toBe(42);
     });
   });
 
-  // advanceCursor — monotonic guard
+  // advanceCursor — atomic monotonic upsert
 
   describe('advanceCursor', () => {
-    it('should save when newLedger > current', async () => {
-      settingsRepo.findOne.mockResolvedValue({
-        key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-        value: '10',
-      });
-
+    it('runs the atomic monotonic upsert', async () => {
       await job.advanceCursor(20);
 
-      expect(settingsRepo.save).toHaveBeenCalledWith({
-        key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-        value: '20',
-      });
+      expect(dataSource.query).toHaveBeenCalledWith(ADVANCE_CURSOR_SQL, [
+        LAST_CONTRACT_EVENT_LEDGER_KEY,
+        '20',
+      ]);
     });
 
-    it('should NOT save when newLedger === current', async () => {
-      settingsRepo.findOne.mockResolvedValue({
-        key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-        value: '10',
-      });
+    it('never issues a read-then-write sequence', async () => {
+      await job.advanceCursor(20);
 
-      await job.advanceCursor(10);
-
+      // Monotonicity is enforced in SQL, so no read is required first.
+      expect(settingsRepo.findOne).not.toHaveBeenCalled();
       expect(settingsRepo.save).not.toHaveBeenCalled();
-    });
-
-    it('should NOT save when newLedger < current', async () => {
-      settingsRepo.findOne.mockResolvedValue({
-        key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-        value: '10',
-      });
-
-      await job.advanceCursor(5);
-
-      expect(settingsRepo.save).not.toHaveBeenCalled();
-    });
-
-    it('should save when no cursor exists yet (current = 0) and newLedger > 0', async () => {
-      settingsRepo.findOne.mockResolvedValue(null);
-
-      await job.advanceCursor(1);
-
-      expect(settingsRepo.save).toHaveBeenCalledWith({
-        key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-        value: '1',
-      });
     });
   });
 
-  // handleIndexing — full flow
+  // handleIndexing — checkpointing flow
 
   describe('handleIndexing', () => {
-    it('should bootstrap from 0, fetch events, and advance cursor', async () => {
-      // No cursor in DB
+    it('checkpoints the cursor inside the same transaction as the events', async () => {
       settingsRepo.findOne.mockResolvedValue(null);
       settlementClient.getEventsSince.mockResolvedValue({
-        events: [],
+        events: [
+          {
+            contractId: 'contract-1',
+            ledger: 100,
+            txHash: 'tx-1',
+            eventIndex: 0,
+            type: 'bid',
+          },
+        ],
         latestLedger: 100,
       });
 
       await job.handleIndexing();
 
       expect(settlementClient.getEventsSince).toHaveBeenCalledWith(0);
-      // advanceCursor calls loadCursor again, then saves
-      expect(settingsRepo.save).toHaveBeenCalledWith({
-        key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-        value: '100',
-      });
+      expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(insertExecute).toHaveBeenCalledTimes(1);
+      // Cursor advanced through the transaction manager, not the DataSource.
+      expect(manager.query).toHaveBeenCalledWith(ADVANCE_CURSOR_SQL, [
+        LAST_CONTRACT_EVENT_LEDGER_KEY,
+        '100',
+      ]);
+      expect(dataSource.query).not.toHaveBeenCalled();
     });
 
-    it('should resume from stored cursor', async () => {
+    it('resumes from the stored cursor', async () => {
       settingsRepo.findOne.mockResolvedValue({
         key: LAST_CONTRACT_EVENT_LEDGER_KEY,
         value: '50',
       });
       settlementClient.getEventsSince.mockResolvedValue({
-        events: [{ type: 'bid' }],
+        events: [],
         latestLedger: 75,
       });
 
       await job.handleIndexing();
 
       expect(settlementClient.getEventsSince).toHaveBeenCalledWith(50);
-      expect(settingsRepo.save).toHaveBeenCalledWith({
-        key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-        value: '75',
-      });
+      // Even an empty batch checkpoints, so an idle chain does not keep
+      // re-scanning the same range.
+      expect(manager.query).toHaveBeenCalledWith(ADVANCE_CURSOR_SQL, [
+        LAST_CONTRACT_EVENT_LEDGER_KEY,
+        '75',
+      ]);
     });
 
-    it('should NOT advance cursor when event fetching fails', async () => {
+    it('does not checkpoint when fetching events fails', async () => {
       settingsRepo.findOne.mockResolvedValue(null);
       settlementClient.getEventsSince.mockRejectedValue(
         new Error('RPC timeout'),
@@ -176,22 +178,20 @@ describe('ContractEventIndexerJob', () => {
 
       await job.handleIndexing();
 
-      expect(settingsRepo.save).not.toHaveBeenCalled();
+      expect(dataSource.transaction).not.toHaveBeenCalled();
+      expect(dataSource.query).not.toHaveBeenCalled();
     });
 
-    it('should NOT advance cursor when latestLedger <= current', async () => {
-      settingsRepo.findOne.mockResolvedValue({
-        key: LAST_CONTRACT_EVENT_LEDGER_KEY,
-        value: '100',
-      });
+    it('does not checkpoint when the transaction rolls back', async () => {
+      settingsRepo.findOne.mockResolvedValue(null);
       settlementClient.getEventsSince.mockResolvedValue({
         events: [],
         latestLedger: 100,
       });
+      manager.query.mockRejectedValue(new Error('checkpoint failed'));
 
-      await job.handleIndexing();
-
-      expect(settingsRepo.save).not.toHaveBeenCalled();
+      await expect(job.handleIndexing()).resolves.toBeUndefined();
+      expect(dataSource.query).not.toHaveBeenCalled();
     });
   });
 });
