@@ -175,9 +175,19 @@ export class NotificationsGateway
         sub: string;
         username?: string;
         email?: string;
+        type?: string;
       }>(token, {
         secret: this.jwtSecret,
       });
+
+      // Only access tokens may open a socket. Refresh tokens share the
+      // signing secret and are meant solely for the refresh endpoint;
+      // accepting them here would let a long-lived refresh token open a
+      // real-time feed indefinitely.
+      if (payload.type && payload.type !== 'access') {
+        this.rejectClient(client, 'invalid_token_type');
+        return;
+      }
 
       const user: AuthenticatedSocketUser = {
         userId: payload.sub,

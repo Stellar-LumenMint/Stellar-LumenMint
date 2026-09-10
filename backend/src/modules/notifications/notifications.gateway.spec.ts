@@ -7,6 +7,7 @@ import { NotificationsService } from './notifications.service';
 describe('NotificationsGateway', () => {
   let gateway: NotificationsGateway;
   let notificationsService: jest.Mocked<Partial<NotificationsService>>;
+  let jwtService: { verify: jest.Mock };
 
   beforeEach(async () => {
     const mockService = {
@@ -15,13 +16,15 @@ describe('NotificationsGateway', () => {
       markAsRead: jest.fn(),
     };
 
+    jwtService = { verify: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationsGateway,
         { provide: NotificationsService, useValue: mockService },
         {
           provide: JwtService,
-          useValue: { verifyAsync: jest.fn() },
+          useValue: jwtService,
         },
         {
           provide: ConfigService,
@@ -58,5 +61,51 @@ describe('NotificationsGateway', () => {
   it('should handle bid notifications', () => {
     // Gateway should expose emit methods for bid updates
     expect(gateway).toBeDefined();
+  });
+
+  it('rejects sockets authenticated with a refresh token', () => {
+    jwtService.verify.mockReturnValue({
+      sub: 'user-1',
+      username: 'alice',
+      type: 'refresh',
+    });
+    const rejectClient = jest
+      .spyOn(gateway as unknown as { rejectClient: (c: unknown, r: string) => void }, 'rejectClient')
+      .mockImplementation(() => undefined);
+    const client = {
+      id: 'socket-1',
+      handshake: { auth: { token: 'refresh-token' } },
+      data: {},
+      join: jest.fn(),
+      emit: jest.fn(),
+    } as unknown as import('socket.io').Socket;
+
+    gateway.handleConnection(client);
+
+    expect(rejectClient).toHaveBeenCalledWith(client, 'invalid_token_type');
+    expect(client.join).not.toHaveBeenCalled();
+  });
+
+  it('accepts sockets authenticated with an access token', () => {
+    jwtService.verify.mockReturnValue({
+      sub: 'user-1',
+      username: 'alice',
+      type: 'access',
+    });
+    const rejectClient = jest
+      .spyOn(gateway as unknown as { rejectClient: (c: unknown, r: string) => void }, 'rejectClient')
+      .mockImplementation(() => undefined);
+    const client = {
+      id: 'socket-2',
+      handshake: { auth: { token: 'access-token' } },
+      data: {},
+      join: jest.fn(),
+      emit: jest.fn(),
+    } as unknown as import('socket.io').Socket;
+
+    gateway.handleConnection(client);
+
+    expect(rejectClient).not.toHaveBeenCalled();
+    expect(client.join).toHaveBeenCalled();
   });
 });
