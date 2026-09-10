@@ -4,8 +4,8 @@ use crate::storage::DataKey;
 use crate::types::{CollectionConfig, CollectionInfo};
 use crate::version;
 use soroban_sdk::{
-    Address, BytesN, Env, IntoVal, String, Val, Vec, contract, contractimpl, panic_with_error,
-    token,
+    contract, contractimpl, panic_with_error, token, Address, BytesN, Env, IntoVal, String, Val,
+    Vec,
 };
 
 #[contract]

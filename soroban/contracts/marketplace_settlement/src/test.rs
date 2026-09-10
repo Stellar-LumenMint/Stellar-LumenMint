@@ -56,7 +56,6 @@ fn mk_asset(env: &Env) -> Asset {
     }
 }
 
-
 fn default_fee_config(env: &Env, fee_recipient: Address) -> FeeConfig {
     FeeConfig {
         platform_fee_bps: 250,
@@ -541,7 +540,9 @@ fn test_admin_can_toggle_emergency_withdrawal() {
 
     // Non-admin cannot toggle the capability.
     let attacker = Address::generate(&env);
-    assert!(client.try_set_emergency_withdrawal(&attacker, &true).is_err());
+    assert!(client
+        .try_set_emergency_withdrawal(&attacker, &true)
+        .is_err());
 }
 
 #[test]
