@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { 
   ArrowLeft, 
@@ -74,7 +74,15 @@ export default function NFTDetailClient({
   const t = useTranslations("common");
 
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+  const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transferHistoryPage, setTransferHistoryPage] = useState(1);
+
+  // Clear the copy-confirmation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+    };
+  }, []);
 
   // Fetch NFT data
   const {
@@ -116,7 +124,8 @@ export default function NFTDetailClient({
     try {
       await navigator.clipboard.writeText(address);
       setCopiedAddress(address);
-      setTimeout(() => setCopiedAddress(null), 2000);
+      if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+      copyResetTimer.current = setTimeout(() => setCopiedAddress(null), 2000);
     } catch (error) {
       console.error("Failed to copy address:", error);
     }
