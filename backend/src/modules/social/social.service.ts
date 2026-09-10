@@ -62,7 +62,26 @@ export class SocialService {
       followingId,
     });
 
-    await this.followRepository.save(follow);
+    try {
+      await this.followRepository.save(follow);
+    } catch (error) {
+      // Two rapid taps can both pass the findOne check above; the unique
+      // constraint on (followerId, followingId) makes the second insert
+      // fail. Treat that race as idempotent: return the existing row
+      // instead of surfacing a 500 to the double-tapping client.
+      if (this.isUniqueViolation(error)) {
+        const existing = await this.followRepository.findOne({
+          where: { followerId, followingId },
+        });
+        if (existing) {
+          this.logger.debug(
+            `Follow for ${followerId}->${followingId} already exists (race); returning existing`,
+          );
+          return existing;
+        }
+      }
+      throw error;
+    }
 
     // Create activity for following
     await this.createActivity({
@@ -77,6 +96,16 @@ export class SocialService {
 
     this.logger.log(`User ${followerId} followed ${followingId}`);
     return follow;
+  }
+
+  private isUniqueViolation(error: unknown): boolean {
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? String((error as { code?: unknown }).code)
+        : '';
+    // PostgreSQL unique-violation codes (23505) plus the TypeORM/Driver
+    // variants that surface as ER_DUP_ENTRY (MySQL) or constraint names.
+    return code === '23505' || code === 'ER_DUP_ENTRY';
   }
 
   /**

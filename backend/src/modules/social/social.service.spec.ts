@@ -99,6 +99,30 @@ describe('SocialService', () => {
       expect(followRepository.save).toHaveBeenCalled();
       expect(activityRepository.save).toHaveBeenCalled();
     });
+
+    it('returns the existing follow when a unique-violation race occurs', async () => {
+      userRepository.findOne.mockResolvedValue({ id: 'user-2' } as User);
+      followRepository.findOne.mockResolvedValueOnce(null); // pre-check passes
+      followRepository.create.mockReturnValue({
+        followerId: 'user-1',
+        followingId: 'user-2',
+      } as Follow);
+      // Concurrent insert hits the unique constraint
+      followRepository.save.mockRejectedValueOnce({
+        code: '23505',
+        message: 'duplicate key value violates unique constraint',
+      });
+      followRepository.findOne.mockResolvedValueOnce({
+        id: 'f-race',
+        followerId: 'user-1',
+        followingId: 'user-2',
+      } as Follow);
+
+      const result = await service.followUser('user-1', 'user-2');
+
+      expect(result.id).toBe('f-race');
+      expect(activityRepository.save).not.toHaveBeenCalled();
+    });
   });
 
   describe('unfollowUser', () => {
