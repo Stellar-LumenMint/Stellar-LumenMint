@@ -45,6 +45,16 @@ export function BidModal({
     }
   }, [isOpen]);
 
+  // Close on Escape for keyboard users
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   const handleSubmit = useCallback(async () => {
     if (!connected) {
       showError('Please connect your wallet to place a bid');
@@ -84,9 +94,15 @@ export function BidModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Place bid"
+      aria-busy={loading}
+    >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
 
       {/* Modal */}
       <div className="relative z-10 w-full max-w-md mx-4 bg-[#1E1A45] rounded-2xl border border-purple-900/30 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -98,6 +114,7 @@ export function BidModal({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close bid dialog"
             className="p-1 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
           >
             <X className="h-5 w-5" />
