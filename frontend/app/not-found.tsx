@@ -16,7 +16,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 
 const NotFound = () => {
   const isMobile = useMobile();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   return (
     <div className="min-h-screen bg-[#0D1117] text-white relative contain-layout">
@@ -65,7 +65,7 @@ const NotFound = () => {
                   >
                     {t("notFound.errorCode")}
                   </p>
-                  <Link href="/en">
+                  <Link href={`/${locale}`}>
                     <Button
                       size={isMobile ? "sm" : "lg"}
                       variant="cosmic"
