@@ -10,9 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
     platform: string;
   }>;
   prompt(): Promise<void>;
-}
-
-export default function InstallPrompt() {
+}export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -24,13 +22,16 @@ export default function InstallPrompt() {
       return;
     }
 
+    let showTimer: ReturnType<typeof setTimeout> | null = null;
+
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Show install prompt after a delay
-      setTimeout(() => {
+      // Show install prompt after a delay (cleaned up on unmount)
+      if (showTimer) clearTimeout(showTimer);
+      showTimer = setTimeout(() => {
         setShowInstallPrompt(true);
       }, 3000);
     };
@@ -40,14 +41,26 @@ export default function InstallPrompt() {
       setIsInstalled(true);
       setShowInstallPrompt(false);
       setDeferredPrompt(null);
+      if (showTimer) clearTimeout(showTimer);
+    };
+
+    const handleVisibilityChange = () => {
+      // Don't interrupt the user if they navigate away before the prompt
+      // would have appeared.
+      if (document.hidden && showTimer) {
+        clearTimeout(showTimer);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      if (showTimer) clearTimeout(showTimer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -62,7 +75,7 @@ export default function InstallPrompt() {
     } else {
       console.log('User dismissed the install prompt');
     }
-    
+
     setDeferredPrompt(null);
     setShowInstallPrompt(false);
   };
