@@ -112,15 +112,16 @@ describe('AuthService', () => {
 
   it('rejects invalid signatures during wallet verification', async () => {
     stellarStrategy.isValidPublicKey.mockReturnValue(true);
-    walletSessionRepository.findOne.mockResolvedValue({
-      id: 'session-1',
-      walletAddress: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
+    stellarStrategy.verifySignedMessage.mockReturnValue(false);
+    // Challenges live in the shared Redis cache, not the WalletSession table.
+    cacheManager.get.mockResolvedValue({
       nonce: 'nonce-1',
       challengeMessage: 'test-message',
-      nonceExpiresAt: new Date(Date.now() + 60_000),
-      consumedAt: null,
+      walletAddress: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
+      walletProvider: 'freighter',
+      issuedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
     });
-    stellarStrategy.verifySignedMessage.mockReturnValue(false);
 
     await expect(
       service.verifyWalletChallenge({
@@ -130,6 +131,11 @@ describe('AuthService', () => {
         signature: Buffer.from('invalid').toString('base64'),
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(stellarStrategy.verifySignedMessage).toHaveBeenCalledWith(
+      'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
+      'test-message',
+      Buffer.from('invalid').toString('base64'),
+    );
   });
 
   it('verifies wallet challenge and returns token pair', async () => {
