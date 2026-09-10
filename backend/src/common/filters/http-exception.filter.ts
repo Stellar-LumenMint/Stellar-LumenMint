@@ -29,14 +29,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
 
+    // Stable, locale-neutral messages. Never echo internal exception details
+    // for 5xx responses — they can leak stack traces or host paths to clients.
+    // The full error is still recorded in the server logs below.
     const errorResponse: ErrorResponse = {
       statusCode: status,
-      message: 'Error en la solicitud',
+      message:
+        status >= 500 ? 'Internal server error' : 'Request failed',
       timestamp: new Date().toISOString(),
       path: request.url,
     };
 
-    // Manejo especial para errores de validación (BadRequestException)
+    // Special handling for class-validator errors (BadRequestException)
     if (
       status === 400 &&
       typeof exceptionResponse === 'object' &&
@@ -44,8 +48,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     ) {
       const responseObj = exceptionResponse as { message?: string | string[] };
       if (responseObj.message && Array.isArray(responseObj.message)) {
-        // Formatear errores de validación
-        errorResponse.message = 'Error de validación';
+        errorResponse.message = 'Validation failed';
         errorResponse.errors = this.formatValidationErrors(responseObj.message);
       } else if (typeof responseObj.message === 'string') {
         errorResponse.message = responseObj.message;
@@ -55,9 +58,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       exceptionResponse !== null
     ) {
       const responseObj = exceptionResponse as { message?: string };
-      errorResponse.message = responseObj.message || exception.message;
+      errorResponse.message =
+        responseObj.message ||
+        (status >= 500 ? 'Internal server error' : exception.message);
     } else {
-      errorResponse.message = exception.message;
+      errorResponse.message =
+        status >= 500 ? 'Internal server error' : exception.message;
     }
 
     const logContext = {
