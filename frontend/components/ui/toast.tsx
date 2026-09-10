@@ -46,18 +46,21 @@ export function Toast() {
   return (
     <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
       <div
+        role={toast.type === 'error' ? 'alert' : 'status'}
+        aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
         className={cn(
           'flex items-center gap-3 p-4 rounded-lg border backdrop-blur-sm max-w-sm shadow-lg',
           colors[toast.type]
         )}
       >
-        <Icon className={cn('h-5 w-5 flex-shrink-0', iconColors[toast.type])} />
+        <Icon aria-hidden="true" className={cn('h-5 w-5 flex-shrink-0', iconColors[toast.type])} />
         <p className="text-sm font-medium flex-1">{toast.message}</p>
         <button
           onClick={hideToast}
+          aria-label="Dismiss notification"
           className="flex-shrink-0 p-1 rounded-full hover:bg-white/10 transition-colors"
         >
-          <X className="h-4 w-4" />
+          <X aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
     </div>
