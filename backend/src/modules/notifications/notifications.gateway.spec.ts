@@ -1,4 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { NotificationsGateway } from './notifications.gateway';
 import { NotificationsService } from './notifications.service';
 
@@ -17,6 +19,14 @@ describe('NotificationsGateway', () => {
       providers: [
         NotificationsGateway,
         { provide: NotificationsService, useValue: mockService },
+        {
+          provide: JwtService,
+          useValue: { verifyAsync: jest.fn() },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn(() => undefined) },
+        },
       ],
     }).compile();
 
@@ -29,7 +39,20 @@ describe('NotificationsGateway', () => {
   });
 
   it('should have a WebSocket server instance', () => {
-    expect(gateway.server).toBeDefined();
+    // @WebSocketServer is populated by Socket.IO at runtime; simulate it.
+    const mockServer = {
+      on: jest.fn(),
+      engine: {
+        on: jest.fn(),
+        opts: {},
+      },
+    };
+    (gateway as unknown as { server: unknown }).server = mockServer;
+
+    gateway.afterInit();
+
+    expect(gateway.getServer()).toBe(mockServer);
+    expect(mockServer.on).toHaveBeenCalledWith('connection_error', expect.any(Function));
   });
 
   it('should handle bid notifications', () => {
