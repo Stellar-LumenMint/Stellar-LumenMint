@@ -2,16 +2,43 @@
 # Builds and deploys all Stellar-LumenMint Stellar contracts, recording each deployment
 # in deployments/manifest.json.
 # Usage: NETWORK=testnet SOURCE=mykey ./scripts/deploy_all.sh
+#        NETWORK=mainnet MAINNET_CONFIRM=yes SOURCE=mykey ./scripts/deploy_all.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
+    # Source .env safely (set -a exports every assignment; plain `xargs`
+    # would split values containing spaces and mishandle quoted strings).
+    set -a
+    # shellcheck disable=SC1091
+    . ./.env
+    set +a
 fi
 
-NETWORK=${NETWORK:-testnet}
-SOURCE=${SOURCE:-secret}
+# The network must be explicit: defaulting to testnet risks an accidental
+# mainnet deploy the moment someone forgets the env var.
+NETWORK="${NETWORK:-}"
+SOURCE="${SOURCE:-secret}"
+
+if [ -z "$NETWORK" ]; then
+    echo "ERROR: NETWORK must be set explicitly (testnet | mainnet | local)." >&2
+    echo "  Example: NETWORK=testnet SOURCE=mykey ./scripts/deploy_all.sh" >&2
+    exit 1
+fi
+
+case "$NETWORK" in
+    testnet | mainnet | local) ;;
+    *)
+        echo "ERROR: unknown NETWORK '$NETWORK' (expected testnet | mainnet | local)" >&2
+        exit 1
+        ;;
+esac
+
+if [ "$NETWORK" = "mainnet" ] && [ "${MAINNET_CONFIRM:-}" != "yes" ]; then
+    echo "ERROR: deploying to mainnet requires MAINNET_CONFIRM=yes" >&2
+    exit 1
+fi
 
 export GIT_COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 export BUILD_TIMESTAMP=$(date -u +%s)
