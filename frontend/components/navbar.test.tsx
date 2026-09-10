@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "./navbar";
 import "@testing-library/jest-dom";
@@ -120,7 +120,9 @@ describe("Navbar", () => {
 
     it("renders wallet connector when not authenticated", () => {
       render(<Navbar />);
-      expect(screen.getByTestId("wallet-connector")).toBeInTheDocument();
+      // The connector appears in both the desktop header and the mobile
+      // drawer (jsdom renders all responsive variants).
+      expect(screen.getAllByTestId("wallet-connector").length).toBeGreaterThan(0);
     });
 
     it("renders user dropdown when authenticated", () => {
@@ -157,11 +159,12 @@ describe("Navbar", () => {
       render(<Navbar />);
       fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
 
-      const closeButton = screen.getByRole("button", { name: /close navigation menu/i });
+      const drawer = screen.getByRole("dialog", { name: /mobile navigation/i });
+      const closeButton = within(drawer).getByRole("button", { name: /close navigation menu/i });
       fireEvent.click(closeButton);
 
       await waitFor(() => {
-        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+        expect(screen.queryByRole("dialog", { name: /mobile navigation/i })).not.toBeInTheDocument();
       });
     });
 
@@ -190,7 +193,9 @@ describe("Navbar", () => {
       render(<Navbar />);
       const hamburger = screen.getByRole("button", { name: /open navigation menu/i });
       fireEvent.click(hamburger);
-      fireEvent.click(screen.getByRole("button", { name: /close navigation menu/i }));
+
+      const drawer = screen.getByRole("dialog", { name: /mobile navigation/i });
+      fireEvent.click(within(drawer).getByRole("button", { name: /close navigation menu/i }));
 
       await waitFor(() => {
         expect(hamburger).toHaveAttribute("aria-expanded", "false");
@@ -206,7 +211,9 @@ describe("Navbar", () => {
     it("restores body scroll when mobile menu closes", async () => {
       render(<Navbar />);
       fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
-      fireEvent.click(screen.getByRole("button", { name: /close navigation menu/i }));
+
+      const drawer = screen.getByRole("dialog", { name: /mobile navigation/i });
+      fireEvent.click(within(drawer).getByRole("button", { name: /close navigation menu/i }));
 
       await waitFor(() => {
         expect(document.body.style.overflow).not.toBe("hidden");
@@ -229,20 +236,22 @@ describe("Navbar", () => {
       });
     });
 
-    it("traps focus within the mobile drawer (Tab cycles)", () => {
+    it("traps focus within the mobile drawer (Tab cycles)", async () => {
       render(<Navbar />);
       fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
 
-      const drawer = screen.getByRole("dialog");
-      // Get all focusable elements
+      const drawer = screen.getByRole("dialog", { name: /mobile navigation/i });
+      // Get all focusable elements inside the drawer
       const focusable = drawer.querySelectorAll<HTMLElement>(
         'a[href], button:not([disabled]), input:not([disabled])'
       );
       expect(focusable.length).toBeGreaterThan(0);
 
-      // Focus should be on close button initially
-      const closeBtn = screen.getByRole("button", { name: /close navigation menu/i });
-      expect(document.activeElement).toBe(closeBtn);
+      // Focus moves to the close button on the next animation frame
+      await waitFor(() => {
+        const closeBtn = within(drawer).getByRole("button", { name: /close navigation menu/i });
+        expect(document.activeElement).toBe(closeBtn);
+      });
     });
   });
 
@@ -284,9 +293,10 @@ describe("Navbar", () => {
       render(<Navbar />);
       fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
 
-      // Essential nav links should be present
-      expect(screen.getByText("Home")).toBeInTheDocument();
-      expect(screen.getByText("Explore")).toBeInTheDocument();
+      const drawer = screen.getByRole("dialog", { name: /mobile navigation/i });
+      // Essential nav links should be present inside the drawer
+      expect(within(drawer).getByText("Home")).toBeInTheDocument();
+      expect(within(drawer).getByText("Explore")).toBeInTheDocument();
     });
   });
 });
