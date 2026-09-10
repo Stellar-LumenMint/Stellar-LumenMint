@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Wallet, ChevronDown, LogOut, Copy, ExternalLink, CheckCircle2 } from "lucide-react";
 import { useWalletStore } from "@/lib/stores/walletStore";
+import { defaultNetwork } from "@/lib/stellar/client";
 import { useStellarWallet } from "./hooks/useStellarWallet";
 import { WalletModal } from "./WalletModal";
 import { WalletNetworkStatus } from "./WalletNetworkStatus";
@@ -92,7 +93,7 @@ export function WalletConnector({ forceVisible = false, fullWidth = false }: Wal
         <div className="px-4 py-3 border-b border-purple-500/10" role="presentation">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-purple-300 uppercase tracking-wider">{provider}</span>
-            <WalletNetworkStatus network={network} />
+            <WalletNetworkStatus network={network} expectedNetwork={defaultNetwork} />
           </div>
           <p className="text-xs font-mono text-gray-300 truncate">{address}</p>
         </div>
