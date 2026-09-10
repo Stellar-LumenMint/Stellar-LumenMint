@@ -6,16 +6,22 @@ interface ModernSearchInputProps {
   placeholder?: string;
   className?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** Accessible name for the search field (defaults to the placeholder) */
+  ariaLabel?: string;
 }
 
 export function ModernSearchInput({
   placeholder = "Search",
   className = "",
   onChange,
+  ariaLabel,
 }: ModernSearchInputProps) {
   return (
     <div className={`${className}`}>
       <div className="group flex items-center relative max-w-[190px]">
+        <label htmlFor="modern-search" className="sr-only">
+          {ariaLabel || placeholder}
+        </label>
         <svg
           className="absolute left-4 w-4 h-4 fill-[#9e9ea7]"
           aria-hidden="true"
@@ -26,6 +32,7 @@ export function ModernSearchInput({
           </g>
         </svg>
         <input
+          id="modern-search"
           placeholder={placeholder}
           type="search"
           className="w-full h-10 leading-7 py-0 px-4 pl-10 border-2 border-transparent rounded-lg outline-none bg-[#f3f3f4] text-[#0d0c22] transition-all duration-300 ease-in-out placeholder:text-[#9e9ea7] focus:outline-none focus:border-[#7748ff] focus:bg-white focus:shadow-[0_0_0_4px_rgba(119,72,255,0.1)] hover:outline-none hover:border-[#7748ff] hover:bg-white hover:shadow-[0_0_0_4px_rgba(119,72,255,0.1)]"
