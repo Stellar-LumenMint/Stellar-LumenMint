@@ -1,6 +1,6 @@
 use crate::types::{CollectionConfig, RoyaltyInfo, TokenAttribute};
 use crate::{NftContract, NftContractClient};
-use soroban_sdk::{Address, Env, String, Vec, testutils::Address as _};
+use soroban_sdk::{testutils::Address as _, testutils::Ledger, Address, Env, String, Vec};
 
 fn make_config(env: &Env) -> CollectionConfig {
     CollectionConfig {
@@ -764,6 +764,9 @@ fn test_mint_starts_with_zero_transfer_count() {
 fn test_transfer_increments_transfer_count() {
     let env = Env::default();
     env.mock_all_auths();
+    // The default test ledger timestamp is 0; transfers record the ledger
+    // timestamp as last_transfer_at, so advance it to a realistic value.
+    env.ledger().set_timestamp(1_700_000_000);
     let (client, admin) = setup(&env);
 
     let user1 = Address::generate(&env);
@@ -793,6 +796,9 @@ fn test_transfer_increments_transfer_count() {
 fn test_batch_transfer_increments_each_token() {
     let env = Env::default();
     env.mock_all_auths();
+    // The default test ledger timestamp is 0; transfers record the ledger
+    // timestamp as last_transfer_at, so advance it to a realistic value.
+    env.ledger().set_timestamp(1_700_000_000);
     let (client, admin) = setup(&env);
 
     let user1 = Address::generate(&env);
@@ -825,6 +831,9 @@ fn test_batch_transfer_increments_each_token() {
 fn test_transfer_via_operator_increments_count() {
     let env = Env::default();
     env.mock_all_auths();
+    // The default test ledger timestamp is 0; transfers record the ledger
+    // timestamp as last_transfer_at, so advance it to a realistic value.
+    env.ledger().set_timestamp(1_700_000_000);
     let (client, admin) = setup(&env);
 
     let user1 = Address::generate(&env);
@@ -875,9 +884,11 @@ fn test_transfer_count_survives_upgrade() {
 
     let data_before = client.token_metadata(&id);
     assert_eq!(data_before.transfer_count, 2);
-    let ts_before = data_before.last_transfer_at;
 
-    // Downgrade: rewrite token as LegacyTokenDataV1 + set StorageVersion=1
+    // Downgrade: rewrite token as LegacyTokenDataV1 + set StorageVersion=1.
+    // Raw storage access from test code must run inside the contract's
+    // context, otherwise soroban-sdk panics with "not accessible outside
+    // of a contract".
     use crate::storage::DataKey;
     use crate::types::LegacyTokenDataV1;
     let v1_data = LegacyTokenDataV1 {
@@ -892,12 +903,17 @@ fn test_transfer_count_survives_upgrade() {
         edition_number: data_before.edition_number,
         total_editions: data_before.total_editions,
     };
-    env.storage()
-        .persistent()
-        .set(&DataKey::TokenData(id), &v1_data);
-    env.storage()
-        .instance()
-        .set(&DataKey::StorageVersion, &1u32);
+    env.as_contract(&client.address, || {
+        env.storage()
+            .persistent()
+            .set(&DataKey::TokenData(id), &v1_data);
+        env.storage()
+            .persistent()
+            .remove(&DataKey::TokenMigratedToV2(id));
+        env.storage()
+            .instance()
+            .set(&DataKey::StorageVersion, &1u32);
+    });
 
     // Upgrade to v2 — migration runs but resets transfer_count to 0
     // (LegacyTokenDataV1 doesn't have transfer_count, so migration

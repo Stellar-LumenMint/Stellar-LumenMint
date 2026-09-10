@@ -1,7 +1,7 @@
 use crate::error::ContractError;
 use crate::storage::DataKey;
 use crate::types::{LegacyTokenDataV1, TokenData};
-use soroban_sdk::{Address, Env, String, panic_with_error, symbol_short};
+use soroban_sdk::{contracttype, Address, Env};
 
 // ── Storage Layout Version ────────────────────────────────────────────────────
 
@@ -17,9 +17,7 @@ pub const SUPPORTED_VERSIONS: &[u32] = &[1, 2];
 /// Get the current upgrade admin address.
 /// Falls back to the contract admin if no upgrade admin is explicitly set.
 pub fn get_upgrade_admin(env: &Env) -> Option<Address> {
-    env.storage()
-        .instance()
-        .get(&DataKey::UpgradeAdmin)
+    env.storage().instance().get(&DataKey::UpgradeAdmin)
 }
 
 /// Set the upgrade admin address (requires current upgrade admin auth).
@@ -44,8 +42,7 @@ pub fn require_upgrade_admin(env: &Env, caller: &Address) -> Result<(), Contract
         }
     }
     // Fall back to contract admin
-    let contract_admin: Option<Address> =
-        env.storage().instance().get(&DataKey::Admin);
+    let contract_admin: Option<Address> = env.storage().instance().get(&DataKey::Admin);
     if let Some(admin) = contract_admin {
         if caller == &admin {
             return Ok(());
@@ -171,10 +168,12 @@ fn run_migration(env: &Env, target_version: u32) -> Result<(), ContractError> {
 /// token ID range from 1 to total_supply.
 ///
 /// # Idempotency
-/// This migration is idempotent: it checks whether each token already has
-/// v2 data (by attempting to read as TokenData first) before migrating.
-/// If a token was already migrated (e.g. after a partial run that was
-/// reverted), it is silently skipped.
+/// This migration is idempotent: each token carries an explicit migration
+/// marker (DataKey::TokenMigratedToV2) that is set once its data has been
+/// transformed, so a partial run that was reverted can be safely resumed.
+/// Note that schema detection by reading the same key as both the v1 and v2
+/// types is impossible on the host — a mismatched read panics with
+/// UnexpectedSize — which is why the marker exists.
 ///
 /// # Gas Considerations
 /// For production collections with thousands of tokens, this function
@@ -190,12 +189,13 @@ fn migrate_v1_to_v2(env: &Env) -> Result<(), ContractError> {
         .unwrap_or(0);
 
     for token_id in 1..=total {
-        // Check if already migrated (idempotent guard)
-        let already_v2: Option<TokenData> = env
+        // Check if already migrated (idempotent guard via explicit marker)
+        let already_migrated: bool = env
             .storage()
             .persistent()
-            .get(&DataKey::TokenData(token_id));
-        if already_v2.is_some() {
+            .get(&DataKey::TokenMigratedToV2(token_id))
+            .unwrap_or(false);
+        if already_migrated {
             continue; // Already migrated, skip
         }
 
@@ -224,6 +224,9 @@ fn migrate_v1_to_v2(env: &Env) -> Result<(), ContractError> {
         env.storage()
             .persistent()
             .set(&DataKey::TokenData(token_id), &v2_data);
+        env.storage()
+            .persistent()
+            .set(&DataKey::TokenMigratedToV2(token_id), &true);
     }
 
     Ok(())
@@ -242,6 +245,7 @@ pub fn get_upgrade_info(env: &Env) -> UpgradeInfo {
 }
 
 #[derive(Clone, Debug)]
+#[contracttype]
 pub struct UpgradeInfo {
     pub storage_version: u32,
     pub current_version: u32,
@@ -280,38 +284,49 @@ mod test {
     /// StorageVersion = 1 and overwriting each token's TokenData with
     /// LegacyTokenDataV1 format. This simulates a contract that was
     /// deployed with v1 and then upgraded its wasm to v2.
-    fn downgrade_to_v1(env: &Env, token_ids: &Vec<u64>) {
-        // Set storage version to 1 (simulate old deployment)
-        env.storage()
-            .instance()
-            .set(&DataKey::StorageVersion, &1u32);
-
-        // Overwrite each token's data with LegacyTokenDataV1 format
-        for i in 0..token_ids.len() {
-            let token_id = token_ids.get(i).unwrap();
-            let v2_data: TokenData = env
-                .storage()
-                .persistent()
-                .get(&DataKey::TokenData(token_id))
-                .unwrap();
-
-            let v1_data = LegacyTokenDataV1 {
-                id: v2_data.id,
-                owner: v2_data.owner,
-                metadata_uri: v2_data.metadata_uri,
-                created_at: v2_data.created_at,
-                creator: v2_data.creator,
-                royalty_percentage: v2_data.royalty_percentage,
-                royalty_recipient: v2_data.royalty_recipient,
-                attributes: v2_data.attributes,
-                edition_number: v2_data.edition_number,
-                total_editions: v2_data.total_editions,
-            };
-
+    ///
+    /// Raw storage access from test code must run inside the contract's
+    /// context, otherwise soroban-sdk panics with "not accessible outside
+    /// of a contract".
+    fn downgrade_to_v1(env: &Env, contract_id: &Address, token_ids: &Vec<u64>) {
+        env.as_contract(contract_id, || {
+            // Set storage version to 1 (simulate old deployment)
             env.storage()
-                .persistent()
-                .set(&DataKey::TokenData(token_id), &v1_data);
-        }
+                .instance()
+                .set(&DataKey::StorageVersion, &1u32);
+
+            // Overwrite each token's data with LegacyTokenDataV1 format.
+            // A genuine v1 deployment would have no migration markers, so
+            // clear them too — otherwise a re-upgrade would skip tokens.
+            for i in 0..token_ids.len() {
+                let token_id = token_ids.get(i).unwrap();
+                env.storage()
+                    .persistent()
+                    .remove(&DataKey::TokenMigratedToV2(token_id));
+                let v2_data: TokenData = env
+                    .storage()
+                    .persistent()
+                    .get(&DataKey::TokenData(token_id))
+                    .unwrap();
+
+                let v1_data = LegacyTokenDataV1 {
+                    id: v2_data.id,
+                    owner: v2_data.owner,
+                    metadata_uri: v2_data.metadata_uri,
+                    created_at: v2_data.created_at,
+                    creator: v2_data.creator,
+                    royalty_percentage: v2_data.royalty_percentage,
+                    royalty_recipient: v2_data.royalty_recipient,
+                    attributes: v2_data.attributes,
+                    edition_number: v2_data.edition_number,
+                    total_editions: v2_data.total_editions,
+                };
+
+                env.storage()
+                    .persistent()
+                    .set(&DataKey::TokenData(token_id), &v1_data);
+            }
+        });
     }
 
     #[test]
@@ -397,11 +412,17 @@ mod test {
 
         // Admin sets upgrade admin to A
         client.set_upgrade_admin(&admin, &admin_a);
-        assert_eq!(client.get_upgrade_info().upgrade_admin, Some(admin_a.clone()));
+        assert_eq!(
+            client.get_upgrade_info().upgrade_admin,
+            Some(admin_a.clone())
+        );
 
         // A rotates to B
         client.set_upgrade_admin(&admin_a, &admin_b);
-        assert_eq!(client.get_upgrade_info().upgrade_admin, Some(admin_b.clone()));
+        assert_eq!(
+            client.get_upgrade_info().upgrade_admin,
+            Some(admin_b.clone())
+        );
 
         // Original admin can no longer set upgrade admin
         let admin_c = Address::generate(&env);
@@ -428,13 +449,15 @@ mod test {
         let burner = Address::generate(&env);
         let empty_attrs: Vec<TokenAttribute> = Vec::new(&env);
 
-        // Mint 5 tokens to owner_a
+        // Mint 5 tokens to owner_a (no_std: the test crate has no `format!`
+        // in scope, and token IDs are sequential, so a single literal URI is
+        // sufficient — uniqueness comes from the mint counter, not the URI)
         let mut token_ids: Vec<u64> = Vec::new(&env);
-        for i in 0..5u32 {
+        for _ in 0..5u32 {
             let id = client.mint(
                 &admin,
                 &owner_a,
-                &String::from_str(&env, &format!("ipfs://token{}", i)),
+                &String::from_str(&env, "ipfs://token"),
                 &empty_attrs,
                 &None,
             );
@@ -465,7 +488,7 @@ mod test {
 
         // ── Simulate v1 contract state (the critical step) ─────────────
 
-        downgrade_to_v1(&env, &token_ids);
+        downgrade_to_v1(&env, &client.address, &token_ids);
 
         // Verify storage version is now 1
         assert_eq!(client.get_upgrade_info().storage_version, 1);
@@ -542,13 +565,25 @@ mod test {
         let empty: Vec<TokenAttribute> = Vec::new(&env);
 
         let mut token_ids: Vec<u64> = Vec::new(&env);
-        let id1 = client.mint(&admin, &owner, &String::from_str(&env, "ipfs://a"), &empty, &None);
+        let id1 = client.mint(
+            &admin,
+            &owner,
+            &String::from_str(&env, "ipfs://a"),
+            &empty,
+            &None,
+        );
         token_ids.push_back(id1);
-        let id2 = client.mint(&admin, &owner, &String::from_str(&env, "ipfs://b"), &empty, &None);
+        let id2 = client.mint(
+            &admin,
+            &owner,
+            &String::from_str(&env, "ipfs://b"),
+            &empty,
+            &None,
+        );
         token_ids.push_back(id2);
 
         // Downgrade to v1
-        downgrade_to_v1(&env, &token_ids);
+        downgrade_to_v1(&env, &client.address, &token_ids);
 
         // First upgrade — should run migration
         client.set_pause(&admin, &true);
@@ -556,7 +591,7 @@ mod test {
         assert_eq!(client.get_upgrade_info().storage_version, 2);
 
         // Downgrade again to simulate partial failure scenario
-        downgrade_to_v1(&env, &token_ids);
+        downgrade_to_v1(&env, &client.address, &token_ids);
 
         // Second upgrade — migration should handle already-migrated
         // tokens that now appear as v1 format again
@@ -581,11 +616,17 @@ mod test {
         let owner = Address::generate(&env);
         let empty: Vec<TokenAttribute> = Vec::new(&env);
         let mut token_ids: Vec<u64> = Vec::new(&env);
-        let id = client.mint(&admin, &owner, &String::from_str(&env, "ipfs://x"), &empty, &None);
+        let id = client.mint(
+            &admin,
+            &owner,
+            &String::from_str(&env, "ipfs://x"),
+            &empty,
+            &None,
+        );
         token_ids.push_back(id);
 
         // Downgrade to v1 so upgrade is actually needed
-        downgrade_to_v1(&env, &token_ids);
+        downgrade_to_v1(&env, &client.address, &token_ids);
 
         // Contract is not paused — upgrade should fail
         let result = client.try_perform_upgrade(&admin, &2u32);
@@ -604,7 +645,13 @@ mod test {
 
         let mut token_ids: Vec<u64> = Vec::new(&env);
         for _ in 0..3u32 {
-            let id = client.mint(&admin, &owner, &String::from_str(&env, "ipfs://x"), &empty, &None);
+            let id = client.mint(
+                &admin,
+                &owner,
+                &String::from_str(&env, "ipfs://x"),
+                &empty,
+                &None,
+            );
             token_ids.push_back(id);
         }
 
@@ -612,7 +659,7 @@ mod test {
         assert_eq!(supply_before, 3);
 
         // Downgrade to v1 and upgrade
-        downgrade_to_v1(&env, &token_ids);
+        downgrade_to_v1(&env, &client.address, &token_ids);
         client.set_pause(&admin, &true);
         client.perform_upgrade(&admin, &2u32);
         client.set_pause(&admin, &false);
@@ -628,5 +675,4 @@ mod test {
         assert_eq!(next_id, 4);
         assert_eq!(client.total_supply(), 4);
     }
-}
 }

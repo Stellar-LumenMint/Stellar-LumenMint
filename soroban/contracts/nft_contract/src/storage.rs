@@ -1,4 +1,4 @@
-use soroban_sdk::{Address, contracttype};
+use soroban_sdk::{contracttype, Address};
 
 #[derive(Clone)]
 #[contracttype]
@@ -33,8 +33,9 @@ pub enum DataKey {
     BatchCount(Address),
 
     // Upgrade & migration
-    StorageVersion,      // u32: current storage layout version
-    UpgradeAdmin,        // Address: admin authorized to perform upgrades
+    StorageVersion,         // u32: current storage layout version
+    UpgradeAdmin,           // Address: admin authorized to perform upgrades
+    TokenMigratedToV2(u64), // bool: per-token v1→v2 migration marker
 }
 
 pub const MAX_BATCH_SIZE: u32 = 50;

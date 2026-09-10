@@ -17,8 +17,8 @@ use crate::access_control as ac;
 use crate::error::ContractError;
 use crate::storage::DataKey;
 use crate::types::{CollectionConfig, RoyaltyInfo, TokenAttribute, TokenData};
-use crate::upgrade::{self, UpgradeInfo};
-use soroban_sdk::{Address, Env, String, Vec, contract, contractimpl, panic_with_error};
+use crate::upgrade::UpgradeInfo;
+use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, String, Vec};
 
 #[contract]
 pub struct NftContract;
