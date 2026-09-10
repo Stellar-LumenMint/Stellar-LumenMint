@@ -47,11 +47,13 @@ export class RedisRateGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<Request>();
     const res = context.switchToHttp().getResponse<Response>();
 
-    const ip =
-      (req.headers['x-forwarded-for'] as string) ||
-      req.ip ||
-      req.connection?.remoteAddress ||
-      'unknown';
+    // Only trust req.ip, which reflects the socket peer — or, when the
+    // Express `trust proxy` setting is enabled in main.ts (TRUST_PROXY),
+    // the client IP resolved from a sanitized proxy chain. Reading
+    // X-Forwarded-For directly here would let clients spoof the header and
+    // reset their own rate-limit budget whenever the proxy does not
+    // overwrite it.
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
     const key = String(ip).split(',')[0].trim();
 
     try {

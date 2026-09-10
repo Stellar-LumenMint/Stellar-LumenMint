@@ -171,6 +171,14 @@ async function bootstrapRestApi() {
   const app = await NestFactory.create(AppModule);
   app.useLogger(app.get<PinoLogger>(PinoLogger));
 
+  // When deployed behind a reverse proxy, TRUST_PROXY=true makes Express
+  // resolve req.ip from a sanitized X-Forwarded-For chain. It must stay
+  // off when the API is directly reachable, otherwise clients could spoof
+  // their IP and bypass rate limiting.
+  if (process.env.TRUST_PROXY === 'true') {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  }
+
   const sorobanRpcService = app.get<SorobanRpcService>(SorobanRpcService);
   const stellarAccountService = app.get<StellarAccountService>(
     StellarAccountService,
