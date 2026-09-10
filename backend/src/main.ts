@@ -72,16 +72,6 @@ function isOriginAllowed(origin: string, config: CorsConfig): boolean {
 /**
  * Create CORS middleware with origin logging
  */
-/**
- * Stellar-LumenMint branding middleware.
- * Sets brand headers on every response.
- */
-function brandResponse(req: Request, res: Response, next: NextFunction): void {
-  res.setHeader('X-Powered-By', 'Stellar-LumenMint');
-  res.setHeader('X-Platform-Version', '2.0.0');
-  res.setHeader('X-Network', process.env.STELLAR_NETWORK || 'testnet');
-  next();
-}
 
 function createCorsMiddleware() {
   const config = getCorsConfig();
@@ -182,6 +172,9 @@ async function bootstrapRestApi() {
     app.getHttpAdapter().getInstance().set('trust proxy', 1);
   }
 
+  // Do not advertise the framework via X-Powered-By.
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
+
   const sorobanRpcService = app.get<SorobanRpcService>(SorobanRpcService);
   const stellarAccountService = app.get<StellarAccountService>(
     StellarAccountService,
@@ -199,8 +192,7 @@ async function bootstrapRestApi() {
     new MetricsInterceptor(),
   );
 
-  // Apply branding and CORS middleware
-  app.use(brandResponse);
+  // Apply CORS middleware
   app.use(createCorsMiddleware());
 
   // Request tracing, latency instrumentation, and security headers were
