@@ -52,7 +52,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: ${{ steps.detect.outputs.manager }}
           cache-dependency-path: |
-            backend/pnpm-lock.yaml
             backend/package-lock.json
 
       - name: Setup pnpm
