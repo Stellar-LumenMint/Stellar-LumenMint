@@ -1,47 +1,51 @@
-import { render, screen } from "@testing-library/react";
-import { DebounceTestComponent } from "./DebounceTestComponent";
+import { renderHook, act } from "@testing-library/react";
+import { useDebounce } from "./useDebounce";
 import React from "react";
-import { act } from "react-dom/test-utils";
 
 jest.useFakeTimers();
 
-describe("useDebounce (React 18 compatible)", () => {
+describe("useDebounce", () => {
   it("should debounce value changes", () => {
-    const { rerender } = render(
-      <DebounceTestComponent value="a" delay={200} />
+    const { result, rerender } = renderHook(
+      ({ value, delay }) => useDebounce(value, delay),
+      { initialProps: { value: "a", delay: 200 } },
     );
-    expect(screen.getByTestId("debounced").textContent).toBe("a");
-    rerender(<DebounceTestComponent value="b" delay={200} />);
-    expect(screen.getByTestId("debounced").textContent).toBe("a");
+    expect(result.current).toBe("a");
+    rerender({ value: "b", delay: 200 });
+    expect(result.current).toBe("a");
     act(() => {
       jest.advanceTimersByTime(199);
     });
-    expect(screen.getByTestId("debounced").textContent).toBe("a");
+    expect(result.current).toBe("a");
     act(() => {
       jest.advanceTimersByTime(1);
     });
-    expect(screen.getByTestId("debounced").textContent).toBe("b");
+    expect(result.current).toBe("b");
   });
 
   it("should support immediate execution", () => {
-    const { rerender } = render(
-      <DebounceTestComponent value="a" delay={100} immediate={true} />
+    const { result, rerender } = renderHook(
+      ({ value, delay, immediate }) =>
+        useDebounce(value, delay, { immediate }),
+      {
+        initialProps: { value: "a", delay: 100, immediate: true },
+      },
     );
-    expect(screen.getByTestId("debounced").textContent).toBe("a");
-    rerender(<DebounceTestComponent value="b" delay={100} immediate={true} />);
-    expect(screen.getByTestId("debounced").textContent).toBe("a");
+    expect(result.current).toBe("a");
+    rerender({ value: "b", delay: 100, immediate: true });
+    expect(result.current).toBe("a");
     act(() => {
       jest.advanceTimersByTime(100);
     });
-    expect(screen.getByTestId("debounced").textContent).toBe("b");
+    expect(result.current).toBe("b");
   });
 
   it("should cleanup on unmount and prevent memory leaks", () => {
-    const { unmount, rerender } = render(
-      <DebounceTestComponent value="a" delay={100} />
+    const { unmount, rerender } = renderHook(
+      ({ value, delay }) => useDebounce(value, delay),
+      { initialProps: { value: "a", delay: 100 } },
     );
-    rerender(<DebounceTestComponent value="b" delay={100} />);
-    unmount();
-    // No errors should be thrown
+    rerender({ value: "b", delay: 100 });
+    expect(() => unmount()).not.toThrow();
   });
 });
