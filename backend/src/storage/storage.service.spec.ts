@@ -8,6 +8,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ArweaveService } from './arweave.service';
 import { StoredAsset } from './entities/stored-asset.entity';
+import { StoredAssetReference } from './entities/stored-asset-reference.entity';
 import { IpfsService } from './ipfs.service';
 import type { RetryQueue } from './interfaces/retry-queue.interface';
 import { STORAGE_RETRY_QUEUE } from './storage.constants';
@@ -40,6 +41,7 @@ describe('StorageService', () => {
     create: jest.Mock;
     save: jest.Mock;
   };
+  let referenceRepository: { upsert: jest.Mock };
   let ipfsService: { upload: jest.Mock };
   let arweaveService: { upload: jest.Mock };
   let retryQueue: RetryQueue & { enqueue: jest.Mock };
@@ -66,6 +68,8 @@ describe('StorageService', () => {
       save: jest.fn(),
     };
 
+    referenceRepository = { upsert: jest.fn().mockResolvedValue(undefined) };
+
     ipfsService = {
       upload: jest.fn(),
     };
@@ -88,6 +92,10 @@ describe('StorageService', () => {
         {
           provide: getRepositoryToken(StoredAsset),
           useValue: repository,
+        },
+        {
+          provide: getRepositoryToken(StoredAssetReference),
+          useValue: referenceRepository,
         },
         {
           provide: IpfsService,
@@ -229,6 +237,52 @@ describe('StorageService', () => {
     expect(retryProviders).toEqual(
       expect.arrayContaining(['ipfs', 'arweave', 'combined']),
     );
+  });
+
+  it('records per-uploader references without re-uploading identical bytes', async () => {
+    const file = createFile();
+
+    // First upload stores the bytes.
+    repository.findOne.mockResolvedValueOnce(null);
+    ipfsService.upload.mockResolvedValueOnce({
+      cid: 'bafy-shared',
+      uri: 'ipfs://bafy-shared',
+      gatewayUrl: 'https://provider.gateway/bafy-shared',
+    });
+    repository.save.mockImplementationOnce((entity: StoredAsset) =>
+      Promise.resolve({ ...entity, id: 'asset-shared' }),
+    );
+
+    await service.storeAsset(file, 'user-1', { type: 'nft' });
+
+    expect(referenceRepository.upsert).toHaveBeenCalledWith(
+      { assetId: 'asset-shared', uploadedBy: 'user-1', metadata: { type: 'nft' } },
+      ['assetId', 'uploadedBy'],
+    );
+
+    // A second uploader sends the same bytes: dedupe returns the existing
+    // asset, keeps their metadata and does not upload again.
+    repository.findOne.mockResolvedValueOnce({
+      id: 'asset-shared',
+      ipfsCid: 'bafy-shared',
+      arweaveId: null,
+      primaryStorage: 'ipfs',
+      fileSize: String(file.size),
+      mimeType: file.mimetype,
+    } as StoredAsset);
+
+    const result = await service.storeAsset(file, 'user-2', { listingId: 'l1' });
+
+    expect(ipfsService.upload).toHaveBeenCalledTimes(1);
+    expect(referenceRepository.upsert).toHaveBeenLastCalledWith(
+      {
+        assetId: 'asset-shared',
+        uploadedBy: 'user-2',
+        metadata: { listingId: 'l1' },
+      },
+      ['assetId', 'uploadedBy'],
+    );
+    expect(result.ipfs.cid).toBe('bafy-shared');
   });
 
   it('generates expected URIs and gateway URLs', () => {

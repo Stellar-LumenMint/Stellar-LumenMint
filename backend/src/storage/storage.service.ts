@@ -13,6 +13,7 @@ import { IpfsService } from './ipfs.service';
 import { STORAGE_RETRY_QUEUE } from './storage.constants';
 import { getStorageConfig } from './storage.config';
 import { StoredAsset } from './entities/stored-asset.entity';
+import { StoredAssetReference } from './entities/stored-asset-reference.entity';
 import type { RetryQueue } from './interfaces/retry-queue.interface';
 import type {
   RetryProvider,
@@ -39,6 +40,8 @@ export class StorageService {
   constructor(
     @InjectRepository(StoredAsset)
     private readonly storedAssetRepository: Repository<StoredAsset>,
+    @InjectRepository(StoredAssetReference)
+    private readonly storedAssetReferenceRepository: Repository<StoredAssetReference>,
     private readonly ipfsService: IpfsService,
     private readonly arweaveService: ArweaveService,
     private readonly configService: ConfigService,
@@ -64,6 +67,11 @@ export class StorageService {
     });
 
     if (existing) {
+      // Bytes are already stored, but this uploader is not necessarily the
+      // one who stored them. Record their own reference so their metadata and
+      // attribution are preserved instead of silently returning someone
+      // else's row.
+      await this.recordReference(existing.id, uploadedBy, metadata);
       return this.mapEntityToResult(existing, storageConfig);
     }
 
@@ -161,7 +169,32 @@ export class StorageService {
     });
 
     const saved = await this.storedAssetRepository.save(entity);
+    await this.recordReference(saved.id, uploadedBy, metadata);
     return this.mapEntityToResult(saved, storageConfig);
+  }
+
+  /**
+   * Upserts the (asset, uploader) reference. Upsert keeps the call idempotent
+   * when the same uploader re-uploads identical bytes, and refreshes their
+   * metadata for the asset.
+   */
+  private async recordReference(
+    assetId: string,
+    uploadedBy: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    const reference = {
+      assetId,
+      uploadedBy,
+      metadata: metadata ?? null,
+    };
+
+    await this.storedAssetReferenceRepository.upsert(
+      reference as Parameters<
+        Repository<StoredAssetReference>['upsert']
+      >[0],
+      ['assetId', 'uploadedBy'],
+    );
   }
 
   private mapEntityToResult(
