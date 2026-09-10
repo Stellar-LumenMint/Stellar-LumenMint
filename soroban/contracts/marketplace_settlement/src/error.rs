@@ -67,6 +67,7 @@ pub enum SettlementError {
     NotAdmin = 800,
     EmergencyWithdrawalNotAllowed = 801,
     AddressBlocked = 802,
+    MaxSupportedAssetsExceeded = 803,
 
     // Math errors
     Overflow = 900,

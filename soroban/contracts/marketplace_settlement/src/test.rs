@@ -56,6 +56,7 @@ fn mk_asset(env: &Env) -> Asset {
     }
 }
 
+
 fn default_fee_config(env: &Env, fee_recipient: Address) -> FeeConfig {
     FeeConfig {
         platform_fee_bps: 250,
@@ -541,6 +542,19 @@ fn test_admin_can_toggle_emergency_withdrawal() {
     // Non-admin cannot toggle the capability.
     let attacker = Address::generate(&env);
     assert!(client.try_set_emergency_withdrawal(&attacker, &true).is_err());
+}
+
+#[test]
+fn test_supported_assets_are_capped() {
+    let (env, _cid, client, admin) = new_env();
+    // Fill the whitelist up to MAX_SUPPORTED_ASSETS (64). Each mk_asset
+    // registers a fresh MockToken contract, so every asset is distinct.
+    for _ in 0..64u32 {
+        client.add_supported_asset(&admin, &mk_asset(&env));
+    }
+    // Adding one more must fail instead of growing the unbounded Vec.
+    let result = client.try_add_supported_asset(&admin, &mk_asset(&env));
+    assert!(result.is_err());
 }
 
 #[test]

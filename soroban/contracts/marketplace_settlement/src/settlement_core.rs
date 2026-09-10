@@ -39,6 +39,9 @@ impl MarketplaceSettlement {
 
     // === INITIALIZATION ===
 
+    /// Maximum number of assets that may be whitelisted for settlement.
+    const MAX_SUPPORTED_ASSETS: u32 = 64;
+
     /// Initialize the contract with admin configuration and explicit fee parameters.
     ///
     /// `fee_config` must be provided with deployment-appropriate values; there
@@ -124,6 +127,13 @@ impl MarketplaceSettlement {
             if asset_utils::assets_equal(&asset, &supported.get(i).unwrap()) {
                 return Err(SettlementError::AlreadyExists);
             }
+        }
+
+        // Bound the whitelist: the list is stored as a single Vec and
+        // rewritten on every add, so an unbounded list would grow storage
+        // costs and eventually blow past ledger limits.
+        if supported.len() >= Self::MAX_SUPPORTED_ASSETS {
+            return Err(SettlementError::MaxSupportedAssetsExceeded);
         }
 
         let mut new_list = supported;
