@@ -12,6 +12,13 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 export class DlqRetryWorker {
   private readonly logger = new Logger(DlqRetryWorker.name);
   private readonly MAX_ATTEMPTS = 5;
+  // An event stuck for longer than this is presumed poisoned (e.g. a
+  // permanently malformed payload or a contract that will never resolve)
+  // and is archived as exhausted instead of retried forever.
+  private readonly MAX_AGE_DAYS = parseInt(
+    process.env.DLQ_MAX_AGE_DAYS || '7',
+    10,
+  );
 
   constructor(
     @InjectRepository(ContractEventDlq)
@@ -44,6 +51,25 @@ export class DlqRetryWorker {
     let resolvedCount = 0;
 
     for (const dlq of dueEvents) {
+      // Poison-pill guard: if the event has been failing past the max age,
+      // stop burning retries on it. Replaying a week-old payload would
+      // likely re-index stale chain state anyway.
+      const firstFailed = dlq.firstFailedAt?.getTime?.() ?? Date.now();
+      const ageDays =
+        (Date.now() - firstFailed) / (24 * 60 * 60 * 1000);
+      if (ageDays >= this.MAX_AGE_DAYS) {
+        dlq.status = 'exhausted';
+        dlq.errorMessage =
+          `Dropped after exceeding max DLQ age (${this.MAX_AGE_DAYS}d). ` +
+          (dlq.errorMessage ?? '');
+        exhaustedCount++;
+        this.logger.warn(
+          `dlqAgedOut: event txHash=${dlq.txHash} index=${dlq.eventIndex} ageDays=${ageDays.toFixed(1)}`,
+        );
+        await this.dlqRepo.save(dlq);
+        continue;
+      }
+
       retriedCount++;
       try {
         dlq.attemptCount += 1;

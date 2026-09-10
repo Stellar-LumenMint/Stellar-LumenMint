@@ -92,6 +92,28 @@ describe('DlqRetryWorker', () => {
     expect(dlqRepo.save).toHaveBeenCalledWith(event);
   });
 
+  it('should age out events older than the max DLQ age without retrying', async () => {
+    const oldEvent = {
+      id: 'stale',
+      status: 'pending',
+      attemptCount: 1,
+      txHash: 'abc',
+      eventIndex: 0,
+      firstFailedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days
+      nextRetryAt: new Date(0),
+      contractId: 'contract-1',
+    } as ContractEventDlq;
+    (dlqRepo.find as jest.Mock).mockResolvedValue([oldEvent]);
+
+    await worker.handleRetries();
+
+    expect(oldEvent.status).toBe('exhausted');
+    // No retry attempt was made: attempt count must not increase.
+    expect(oldEvent.attemptCount).toBe(1);
+    expect(indexerService.processTransaction).not.toHaveBeenCalled();
+    expect(dlqRepo.save).toHaveBeenCalledWith(oldEvent);
+  });
+
   it('should increase attempt and update nextRetryAt on failure', async () => {
     const event = {
       id: '1',
