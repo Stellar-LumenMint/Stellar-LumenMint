@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { getCookie } from "@/lib/CSRFTOKEN";
 import { parseResponseError, normalizeApiError } from "@/utils/fetchUtils";
 
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -28,6 +29,21 @@ export async function fetchWithAuth(
   const headers = new Headers(init?.headers || {});
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+
+  // Attach the CSRF token to every state-changing request. Doing it here
+  // instead of per page guarantees no mutating flow can be sent without
+  // one (the token is cached, so this is not an extra round-trip).
+  const method = (init?.method || "GET").toUpperCase();
+  const isMutating = !["GET", "HEAD", "OPTIONS"].includes(method);
+  if (isMutating && typeof window !== "undefined") {
+    try {
+      const csrfToken = await getCookie();
+      headers.set("X-CSRF-Token", csrfToken);
+    } catch {
+      // CSRF token fetch failure must not block the request; the server
+      // still enforces the cookie-based CSRF check where configured.
+    }
   }
 
   // Synthesize client timeout using a unified AbortController signal
