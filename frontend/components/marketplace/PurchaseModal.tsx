@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBuyNFTMutation } from "@/hooks/graphql/useMutations";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/image";
@@ -33,6 +33,26 @@ export function PurchaseModal({
   const { connected: isConnected } = useWalletStore();
   const router = useRouter();
   const { showSuccess, showError } = useToast();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Reset transient state whenever the modal opens or closes, and move
+  // focus into the dialog on open.
+  useEffect(() => {
+    if (isOpen) {
+      setSuccess(false);
+      closeButtonRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  // Close on Escape for keyboard users.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
 
   const handlePurchase = async () => {
     if (!isConnected) {
@@ -58,7 +78,12 @@ export function PurchaseModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Complete purchase"
+    >
       <div className="bg-[#1E1A45] rounded-2xl p-6 w-full max-w-md border border-purple-900/30">
         <h2 className="text-2xl font-bold mb-4">Complete Purchase</h2>
         
@@ -105,7 +130,10 @@ export function PurchaseModal({
             </div>
 
             {error && (
-              <div className="text-red-400 text-sm mb-4 p-3 bg-red-400/10 rounded-lg">
+              <div
+                role="alert"
+                className="text-red-400 text-sm mb-4 p-3 bg-red-400/10 rounded-lg"
+              >
                 {error.message || "Transaction failed. Please try again."}
               </div>
             )}
@@ -114,6 +142,7 @@ export function PurchaseModal({
               <Button 
                 variant="outline" 
                 onClick={onClose}
+                ref={closeButtonRef}
                 className="flex-1 bg-transparent border-purple-900/50 hover:bg-purple-900/20"
                 disabled={loading}
               >
