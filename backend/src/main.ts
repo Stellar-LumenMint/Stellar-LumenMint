@@ -243,16 +243,33 @@ async function bootstrapRestApi() {
     .addBearerAuth()
     .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+  // Swagger exposes the full API surface (routes, DTOs, schemas) to anyone
+  // who can reach it. Enabled by default outside production, and opt-in via
+  // SWAGGER_ENABLED=true when internal API docs are needed in production.
+  const swaggerEnabled =
+    process.env.SWAGGER_ENABLED === 'true' ||
+    (process.env.NODE_ENV !== 'production' &&
+      process.env.SWAGGER_ENABLED !== 'false');
+
+  if (swaggerEnabled) {
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document);
+  }
+
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   const logger = app.get<PinoLogger>(PinoLogger);
 
   logger.log(`Application is running on: http://localhost:${port}/api/v1`);
-  logger.log(
-    `Swagger documentation available at: http://localhost:${port}/api/docs`,
-  );
+  if (swaggerEnabled) {
+    logger.log(
+      `Swagger documentation available at: http://localhost:${port}/api/docs`,
+    );
+  } else {
+    logger.log(
+      'Swagger documentation disabled (set SWAGGER_ENABLED=true to enable)',
+    );
+  }
 
   return app;
 }
