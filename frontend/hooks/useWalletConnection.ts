@@ -43,19 +43,35 @@ export function useWalletConnection() {
       return;
     }
 
-    pollingRef.current = setInterval(async () => {
+    const poll = async () => {
+      // Skip polling while the tab is hidden; the status will be refreshed
+      // when it becomes visible again.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
       try {
         const stillConnected = await isFreighterConnected();
         if (!stillConnected) {
           setDisconnected();
         }
-      } catch {
-        
+      } catch (error) {
+        // Transient extension/network errors should not log the user out;
+        // surface for debugging without disconnecting.
+        console.debug("[wallet-connection] poll failed", error);
       }
-    }, 30_000);
+    };
+
+    pollingRef.current = setInterval(poll, 30_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void poll();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [connected, provider, setDisconnected]);
 
