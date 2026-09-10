@@ -3,6 +3,30 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
+const LOCALE_STORAGE_KEY = "stellar-lumenmint:locale";
+
+function readStoredLocale(): Locale | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    return stored && Object.keys(translations).includes(stored)
+      ? (stored as Locale)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistLocale(locale: Locale) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  } catch {
+    // Ignore storage failures (private mode / quota) — the choice just
+    // won't survive a reload.
+  }
+}
+
 // --- Import translations dynamically ---
 import enCommon from "@/locales/en/common.json";
 import frCommon from "@/locales/fr/common.json";
@@ -44,13 +68,14 @@ export function useTranslation() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // --- Determine locale from pathname ---
+  // --- Determine locale from pathname, falling back to the stored choice ---
   const locale: Locale = useMemo(() => {
     const pathSegments = pathname?.split("/") || [];
     const pathLocale = pathSegments[1];
-    return (Object.keys(translations).includes(pathLocale)
-      ? pathLocale
-      : "en") as Locale;
+    if (Object.keys(translations).includes(pathLocale)) {
+      return pathLocale as Locale;
+    }
+    return readStoredLocale() ?? "en";
   }, [pathname]);
 
   const locales = Object.keys(translations) as Locale[];
@@ -105,6 +130,7 @@ export function useTranslation() {
  
   const changeLocale = useCallback(
     (newLocale: Locale) => {
+      persistLocale(newLocale);
       const pathSegments = pathname?.split("/") || [];
   
       if (Object.keys(translations).includes(pathSegments[1])) {
