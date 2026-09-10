@@ -220,12 +220,10 @@ async function bootstrapRestApi() {
       'Cache-Control',
       'Pragma',
     ],
-    exposedHeaders: [
-      'Content-Length',
-      'X-Content-Type-Options',
-      'X-Frame-Options',
-      'X-XSS-Protection',
-    ],
+    // Only headers the browser needs to read via JavaScript belong here.
+    // X-Content-Type-Options / X-Frame-Options / X-XSS-Protection are
+    // security response headers set by the server, not CORS-exposed headers.
+    exposedHeaders: ['Content-Length'],
     maxAge: 86400,
   });
 
@@ -278,12 +276,10 @@ async function bootstrapGraphqlGateway() {
       'Cache-Control',
       'Pragma',
     ],
-    exposedHeaders: [
-      'Content-Length',
-      'X-Content-Type-Options',
-      'X-Frame-Options',
-      'X-XSS-Protection',
-    ],
+    // Only headers the browser needs to read via JavaScript belong here.
+    // X-Content-Type-Options / X-Frame-Options / X-XSS-Protection are
+    // security response headers set by the server, not CORS-exposed headers.
+    exposedHeaders: ['Content-Length'],
     maxAge: 86400,
   });
 
