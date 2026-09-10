@@ -1,7 +1,7 @@
 use crate::error::SettlementError;
 use crate::events::{emit_front_running_detected, FrontRunningDetectedEvent};
 use crate::types::Bid;
-use soroban_sdk::{contracttype, symbol_short, Address, Bytes, Env, Symbol, Vec, xdr::ToXdr};
+use soroban_sdk::{contracttype, symbol_short, xdr::ToXdr, Address, Bytes, Env, Symbol, Vec};
 
 // Storage keys
 const COMMITMENT_STORAGE: Symbol = symbol_short!("commits");
@@ -278,9 +278,7 @@ impl WithdrawalPatternMonitor {
             .get(&key)
             .unwrap_or(soroban_sdk::Map::new(env));
 
-        let mut user_logs = logs
-            .get(user.clone())
-            .unwrap_or(soroban_sdk::Vec::new(env));
+        let mut user_logs = logs.get(user.clone()).unwrap_or(soroban_sdk::Vec::new(env));
 
         let entry = WithdrawalRecord {
             timestamp: env.ledger().timestamp(),
@@ -299,12 +297,10 @@ impl WithdrawalPatternMonitor {
         Ok(())
     }
 
-    /// Check for unusual withdrawal patterns — flags high-frequency or large-amount anomalies
-    pub fn check_unusual_pattern(
-        env: &Env,
-        user: &Address,
-        amount: i128,
-    ) -> Result<(), SettlementError> {
+    /// Check for unusual withdrawal patterns — flags high-frequency or large-amount anomalies.
+    /// The current withdrawal amount is already part of the logged records, so the anomaly
+    /// check operates purely on the stored window state.
+    pub fn check_unusual_pattern(env: &Env, user: &Address) -> Result<(), SettlementError> {
         let key = Symbol::new(env, "wdrwl_log");
         let logs: soroban_sdk::Map<Address, soroban_sdk::Vec<WithdrawalRecord>> = env
             .storage()
