@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import PopularThisWeek from "./PopularThisWeek";
 import { useTranslation } from "@/hooks/useTranslation";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 export type NFTItem = {
   id: number;
@@ -52,6 +53,7 @@ const nftItems: NFTItem[] = [
 
 export const PopularThisWeekMarqueeParent: React.FC = () => {
   const [hoveredCardId, setHoveredCardId] = useState<number | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const { t } = useTranslation();
 
@@ -76,7 +78,7 @@ export const PopularThisWeekMarqueeParent: React.FC = () => {
       {/* Marquee Section */}
       <div
         className={`flex max-w-6xl mx-auto items-center h-auto sm:h-md p-4 sm:p-8 lg:p-20 pb-8 sm:pb-12 lg:pb-20 gap-4 sm:gap-8 lg:gap-16 whitespace-nowrap overflow-x-auto sm:overflow-x-hidden
-        ${hoveredCardId !== null ? "animate-pause" : "animate-marquee"}`}
+        ${prefersReducedMotion ? "" : hoveredCardId !== null ? "animate-pause" : "animate-marquee"}`}
       >
         {nftItems
           .concat(nftItems)
