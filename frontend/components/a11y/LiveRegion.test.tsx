@@ -39,7 +39,9 @@ describe("LiveRegion", () => {
       jest.advanceTimersByTime(501);
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent("\u00A0");
+    // toHaveTextContent normalises whitespace (including NBSP), so compare
+    // the raw textContent to verify the region was cleared.
+    expect(screen.getByRole("status").textContent).toBe("\u00A0");
   });
 
   it("does not clear the message when clearAfter is false", () => {
