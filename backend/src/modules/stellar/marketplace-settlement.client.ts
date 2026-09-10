@@ -609,7 +609,16 @@ export class MarketplaceSettlementClient {
         { submit: false },
       );
       const tx = result.transaction as { transactionXdr?: string } | undefined;
-      return tx?.transactionXdr ?? '';
+      if (!tx?.transactionXdr) {
+        // Returning '' masked the failure: callers treated an empty XDR as a
+        // success and tried to sign/broadcast an empty transaction. Surface a
+        // typed error instead so the caller can distinguish "simulation
+        // failed" from a real transaction.
+        throw new SorobanContractError(
+          'accept_offer simulation completed but returned no transaction XDR',
+        );
+      }
+      return tx.transactionXdr;
     });
   }
 }
