@@ -65,7 +65,7 @@ const Footer = () => {
 
           {/* Brand block - spans 2 cols */}
           <div className="lg:col-span-2 flex flex-col gap-5">
-            <Link href="/" className="flex items-center group">
+            <Link href={`/${locale}`} className="flex items-center group">
               <OptimizedImage
                 src="/stellar-lumenmint-logo.svg"
                 alt="Stellar-LumenMint"
@@ -173,9 +173,9 @@ const Footer = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs text-[#6B7A8D]">
-            <Link href="/privacy-policy" className="hover:text-[#8A9BB0] transition-colors">Privacy</Link>
-            <Link href="/terms-of-service" className="hover:text-[#8A9BB0] transition-colors">Terms</Link>
-            <Link href="/cookies" className="hover:text-[#8A9BB0] transition-colors">Cookies</Link>
+            <Link href={`/${locale}/privacy-policy`} className="hover:text-[#8A9BB0] transition-colors">Privacy</Link>
+            <Link href={`/${locale}/terms-of-service`} className="hover:text-[#8A9BB0] transition-colors">Terms</Link>
+            <Link href={`/${locale}/cookies`} className="hover:text-[#8A9BB0] transition-colors">Cookies</Link>
           </div>
         </div>
       </div>
