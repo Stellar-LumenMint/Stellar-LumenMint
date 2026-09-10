@@ -50,7 +50,11 @@ const IMAGES = [
 async function bootstrap() {
   console.log('Connecting directly to database via TypeORM DataSource...');
 
+  // SEED_DATABASE_URL lets you target a throwaway database without touching
+  // the app's DATABASE_URL (which the running API reads). Falls back to the
+  // standard DATABASE_URL, then to the local docker-compose default.
   const dbUrl =
+    process.env.SEED_DATABASE_URL ||
     process.env.DATABASE_URL ||
     'postgresql://postgres:postgres@localhost:5433/stellar_lumenmint';
 
@@ -83,6 +87,9 @@ async function bootstrap() {
   const auctionRepo = dataSource.getRepository(Auction);
   const bidRepo = dataSource.getRepository(Bid);
 
+  // The cleanup below is scoped to the two fixed demo user IDs, so a re-run
+  // is idempotent and never touches real users. To avoid pointing the seed at
+  // a database you care about, set SEED_DATABASE_URL to a throwaway database.
   console.log('Cleaning up existing demo data to ensure idempotency...');
   await bidRepo.delete({ bidderId: In([CREATOR_ID, BUYER_ID]) });
   await auctionRepo.delete({ sellerId: In([CREATOR_ID, BUYER_ID]) });

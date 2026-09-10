@@ -159,6 +159,29 @@ Notes:
 | `npm run test:cov` | Generate coverage |
 | `npm run lint` | Run ESLint with fixes |
 | `npm run format` | Format source and test files |
+| `npm run db:seed` | Seed demo marketplace data (see [Seeding](#seeding)) |
+
+## Seeding
+
+The backend ships a demo seed (`src/seed.ts`, run with `npm run db:seed`) that
+creates two users (creator + buyer), three collections, twelve NFTs, listings,
+auctions and bids with fixed IDs so re-runs are idempotent. The cleanup phase
+deletes **only** those two demo user IDs and their scoped rows — real users are
+never touched.
+
+```bash
+# Against the default local docker-compose database:
+npm run db:seed
+
+# Against a throwaway database (never points at a live one by accident):
+SEED_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/seed_db npm run db:seed
+
+# Respect the standard app DATABASE_URL instead:
+DATABASE_URL=postgresql://user:pass@host:5432/db npm run db:seed
+```
+
+`SEED_DATABASE_URL` takes precedence over `DATABASE_URL` so the seed can
+safely target a separate database without changing the running API's config.
 
 ## 🔌 API Surface
 
