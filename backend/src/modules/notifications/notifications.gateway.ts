@@ -14,6 +14,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
+import { getWebSocketOrigins } from '../../config/cors.config';
 import { getJwtSecret } from '../../config/jwt.config';
 import { getNotificationsConfig } from './notifications.config';
 import {
@@ -72,7 +73,7 @@ export interface ClientMeta {
 @WebSocketGateway({
   namespace: '/notifications',
   cors: {
-    origin: process.env.CORS_ORIGIN ?? '*',
+    origin: getWebSocketOrigins(process.env),
     methods: ['GET', 'POST'],
     credentials: true,
   },

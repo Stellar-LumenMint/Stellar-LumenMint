@@ -11,6 +11,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import type { Server, Socket } from 'socket.io';
+import { getWebSocketOrigins } from '../../config/cors.config';
 import {
   BID_PLACED_EVENT,
   type BidPlacedEvent,
@@ -34,7 +35,7 @@ import {
 @WebSocketGateway({
   namespace: '/bids',
   cors: {
-    origin: process.env.CORS_ORIGIN ?? '*',
+    origin: getWebSocketOrigins(process.env),
     methods: ['GET', 'POST'],
     credentials: true,
   },

@@ -117,6 +117,53 @@ export function createCorsConfig(env: CorsEnvironment): CorsConfig {
   };
 }
 
+const DEV_WS_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5000',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:5000',
+];
+
+/**
+ * Origins allowed to open Socket.IO connections.
+ *
+ * Fail-closed: in production this requires CORS_ALLOWED_ORIGINS to be set
+ * (same allowlist as the REST API). It never falls back to the wildcard
+ * `*` — wildcard origins are rejected by browsers for credentialed
+ * requests, so the previous `CORS_ORIGIN ?? '*'` default silently broke
+ * auth'd websockets in production and allowed any origin in dev.
+ */
+export function getWebSocketOrigins(
+  env: NodeJS.ProcessEnv = process.env,
+): string[] {
+  const nodeEnv = env.NODE_ENV;
+
+  if (nodeEnv === 'production') {
+    if (!env.CORS_ALLOWED_ORIGINS || env.CORS_ALLOWED_ORIGINS.trim() === '') {
+      throw new BadRequestException(
+        'CORS_ALLOWED_ORIGINS must be defined and non-empty in production for websocket gateways',
+      );
+    }
+    return getAllowedOrigins({
+      nodeEnv,
+      corsAllowedOrigins: env.CORS_ALLOWED_ORIGINS,
+      corsOriginDev: env.CORS_ORIGIN_DEV,
+    });
+  }
+
+  const devOrigins = [...DEV_WS_ORIGINS];
+  if (env.CORS_ORIGIN_DEV && env.CORS_ORIGIN_DEV.trim() !== '') {
+    devOrigins.push(
+      ...env.CORS_ORIGIN_DEV.split(',')
+        .map((o) => o.trim())
+        .filter((o) => o.length > 0),
+    );
+  }
+  return devOrigins;
+}
+
 /**
  * Log rejected origins for security auditing
  */
