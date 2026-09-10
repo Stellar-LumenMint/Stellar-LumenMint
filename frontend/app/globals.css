@@ -345,3 +345,13 @@
   box-shadow: 0 0 0 2px #0D1117, 0 0 0 4px rgba(0, 212, 255, 0.5);
   border-radius: 0.5rem;
 }
+
+/* ─── Global keyboard focus indicator ──────────────────────── */
+/* Ensure every interactive element shows a visible focus ring for
+   keyboard users, regardless of whether a component opts into
+   .lm-focus-ring. Mouse clicks never trigger it (focus-visible). */
+:focus-visible {
+  outline: 2px solid rgba(0, 212, 255, 0.7);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
