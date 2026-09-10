@@ -18,14 +18,9 @@ export async function detectInstalledWallets(): Promise<WalletInfo[]> {
       installUrl: "https://albedo.link/",
       available: true, 
     },
-    {
-      id: "walletconnect",
-      name: "WalletConnect",
-      logo: "/wallets/walletconnect.svg",
-      description: "Connect mobile wallets via QR code",
-      installUrl: "https://walletconnect.com/",
-      available: true,
-    },
+    // WalletConnect is intentionally absent: the previous stub entry
+    // advertised it as available even though connecting always threw
+    // "not yet implemented". Only list providers with working connectors.
   ];
 
   return wallets;
