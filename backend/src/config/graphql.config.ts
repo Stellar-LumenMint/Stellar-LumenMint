@@ -21,11 +21,22 @@ function parseBoolean(value: string | undefined, fallback: boolean): boolean {
 export function getGraphqlConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): GraphqlRuntimeConfig {
+  const isProduction = env.NODE_ENV === 'production';
   return {
     port: parseInt(env.GRAPHQL_PORT || '3001', 10),
     path: '/graphql',
-    playgroundEnabled: parseBoolean(env.GRAPHQL_PLAYGROUND_ENABLED, true),
-    introspectionEnabled: parseBoolean(env.GRAPHQL_INTROSPECTION_ENABLED, true),
+    // Playground and introspection default ON outside production and OFF in
+    // production. Introspection in production lets anyone enumerate the full
+    // schema; an operator can still opt back in explicitly when the GraphQL
+    // gateway is internal-only.
+    playgroundEnabled: parseBoolean(
+      env.GRAPHQL_PLAYGROUND_ENABLED,
+      !isProduction,
+    ),
+    introspectionEnabled: parseBoolean(
+      env.GRAPHQL_INTROSPECTION_ENABLED,
+      !isProduction,
+    ),
   };
 }
 
