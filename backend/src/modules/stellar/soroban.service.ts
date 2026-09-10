@@ -47,6 +47,41 @@ export type SorobanContractArg = {
   value: unknown;
 };
 
+const I128_MIN = -(2n ** 127n);
+const I128_MAX = 2n ** 127n - 1n;
+const U32_MAX = 2n ** 32n - 1n;
+const U64_MAX = 2n ** 64n - 1n;
+
+/**
+ * Validate an integer-like argument before conversion to an SCVal.
+ * Raw BigInt(String(...)) calls throw untyped RangeErrors on malformed or
+ * out-of-range input, which would surface as 500s; these fail fast with a
+ * clear 400 instead.
+ */
+export function assertScValNumericRange(
+  type: 'i128' | 'u32' | 'u64',
+  raw: unknown,
+): void {
+  let value: bigint;
+  try {
+    value = BigInt(String(raw));
+  } catch {
+    throw new BadRequestException(
+      `Invalid ${type} argument: expected an integer, got "${String(raw)}"`,
+    );
+  }
+
+  if (type === 'i128' && (value < I128_MIN || value > I128_MAX)) {
+    throw new BadRequestException(`i128 argument out of range: ${value}`);
+  }
+  if (type === 'u32' && (value < 0n || value > U32_MAX)) {
+    throw new BadRequestException(`u32 argument out of range: ${value}`);
+  }
+  if (type === 'u64' && (value < 0n || value > U64_MAX)) {
+    throw new BadRequestException(`u64 argument out of range: ${value}`);
+  }
+}
+
 export type BuildTransactionResult = {
   transactionXdr: string;
   simulationResult: unknown;
@@ -398,14 +433,17 @@ export class SorobanService implements OnModuleInit {
     }
 
     if (type === 'i128') {
+      assertScValNumericRange('i128', arg.value);
       return nativeToScVal(BigInt(String(arg.value)), { type: 'i128' });
     }
 
     if (type === 'u32') {
+      assertScValNumericRange('u32', arg.value);
       return nativeToScVal(Number(arg.value), { type: 'u32' });
     }
 
     if (type === 'u64') {
+      assertScValNumericRange('u64', arg.value);
       return nativeToScVal(BigInt(String(arg.value)), { type: 'u64' });
     }
 
