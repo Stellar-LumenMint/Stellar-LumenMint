@@ -44,16 +44,19 @@ jobs:
           workspaces: soroban
           cache-on-failure: true
 
+      # These four gates are hard failures. Previously each step ended in
+      # `|| echo "::warning::..."`, so a broken contract crate — including a
+      # parse error that stopped nft_contract from compiling at all — still
+      # produced a green badge. Contract bugs move funds; they must never
+      # merge silently.
       - name: Check formatting
-        run: cargo fmt --all -- --check || echo "::warning::cargo fmt issues found (non-blocking)"
+        run: cargo fmt --all -- --check
 
       - name: Clippy (lint)
-        run: cargo clippy --workspace -- -D warnings || echo "::warning::Clippy warnings found (non-fatal)"
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Build all contracts
-        run: |
-          # Build the entire workspace in one shot (warning-only — surfaces contract errors without blocking badge)
-          cargo build --workspace --release --target wasm32-unknown-unknown || echo "::warning::cargo build failed (non-blocking)"
+        run: cargo build --workspace --release --target wasm32-unknown-unknown
 
       - name: Run tests
-        run: cargo test --workspace || echo "::warning::cargo test failed (non-blocking)"
+        run: cargo test --workspace
