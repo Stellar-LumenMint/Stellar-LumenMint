@@ -186,7 +186,7 @@ export function Navbar() {
         />
 
         {/* Drawer panel */}
-        <aside
+        <div
           id="mobile-navigation-drawer"
           ref={drawerRef}
           role="dialog"
@@ -343,7 +343,7 @@ export function Navbar() {
               </div>
             </div>
           </div>
-        </aside>
+        </div>
       </div>
     </header>
   );
