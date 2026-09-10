@@ -40,10 +40,10 @@ import { MarketplaceSettlementClient } from '../stellar/marketplace-settlement.c
 import {
   BID_PLACED_EVENT,
   BID_CACHE_PREFIX,
-  BID_CACHE_TTL_S,
+  BID_CACHE_TTL_MS,
   BID_RATE_LIMIT_PREFIX,
   BID_RATE_LIMIT_MAX,
-  BID_RATE_LIMIT_WINDOW_S,
+  BID_RATE_LIMIT_WINDOW_MS,
   BID_MIN_INCREMENT_PCT,
   STROOPS_PER_XLM,
   type BidPlacedEvent,
@@ -248,7 +248,7 @@ export class BidService {
     // Try to query from Soroban contract first
     const contractResult = await this.queryHighestBidFromContract(auctionId);
     if (contractResult) {
-      await this.cacheManager.set(cacheKey, contractResult, BID_CACHE_TTL_S);
+      await this.cacheManager.set(cacheKey, contractResult, BID_CACHE_TTL_MS);
       return { ...contractResult, fromCache: false };
     }
 
@@ -273,7 +273,7 @@ export class BidService {
       fromCache: false,
     };
 
-    await this.cacheManager.set(cacheKey, result, BID_CACHE_TTL_S);
+    await this.cacheManager.set(cacheKey, result, BID_CACHE_TTL_MS);
     return result;
   }
 
@@ -420,7 +420,7 @@ export class BidService {
     await this.cacheManager.set(
       windowKey,
       String(count + 1),
-      BID_RATE_LIMIT_WINDOW_S,
+      BID_RATE_LIMIT_WINDOW_MS,
     );
   }
 

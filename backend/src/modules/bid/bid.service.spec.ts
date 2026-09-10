@@ -42,7 +42,12 @@ import { AuctionStatus } from '../auction/interfaces/auction.interface';
 import { StellarSignatureStrategy } from '../../auth/strategies/stellar.strategy';
 import { MarketplaceSettlementClient } from '../stellar/marketplace-settlement.client';
 import { PlaceBidDto } from './dto/place-bid.dto';
-import { BID_PLACED_EVENT, BID_CACHE_PREFIX } from './interfaces/bid.interface';
+import {
+  BID_PLACED_EVENT,
+  BID_CACHE_PREFIX,
+  BID_CACHE_TTL_MS,
+  BID_RATE_LIMIT_WINDOW_MS,
+} from './interfaces/bid.interface';
 import { buildBidMessage } from '../../common/stellar/bid-message';
 import { SorobanService } from '../stellar/soroban.service';
 
@@ -365,6 +370,20 @@ describe('BidService', () => {
       ).rejects.toThrow(HttpException);
     });
 
+    it('writes the rate-limit window with a millisecond TTL', async () => {
+      mockCache.get.mockResolvedValue(null);
+
+      await (
+        service as unknown as { enforceRateLimit: (u: string) => Promise<void> }
+      ).enforceRateLimit(bidderId);
+
+      expect(mockCache.set).toHaveBeenCalledWith(
+        expect.stringContaining(':window'),
+        '1',
+        BID_RATE_LIMIT_WINDOW_MS,
+      );
+    });
+
     it('throws NotFoundException when auction does not exist', async () => {
       mockCache.get.mockResolvedValue(null);
       mockAuctionRepo.findOne.mockResolvedValue(null);
@@ -433,7 +452,7 @@ describe('BidService', () => {
       expect(mockCache.set).toHaveBeenCalledWith(
         `${BID_CACHE_PREFIX}auction-uuid-1`,
         expect.any(Object),
-        expect.any(Number),
+        BID_CACHE_TTL_MS,
       );
     });
 

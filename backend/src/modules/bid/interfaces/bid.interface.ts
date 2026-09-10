@@ -46,10 +46,14 @@ export interface BidRecord {
 
 export const BID_PLACED_EVENT = 'bid.placed';
 export const BID_CACHE_PREFIX = 'bid:highest:';
-export const BID_CACHE_TTL_S = 30;
+/**
+ * Cache TTLs are milliseconds: cache-manager v7 interprets the `ttl` argument
+ * as ms, so a bare `30` would expire a key 30ms after it was written.
+ */
+export const BID_CACHE_TTL_MS = 30_000;
 export const BID_RATE_LIMIT_PREFIX = 'bid:rl:';
 export const BID_RATE_LIMIT_MAX = 5;
-export const BID_RATE_LIMIT_WINDOW_S = 60;
+export const BID_RATE_LIMIT_WINDOW_MS = 60_000;
 /** Minimum increment: 5% of current highest bid */
 export const BID_MIN_INCREMENT_PCT = 0.05;
 /** Stroops per XLM */

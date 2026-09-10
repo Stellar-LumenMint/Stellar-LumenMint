@@ -9,7 +9,7 @@ import { Bid } from '../../auction/entities/bid.entity';
 import {
   BID_PLACED_EVENT,
   BID_CACHE_PREFIX,
-  BID_CACHE_TTL_S,
+  BID_CACHE_TTL_MS,
   STROOPS_PER_XLM,
   type BidPlacedEvent,
   type HighestBidResult,
@@ -77,7 +77,7 @@ export class BidEventListener {
       fromCache: true,
     };
 
-    await this.cacheManager.set(cacheKey, updated, BID_CACHE_TTL_S);
+    await this.cacheManager.set(cacheKey, updated, BID_CACHE_TTL_MS);
 
     this.logger.debug(
       `Cache refreshed for auction ${event.auctionId}: ` +
