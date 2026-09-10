@@ -1,3 +1,5 @@
+import type { WalletChallenge } from "@/lib/services/profile";
+
 // Auth Store Types
 export interface User {
   id?: string;
@@ -55,7 +57,7 @@ export type AuthStore = {
   emailLogin: (email: string, password: string) => Promise<void>;
 
   // Wallet auth
-  getWalletChallenge: (walletAddress: string, walletProvider?: string) => Promise<unknown>;
+  getWalletChallenge: (walletAddress: string, walletProvider?: string) => Promise<WalletChallenge>;
   verifyWalletSignature: (walletAddress: string, nonce: string, signature: string, walletProvider?: string) => Promise<void>;
   linkWallet: (walletAddress: string, nonce: string, signature: string, walletProvider?: string) => Promise<unknown>;
   unlinkWallet: (walletAddress: string) => Promise<unknown>;
