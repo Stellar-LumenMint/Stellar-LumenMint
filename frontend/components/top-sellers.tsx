@@ -19,7 +19,9 @@ interface Seller {
 export function TopSellers() {
   const { t } = useTranslation();
   const pathname = usePathname();
-  const isMarketplacePage = pathname === "/marketplace";
+  // Strip the locale segment (e.g. /en/marketplace -> /marketplace) so the
+  // marketplace variant activates on every locale.
+  const isMarketplacePage = (pathname || "").replace(/^\/[a-z]{2}(?=\/|$)/, "") === "/marketplace";
   const [showNavButtons, setShowNavButtons] = useState(false);
 
   const sellers: Seller[] = [
