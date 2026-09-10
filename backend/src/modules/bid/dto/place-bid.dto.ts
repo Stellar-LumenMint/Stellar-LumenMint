@@ -1,4 +1,13 @@
-import { IsNotEmpty, IsString, Matches, IsOptional } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  Matches,
+  IsOptional,
+  Max,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class PlaceBidDto {
   /**
@@ -21,8 +30,30 @@ export class PlaceBidDto {
   publicKey: string;
 
   /**
+   * Epoch milliseconds at which the client signed the bid. Bounds the
+   * signature's validity so a captured request cannot be replayed
+   * indefinitely.
+   */
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(Number.MAX_SAFE_INTEGER)
+  timestamp: number;
+
+  /**
+   * Client-generated unique value (UUID/random) preventing replay of a
+   * previously accepted signed bid.
+   */
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[A-Za-z0-9_-]{8,128}$/, {
+    message: 'nonce must be 8-128 URL-safe characters',
+  })
+  nonce: string;
+
+  /**
    * Base64-encoded Ed25519 signature over the canonical message:
-   *   `bid:{auctionId}:{amount}`
+   *   `bid:{auctionId}:{amount}:{timestamp}:{nonce}`
    */
   @IsString()
   @IsNotEmpty()

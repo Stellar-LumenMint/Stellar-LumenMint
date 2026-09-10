@@ -32,6 +32,10 @@ import { User } from '../../users/user.entity';
 import { PlaceBidDto } from './dto/place-bid.dto';
 import { BidQueryDto } from './dto/bid-query.dto';
 import { StellarSignatureStrategy } from '../../auth/strategies/stellar.strategy';
+import {
+  buildBidMessage,
+  isBidTimestampFresh,
+} from '../../common/stellar/bid-message';
 import { MarketplaceSettlementClient } from '../stellar/marketplace-settlement.client';
 import {
   BID_PLACED_EVENT,
@@ -311,7 +315,20 @@ export class BidService {
   }
 
   private verifySignature(auctionId: string, dto: PlaceBidDto): void {
-    const message = `bid:${auctionId}:${dto.amount}`;
+    // Defence in depth: the HTTP guard already checks freshness, but the
+    // service re-checks so an internal caller cannot bypass the expiry window.
+    if (!isBidTimestampFresh(dto.timestamp)) {
+      throw new ForbiddenException(
+        'Bid signature is expired or has an invalid timestamp',
+      );
+    }
+
+    const message = buildBidMessage({
+      auctionId,
+      amount: dto.amount,
+      timestamp: dto.timestamp,
+      nonce: dto.nonce,
+    });
     const valid = this.stellarStrategy.verifySignedMessage(
       dto.publicKey,
       message,

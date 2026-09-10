@@ -43,6 +43,7 @@ import { StellarSignatureStrategy } from '../../auth/strategies/stellar.strategy
 import { MarketplaceSettlementClient } from '../stellar/marketplace-settlement.client';
 import { PlaceBidDto } from './dto/place-bid.dto';
 import { BID_PLACED_EVENT, BID_CACHE_PREFIX } from './interfaces/bid.interface';
+import { buildBidMessage } from '../../common/stellar/bid-message';
 import { SorobanService } from '../stellar/soroban.service';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -79,12 +80,21 @@ function makeBid(overrides: Partial<Bid> = {}): Bid {
   } as Bid;
 }
 
+let nonceCounter = 0;
+
+function nextNonce(): string {
+  nonceCounter += 1;
+  return `nonce-${nonceCounter}-${Date.now()}`;
+}
+
 function signBidMessage(
   keypair: Keypair,
   auctionId: string,
   amount: string,
+  timestamp: number = Date.now(),
+  nonce: string = nextNonce(),
 ): string {
-  const message = `bid:${auctionId}:${amount}`;
+  const message = buildBidMessage({ auctionId, amount, timestamp, nonce });
   const sig = keypair.sign(Buffer.from(message, 'utf8'));
   return Buffer.from(sig).toString('base64');
 }
@@ -173,10 +183,20 @@ describe('BidService', () => {
     const amount = '15.0000000';
 
     function makeDto(): PlaceBidDto {
+      const timestamp = Date.now();
+      const nonce = nextNonce();
       return {
         amount,
         publicKey: testKeypair.publicKey(),
-        signature: signBidMessage(testKeypair, auctionId, amount),
+        timestamp,
+        nonce,
+        signature: signBidMessage(
+          testKeypair,
+          auctionId,
+          amount,
+          timestamp,
+          nonce,
+        ),
       };
     }
 
@@ -245,6 +265,8 @@ describe('BidService', () => {
       const badDto: PlaceBidDto = {
         amount,
         publicKey: testKeypair.publicKey(),
+        timestamp: Date.now(),
+        nonce: nextNonce(),
         signature: 'aW52YWxpZHNpZ25hdHVyZQ==', // invalid base64 sig
       };
 
@@ -253,13 +275,75 @@ describe('BidService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
+    it('rejects a signature bound to a different nonce (tamper detection)', async () => {
+      const auction = makeAuction();
+      mockCache.get.mockResolvedValue(null);
+      mockAuctionRepo.findOne.mockResolvedValue(auction);
+
+      const timestamp = Date.now();
+      // Signature was produced over a different nonce than the one submitted.
+      const tampered: PlaceBidDto = {
+        amount,
+        publicKey: testKeypair.publicKey(),
+        timestamp,
+        nonce: nextNonce(),
+        signature: signBidMessage(
+          testKeypair,
+          auctionId,
+          amount,
+          timestamp,
+          'a-completely-different-nonce',
+        ),
+      };
+
+      await expect(
+        service.placeBid(auctionId, bidderId, tampered),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects a stale signature outside the freshness window', async () => {
+      const auction = makeAuction();
+      mockCache.get.mockResolvedValue(null);
+      mockAuctionRepo.findOne.mockResolvedValue(auction);
+
+      const staleTimestamp = Date.now() - 60 * 60 * 1000; // one hour old
+      const staleNonce = nextNonce();
+      const staleDto: PlaceBidDto = {
+        amount,
+        publicKey: testKeypair.publicKey(),
+        timestamp: staleTimestamp,
+        nonce: staleNonce,
+        signature: signBidMessage(
+          testKeypair,
+          auctionId,
+          amount,
+          staleTimestamp,
+          staleNonce,
+        ),
+      };
+
+      await expect(
+        service.placeBid(auctionId, bidderId, staleDto),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
     it('throws BadRequestException when bid is below minimum increment', async () => {
       const auction = makeAuction({ currentPrice: 100 });
       const insufficientAmount = '100.01'; // still below 5% threshold
+      const dto2Timestamp = Date.now();
+      const dto2Nonce = nextNonce();
       const dto2: PlaceBidDto = {
         amount: insufficientAmount,
         publicKey: testKeypair.publicKey(),
-        signature: signBidMessage(testKeypair, auctionId, insufficientAmount),
+        timestamp: dto2Timestamp,
+        nonce: dto2Nonce,
+        signature: signBidMessage(
+          testKeypair,
+          auctionId,
+          insufficientAmount,
+          dto2Timestamp,
+          dto2Nonce,
+        ),
       };
 
       mockCache.get.mockResolvedValue(null);

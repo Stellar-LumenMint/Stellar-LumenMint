@@ -39,7 +39,9 @@ export class BidController {
    * Place a new bid on an active auction.
    * Requires:
    *  - Valid JWT (bidder identity)
-   *  - Valid Stellar wallet signature over `bid:{auctionId}:{amount}`
+   *  - Valid Stellar wallet signature over the canonical bid payload
+   *    `bid:{auctionId}:{amount}:{timestamp}:{nonce}` (timestamp-bounded and
+   *    nonce-unique, so a captured signature cannot be replayed)
    */
   @UseGuards(JwtAuthGuard, StellarSignatureGuard)
   @Post(':auctionId')
