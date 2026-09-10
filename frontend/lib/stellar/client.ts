@@ -30,11 +30,19 @@ export function getHorizonServer(
   return new Horizon.Server(STELLAR_NETWORKS[network].horizonUrl);
 }
 
+// Allow plain-HTTP RPC endpoints for local development against a local
+// Soroban/quickstart node. Explicitly opt-in at build time; never inferred
+// from the network name, because a testnet-like config could otherwise
+// silently ship with insecure HTTP in production.
+const allowHttpRpc =
+  process.env.NEXT_PUBLIC_STELLAR_ALLOW_HTTP_RPC === "true" ||
+  process.env.NODE_ENV === "development";
+
 export function getSorobanServer(
   network: StellarNetworkKey = defaultNetwork
 ): rpc.Server {
   return new rpc.Server(STELLAR_NETWORKS[network].sorobanRpcUrl, {
-    allowHttp: network === "testnet",
+    allowHttp: allowHttpRpc,
   });
 }
 
