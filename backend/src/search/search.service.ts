@@ -8,6 +8,7 @@ import {
   SEARCH_NFT_INDEX,
   SEARCH_PROFILE_INDEX,
 } from './search.constants';
+import { clampLimit, clampPage } from '../common/pagination/pagination';
 import { SearchQueryDto } from './dto/search-query.dto';
 import {
   SearchNftDocument,
@@ -52,8 +53,9 @@ export class SearchService {
   async search(query: SearchQueryDto): Promise<SearchResponsePayload> {
     await this.ensureSettings();
 
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
+    // Defense in depth: clamp even though the DTO bounds these values.
+    const page = clampPage(query.page);
+    const limit = clampLimit(query.limit);
     const searchTerm = query.q?.trim() ?? '';
     const type = query.type ?? 'all';
 
