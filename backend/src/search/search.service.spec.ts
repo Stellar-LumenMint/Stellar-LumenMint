@@ -137,4 +137,32 @@ describe('SearchService', () => {
       facets: ['collectionId', 'ownerId', 'creatorId', 'attributeFacets'],
     });
   });
+
+  describe('ensureSettings', () => {
+    const searchOnce = () =>
+      service.search({ type: 'nfts', page: 1, limit: 10 });
+
+    it('configures each index only once across calls', async () => {
+      await searchOnce();
+      await searchOnce();
+
+      expect(mockNftIndex.updateSearchableAttributes).toHaveBeenCalledTimes(1);
+      expect(mockNftIndex.updateFilterableAttributes).toHaveBeenCalledTimes(1);
+      expect(mockProfileIndex.updateSearchableAttributes).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    it('retries configuration after a transient failure', async () => {
+      mockNftIndex.updateSearchableAttributes
+        .mockRejectedValueOnce(new Error('meilisearch unavailable'))
+        .mockResolvedValue({} as never);
+
+      await expect(searchOnce()).rejects.toThrow('meilisearch unavailable');
+
+      // A rejected promise must not be cached: the next call reconfigures.
+      await expect(searchOnce()).resolves.toBeDefined();
+      expect(mockNftIndex.updateSearchableAttributes).toHaveBeenCalledTimes(2);
+    });
+  });
 });

@@ -105,7 +105,13 @@ export class SearchService {
 
   private async ensureSettings(): Promise<void> {
     if (!this.settingsPromise) {
-      this.settingsPromise = this.configureIndexes();
+      this.settingsPromise = this.configureIndexes().catch((error: unknown) => {
+        // Never cache a rejected promise: a transient Meilisearch outage
+        // would otherwise poison the memoized value and break search for the
+        // rest of the process's life. Clearing it lets the next call retry.
+        this.settingsPromise = undefined;
+        throw error;
+      });
     }
 
     await this.settingsPromise;
