@@ -284,6 +284,35 @@ describe('AuthService', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  it('stores passwords as salted scrypt hashes with the tuned cost', async () => {
+    userRepository.findOne.mockResolvedValue(null);
+    // TypeORM's create() passes the draft through; mimic that so the
+    // passwordHash computed by the service is observable on the saved row.
+    userRepository.create.mockImplementation((draft: Partial<User>) => draft);
+    userRepository.save.mockImplementation(async (draft: Partial<User>) => ({
+      id: 'user-scrypt-1',
+      email: draft.email,
+      username: draft.username,
+      passwordHash: draft.passwordHash,
+      isEmailVerified: false,
+      tokenVersion: 0,
+    }));
+    jwtService.sign
+      .mockReturnValueOnce('access-token-scrypt')
+      .mockReturnValueOnce('refresh-token-scrypt');
+
+    const result = await service.registerWithEmail({
+      email: 'scrypt@stellar-lumenmint.io',
+      password: 'A_secure1!',
+      username: 'scryptuser',
+    });
+
+    expect(result.access_token).toBe('access-token-scrypt');
+    const saved = userRepository.save.mock.calls[0][0];
+    // 16-byte hex salt + 64-byte hex scrypt digest, stored as salt:hash.
+    expect(saved.passwordHash).toMatch(/^[a-f0-9]{32}:[a-f0-9]{128}$/);
+  });
+
   it('accepts a refresh token matching the current token version', async () => {
     jwtService.verify = jest.fn().mockReturnValue({
       sub: 'user-1',

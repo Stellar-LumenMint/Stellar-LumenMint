@@ -45,7 +45,23 @@ type JwtRefreshPayload = {
   tokenVersion?: number;
 };
 
-const scryptAsync = promisify(crypto.scrypt);
+// scrypt parameters tuned above Node's defaults (N=2^14) to the OWASP
+// minimum for interactive logins (N=2^17). The larger memory cost makes
+// offline brute-force of a leaked hash meaningfully more expensive while
+// keeping per-login latency well under a second on modern hardware.
+const SCRYPT_N = 131072; // 2^17
+const SCRYPT_R = 8;
+const SCRYPT_P = 1;
+const SCRYPT_MAXMEM = 256 * 1024 * 1024;
+
+// promisify loses the options overload in older @types/node; wrap it with
+// the ScryptOptions signature so the tuned cost parameters typecheck.
+const scryptAsync = promisify(crypto.scrypt) as (
+  password: string,
+  salt: string,
+  keylen: number,
+  options: crypto.ScryptOptions,
+) => Promise<Buffer>;
 
 @Injectable()
 export class AuthService {
@@ -584,7 +600,12 @@ export class AuthService {
 
   private async hashPassword(password: string): Promise<string> {
     const salt = crypto.randomBytes(16).toString('hex');
-    const hash = (await scryptAsync(password, salt, 64)) as Buffer;
+    const hash = (await scryptAsync(password, salt, 64, {
+      N: SCRYPT_N,
+      r: SCRYPT_R,
+      p: SCRYPT_P,
+      maxmem: SCRYPT_MAXMEM,
+    })) as Buffer;
     return `${salt}:${hash.toString('hex')}`;
   }
 
@@ -597,7 +618,12 @@ export class AuthService {
       return false;
     }
 
-    const derivedHash = (await scryptAsync(password, salt, 64)) as Buffer;
+    const derivedHash = (await scryptAsync(password, salt, 64, {
+      N: SCRYPT_N,
+      r: SCRYPT_R,
+      p: SCRYPT_P,
+      maxmem: SCRYPT_MAXMEM,
+    })) as Buffer;
     const storedHashBuffer = Buffer.from(storedHash, 'hex');
 
     if (storedHashBuffer.length !== derivedHash.length) {
