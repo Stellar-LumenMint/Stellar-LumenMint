@@ -180,8 +180,10 @@ async function bootstrapRestApi() {
     StellarAccountService,
   );
 
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ extended: true, limit: '10mb' }));
+  // Keep the default JSON body small. File uploads go through dedicated
+  // multipart routes; a global 10MB limit is an unnecessary DoS surface.
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ extended: true, limit: '1mb' }));
 
   app.useGlobalInterceptors(
     new StellarErrorInterceptor(sorobanRpcService),
