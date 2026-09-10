@@ -14,6 +14,7 @@ import { BuyNftDto } from './dto/buy-nft.dto';
 import { ListingStatus } from './interfaces/listing.interface';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { StellarNft } from '../../nft/entities/stellar-nft.entity';
+import { clampLimit, clampPage } from '../../common/pagination/pagination';
 import { MarketplaceSettlementClient } from '../stellar/marketplace-settlement.client';
 import { CreateSaleParams } from '../shared/contracts/marketplace-settlement.types';
 import { TransactionService } from '../transaction/transaction.service';
@@ -133,8 +134,9 @@ export class ListingService {
       });
     }
 
-    const page = Number(query?.page ?? 1);
-    const limit = Number(query?.limit ?? 20);
+    // Clamp caller-supplied pagination to guard against unbounded queries.
+    const page = clampPage(query?.page);
+    const limit = clampLimit(query?.limit);
     qb.skip((page - 1) * limit).take(limit);
 
     return qb.getMany();
@@ -208,15 +210,16 @@ export class ListingService {
       );
     this.applyFilters(totalQb, query);
 
+    const first = clampLimit(query.first);
     const [rows, total] = await Promise.all([
-      qb.take(query.first + 1).getMany(),
+      qb.take(first + 1).getMany(),
       totalQb.getCount(),
     ]);
 
     return {
-      data: rows.slice(0, query.first),
+      data: rows.slice(0, first),
       total,
-      hasNextPage: rows.length > query.first,
+      hasNextPage: rows.length > first,
     };
   }
 

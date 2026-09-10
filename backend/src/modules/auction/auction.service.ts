@@ -16,6 +16,7 @@ import { AuctionStatus } from './interfaces/auction.interface';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { StellarNft } from '../../nft/entities/stellar-nft.entity';
 import { ConfigService } from '@nestjs/config';
+import { clampLimit, clampPage } from '../../common/pagination/pagination';
 import { MarketplaceSettlementClient } from '../stellar/marketplace-settlement.client';
 import { TransactionService } from '../transaction/transaction.service';
 import { TransactionState } from '../transaction/enums/transaction-state.enum';
@@ -124,8 +125,9 @@ export class AuctionService {
       qb.andWhere('a.endTime > :now', { now: new Date() });
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 20;
+    // Clamp caller-supplied pagination to guard against unbounded queries.
+    const page = clampPage(query.page);
+    const limit = clampLimit(query.limit);
     qb.skip((page - 1) * limit).take(limit);
 
     return qb.getMany();

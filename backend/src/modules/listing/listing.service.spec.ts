@@ -128,5 +128,23 @@ describe('ListingService', () => {
       expect(result).toHaveLength(1);
       expect(qb.andWhere).toHaveBeenCalled();
     });
+
+    it('clamps unbounded caller-supplied pagination to safe values', async () => {
+      const qb = {
+        andWhere: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      (listingRepository as any).createQueryBuilder = jest.fn().mockReturnValue(qb);
+
+      await service.findAll({ page: 999999, limit: 1000000000 } as any);
+      expect(qb.skip).toHaveBeenCalledWith(99999800); // page kept (>= 1)
+      expect(qb.take).toHaveBeenCalledWith(100); // limit capped at 100
+
+      await service.findAll({ page: -5, limit: -10 } as any);
+      expect(qb.skip).toHaveBeenCalledWith(0); // negative page clamped to 1
+      expect(qb.take).toHaveBeenCalledWith(20); // default size
+    });
   });
 });
