@@ -29,11 +29,23 @@ class TelemetryCore implements TelemetryClient {
   async init() {
     if (this.initialized) return;
     const config = getTelemetryConfig();
-    // Optionally, update reliabilityConfig from env here if needed
+    // Pick the adapter from the build-time config. Previously the client
+    // always kept the noop adapter, so telemetry could never actually
+    // reach PostHog even when explicitly enabled.
+    this.adapter = config.enabled && config.provider === "posthog"
+      ? posthogAdapter
+      : noopAdapter;
     this.reliabilityConfig = DEFAULT_RELIABILITY_CONFIG;
     this.queue = new TelemetryQueue(this.reliabilityConfig);
     this.dispatcher = new TelemetryDispatcher(this.queue, this.reliabilityConfig);
     this.debouncer = new TelemetryDebouncer(this.reliabilityConfig.debounceRules);
+
+    // When telemetry is disabled there is nothing to initialize or flush.
+    if (!config.enabled) {
+      this.initialized = true;
+      return;
+    }
+
     try {
       await this.adapter.init();
       this.dispatcher.setAdapterReady(true);
