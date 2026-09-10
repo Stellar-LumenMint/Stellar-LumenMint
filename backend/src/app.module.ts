@@ -21,6 +21,10 @@ import { LoggerModule } from 'nestjs-pino';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { getSynchronizeSetting } from './config/database.config';
+import {
+  cacheEnvFromConfig,
+  createCacheModuleOptions,
+} from './config/cache.config';
 import { StorageModule } from './storage/storage.module';
 import { RedisRateGuard } from './common/guards/redis-rate.guard';
 import { SearchModule } from './search/search.module';
@@ -75,14 +79,8 @@ import { OutboxModule } from './common/outbox';
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],
-      useFactory: async (config: ConfigService) => ({
-        store: (await import('cache-manager-redis-store')).default,
-        host: config.get('REDIS_HOST') || 'localhost',
-        port: parseInt(config.get('REDIS_PORT') || '6379', 10),
-        password: config.get('REDIS_PASSWORD'),
-        db: parseInt(config.get('REDIS_DB') || '0', 10),
-        ttl: parseInt(config.get('CACHE_TTL') || '300', 10),
-      }),
+      useFactory: (config: ConfigService) =>
+        createCacheModuleOptions(cacheEnvFromConfig(config)),
     }),
 
     AuthModule,

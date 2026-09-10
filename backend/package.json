@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@apollo/server": "^4.13.0",
+    "@keyv/redis": "^5.1.6",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -38,7 +39,6 @@
     "@nestjs/websockets": "^11.1.17",
     "arweave": "^1.15.7",
     "cache-manager": "^7.2.8",
-    "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "dataloader": "^2.2.3",
@@ -70,7 +70,6 @@
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.1.14",
     "@types/cache-manager": "^4.0.6",
-    "@types/cache-manager-redis-store": "^2.0.4",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",

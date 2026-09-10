@@ -9,6 +9,10 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getJwtSecret } from '../config/jwt.config';
 import { getSynchronizeSetting } from '../config/database.config';
+import {
+  cacheEnvFromConfig,
+  createCacheModuleOptions,
+} from '../config/cache.config';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { GqlAuthGuard } from '../common/guards/gql-auth.guard';
 import { CollectionModule } from '../modules/collection/collection.module';
@@ -35,14 +39,8 @@ const jwtAccessExpiresInSeconds = parseInt(
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],
-      useFactory: async (config: ConfigService) => ({
-        store: (await import('cache-manager-redis-store')).default,
-        host: config.get('REDIS_HOST') || 'localhost',
-        port: parseInt(config.get('REDIS_PORT') || '6379', 10),
-        password: config.get('REDIS_PASSWORD'),
-        db: parseInt(config.get('REDIS_DB') || '0', 10),
-        ttl: parseInt(config.get('CACHE_TTL') || '300', 10),
-      }),
+      useFactory: (config: ConfigService) =>
+        createCacheModuleOptions(cacheEnvFromConfig(config)),
     }),
     PassportModule,
     GraphQLSchemaBuilderModule,
