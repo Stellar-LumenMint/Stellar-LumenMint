@@ -54,9 +54,9 @@ const LoginBox = () => {
               <input type="checkbox" className="accent-white mr-2" />
               {t("auth.rememberMe")}
             </label>
-            <Link href={localizedRoute("/auth/forgot-password")} className="hover:underline">
+            <a href="#" className="hover:underline">
               {t("auth.forgotPassword")}
-            </Link>
+            </a>
           </div>
           <Button
             type="submit"
