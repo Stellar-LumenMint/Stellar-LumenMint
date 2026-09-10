@@ -1,32 +1,25 @@
-import { useEffect, useState } from "react";
+import { useMediaQuery } from "./useMediaQuery";
+import { BREAKPOINTS, type BreakpointKey } from "@/utils/breakpoints";
 
-// Default Tailwind 'sm' breakpoint (mobile: <640px)
-const DEFAULT_MOBILE_BREAKPOINT = 640;
+const DEFAULT_MOBILE_BREAKPOINT: BreakpointKey = "sm";
 
+/**
+ * Returns whether the viewport is below the given breakpoint
+ * (i.e. "mobile-sized").
+ *
+ * Delegates to the SSR-safe `useMediaQuery`, so the server and client
+ * render the same value and hydration cannot mismatch. Accepts either a
+ * named Tailwind breakpoint or an explicit pixel width.
+ *
+ * @example
+ * const isMobile = useMobile();          // true when width < 576px
+ * const isCompact = useMobile("md");     // true when width < 768px
+ * const isNarrow = useMobile(480);       // true when width < 480px
+ */
 export function useMobile(
-  breakpoint: number = DEFAULT_MOBILE_BREAKPOINT
+  breakpoint: BreakpointKey | number = DEFAULT_MOBILE_BREAKPOINT,
 ): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(
-    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
-  );
-
-  useEffect(() => {
-    // SSR-safe: only run on client
-    let timeout: NodeJS.Timeout | null = null;
-    const handleResize = () => {
-      if (timeout) clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        setIsMobile(window.innerWidth < breakpoint);
-      }, 100); // Debounce: 100ms
-    };
-    window.addEventListener("resize", handleResize);
-    // Initial check
-    setIsMobile(window.innerWidth < breakpoint);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [breakpoint]);
-
-  return isMobile;
+  const width =
+    typeof breakpoint === "number" ? breakpoint : BREAKPOINTS[breakpoint];
+  return useMediaQuery(`(max-width: ${width - 1}px)`);
 }
