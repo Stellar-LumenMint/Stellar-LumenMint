@@ -3,7 +3,11 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
-const LOCALE_STORAGE_KEY = "stellar-lumenmint:locale";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_STORAGE_KEY,
+  SUPPORTED_LOCALES,
+} from "@/lib/i18n/locales";
 
 function readStoredLocale(): Locale | null {
   if (typeof window === "undefined") return null;
@@ -33,7 +37,9 @@ import frCommon from "@/locales/fr/common.json";
 import esCommon from "@/locales/es/common.json";
 import deCommon from "@/locales/de/common.json";
 
-// Dynamically built translations map
+// Dynamically built translations map. The keys must match the shared
+// SUPPORTED_LOCALES list used by the middleware, or a locale can be
+// redirected to but have no translations (and vice versa).
 const translations = {
   en: { common: enCommon },
   fr: { common: frCommon },
@@ -72,13 +78,15 @@ export function useTranslation() {
   const locale: Locale = useMemo(() => {
     const pathSegments = pathname?.split("/") || [];
     const pathLocale = pathSegments[1];
-    if (Object.keys(translations).includes(pathLocale)) {
+    if ((SUPPORTED_LOCALES as readonly string[]).includes(pathLocale)) {
       return pathLocale as Locale;
     }
-    return readStoredLocale() ?? "en";
+    return readStoredLocale() ?? DEFAULT_LOCALE;
   }, [pathname]);
 
-  const locales = Object.keys(translations) as Locale[];
+  // Derived from the shared config so the middleware and this hook always
+  // agree on which languages exist.
+  const locales = [...SUPPORTED_LOCALES] as Locale[];
 
   // --- Translation function ---
   const t = useCallback(

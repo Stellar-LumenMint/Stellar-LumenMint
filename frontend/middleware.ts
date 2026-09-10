@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  isSupportedLocale,
+} from "@/lib/i18n/locales";
 
-const locales = ["en", "fr", "es", "de"]; 
-const defaultLocale = "en";
+const locales: readonly string[] = SUPPORTED_LOCALES;
 
 function getLocale(request: NextRequest): string {
   const pathname = request.nextUrl.pathname;
@@ -27,11 +31,11 @@ function getLocale(request: NextRequest): string {
   }
 
   const localeCookie = request.cookies.get("NEXT_LOCALE");
-  if (localeCookie && locales.includes(localeCookie.value)) {
+  if (localeCookie && isSupportedLocale(localeCookie.value)) {
     return localeCookie.value;
   }
 
-  return defaultLocale;
+  return DEFAULT_LOCALE;
 }
 
 export function middleware(request: NextRequest) {
@@ -75,4 +79,3 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
   ],
 };
-
