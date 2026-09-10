@@ -121,6 +121,8 @@ describe("LiveAuctions", () => {
   it("has an Explore More link", () => {
     render(<LiveAuctions />);
     const exploreLink = screen.getByRole("link", { name: /explore more/i });
-    expect(exploreLink).toHaveAttribute("href", "/marketplace/auctions");
+    // The explore link is locale-prefixed so non-English users stay in
+    // their language (default mock locale is 'en').
+    expect(exploreLink).toHaveAttribute("href", "/en/marketplace/auctions");
   });
 });

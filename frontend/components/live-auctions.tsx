@@ -20,7 +20,7 @@ type AuctionItem = {
 };
 
 function LiveAuctionsContent() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const auctionItems: AuctionItem[] = [
     { id:"1", name:"Yonder Contemplation",      creator:"KittenSoul",      price:"4.89 XLM", timeLeft:"04:12:41", bidCount:12, isLive:true, accent:"teal" },
@@ -57,7 +57,7 @@ function LiveAuctionsContent() {
             {t("liveAuctions.title")}
           </h2>
         </div>
-        <Link href="/marketplace/auctions">
+        <Link href={`/${locale}/marketplace/auctions`}>
           <Button variant="link" className="text-[#8A9BB0] hover:text-[#00D4FF] flex items-center gap-1 text-xs transition-colors">
             {t("liveAuctions.exploreMore")}
             <ChevronRight className="h-3.5 w-3.5" />
