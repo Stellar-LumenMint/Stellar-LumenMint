@@ -14,7 +14,7 @@ type CollectionCardProps = {
   }
   isLoading?: boolean
 }
-import { CollectionCardSkeleton } from "./skelletons/collection-card-skeleton"
+import { CollectionCardSkeleton } from "./skeletons/collection-card-skeleton"
 import { OptimizedImage } from '@/components/image';
 
 export const CollectionCard = ({ collection, isLoading = false }: CollectionCardProps) => {

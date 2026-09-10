@@ -1,4 +1,4 @@
-import { StatCardSkeleton } from "./skelletons/stat-card-skeleton"
+import { StatCardSkeleton } from "./skeletons/stat-card-skeleton"
 
 export interface StatCardProps {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;

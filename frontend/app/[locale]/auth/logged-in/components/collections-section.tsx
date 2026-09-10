@@ -9,7 +9,7 @@ type Collection = {
   createdAt: string | number | Date
 }
 import { CollectionCard } from "./collection-card"
-import { CollectionCardSkeleton } from "./skelletons/collection-card-skeleton"
+import { CollectionCardSkeleton } from "./skeletons/collection-card-skeleton"
 
 type CollectionsSectionProps = {
   collections: Collection[]
