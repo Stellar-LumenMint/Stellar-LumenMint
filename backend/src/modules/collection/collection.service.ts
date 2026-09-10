@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { User } from '../../users/user.entity';
+import { clampLimit, clampPage } from '../../common/pagination/pagination';
 import { Nft } from '../nft/entities/nft.entity';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { Collection } from './entities/collection.entity';
@@ -92,7 +93,7 @@ export class CollectionService {
   }
 
   async getTopCollections(limit: number = 10): Promise<Collection[]> {
-    return this.findTopCollections(limit);
+    return this.findTopCollections(clampLimit(limit));
   }
 
   async getNftsInCollection(
@@ -107,20 +108,23 @@ export class CollectionService {
   }> {
     await this.findById(id);
 
-    const skip = (page - 1) * limit;
+    // Defense in depth: clamp caller-supplied pagination.
+    const safePage = clampPage(page);
+    const safeLimit = clampLimit(limit);
+    const skip = (safePage - 1) * safeLimit;
 
     const [data, total] = await this.nftRepository.findAndCount({
       where: { collectionId: id, isBurned: false },
       skip,
-      take: limit,
+      take: safeLimit,
       order: { createdAt: 'DESC' },
     });
 
     return {
       data,
       total,
-      page,
-      limit,
+      page: safePage,
+      limit: safeLimit,
     };
   }
 

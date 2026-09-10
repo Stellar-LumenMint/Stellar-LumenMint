@@ -21,6 +21,7 @@ import {
   ReviewVerificationRequestDto,
 } from './dto/verification-request.dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { clampLimit, clampPage } from '../../common/pagination/pagination';
 import {
   CollectionConnectionResult,
   CollectionStatsResult,
@@ -39,7 +40,7 @@ export class CollectionController {
 
   @Get('top')
   async getTopCollections(@Query('limit') limit?: string) {
-    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+    const parsedLimit = clampLimit(limit ?? 10);
     return await this.collectionService.getTopCollections(parsedLimit);
   }
 
@@ -66,8 +67,8 @@ export class CollectionController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const parsedPage = page ? parseInt(page, 10) : 1;
-    const parsedLimit = limit ? parseInt(limit, 10) : 20;
+    const parsedPage = clampPage(page);
+    const parsedLimit = clampLimit(limit);
     return await this.collectionService.getNftsInCollection(
       id,
       parsedPage,

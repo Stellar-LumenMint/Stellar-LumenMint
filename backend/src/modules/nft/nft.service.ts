@@ -22,6 +22,7 @@ import {
   StellarMintSyncResult,
 } from './interfaces/nft.interface';
 import { SorobanService } from '../../nft/soroban.service';
+import { clampLimit, clampPage } from '../../common/pagination/pagination';
 import { User } from '../../users/user.entity';
 import { PrometheusService } from '../../common/metrics/prometheus';
 import { NftTransferEvent } from '../../jobs/entities/nft-transfer-event.entity';
@@ -45,8 +46,9 @@ export class NftService {
   ) {}
 
   async findAll(query: NftQueryDto): Promise<NftQueryResult<Nft>> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
+    // Defense in depth: clamp caller-supplied pagination.
+    const page = clampPage(query.page);
+    const limit = clampLimit(query.limit);
 
     const qb = this.createBaseQuery(query);
 
@@ -67,7 +69,7 @@ export class NftService {
   async findConnection(
     query: NftConnectionQuery,
   ): Promise<NftConnectionResult<Nft>> {
-    const first = query.first ?? 20;
+    const first = clampLimit(query.first);
 
     const [total, rows] = await Promise.all([
       this.createBaseQuery(query).getCount(),
