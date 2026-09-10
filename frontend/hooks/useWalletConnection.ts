@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useWalletStore } from "@/stores/walletStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
 import { isFreighterConnected, getFreighterAddress } from "@/lib/stellar/wallet/freighter";
 
 

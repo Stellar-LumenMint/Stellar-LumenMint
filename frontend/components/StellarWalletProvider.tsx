@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useWalletStore } from "@/stores/walletStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
 import { isFreighterConnected, getFreighterAddress, getFreighterNetwork } from "@/lib/stellar/wallet/freighter";
 import { telemetry } from "@/lib/telemetry";
 import { EVENT_NAMES } from "@/lib/telemetry/events";

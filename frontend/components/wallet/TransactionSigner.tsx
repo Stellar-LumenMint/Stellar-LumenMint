@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, AlertCircle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import { useStellarTransaction } from "./hooks/useStellarTransaction";
-import { useWalletStore } from "@/stores/walletStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
 import { getExplorerUrl } from "@/lib/stellar/network";
 import { Button } from "@/components/ui/button";
 

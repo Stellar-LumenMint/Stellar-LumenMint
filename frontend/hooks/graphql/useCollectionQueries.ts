@@ -8,7 +8,7 @@ import { GET_TOP_COLLECTIONS_QUERY } from "@/lib/graphql/queries/collection.quer
 import { LIKE_COLLECTION_MUTATION, UNLIKE_COLLECTION_MUTATION, GET_COLLECTION_LIKES_QUERY } from "@/lib/graphql/mutations/collection.mutations";
 import { useMemo, useCallback, useRef, useState } from "react";
 import { Collection } from "@/types";
-import { useWalletStore } from "@/stores/walletStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
 import { useToast } from "@/lib/stores";
 
 // Enhanced hook with data transformation

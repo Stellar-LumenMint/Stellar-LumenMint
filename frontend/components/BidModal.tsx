@@ -5,7 +5,7 @@ import { X, Gavel, AlertCircle, Loader2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useWalletStore } from '@/stores/walletStore';
+import { useWalletStore } from '@/lib/stores/walletStore';
 import { usePlaceBidMutation } from '@/hooks/graphql/useMutations';
 import { useToast } from '@/lib/stores';
 import { cn } from '@/lib/utils';

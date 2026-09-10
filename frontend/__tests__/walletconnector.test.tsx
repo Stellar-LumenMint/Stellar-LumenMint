@@ -7,7 +7,7 @@ const mockShowError = jest.fn();
 const mockDisconnect = jest.fn();
 const mockUseWalletStore = jest.fn();
 
-jest.mock("@/stores/walletStore", () => ({
+jest.mock("@/lib/stores/walletStore", () => ({
   useWalletStore: () => mockUseWalletStore(),
 }));
 

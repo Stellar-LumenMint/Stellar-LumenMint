@@ -5,7 +5,7 @@ import { useBuyNFTMutation } from "@/hooks/graphql/useMutations";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/image";
 import { Loader2 } from "lucide-react";
-import { useWalletStore } from "@/stores/walletStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
 import { useToast } from "@/lib/stores";
 import { useRouter } from "next/navigation";
 

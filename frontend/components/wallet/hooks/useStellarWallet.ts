@@ -6,7 +6,7 @@ import { connectFreighter, getFreighterAddress, isFreighterConnected } from "@/l
 import { connectAlbedo } from "@/lib/stellar/wallet/albedo";
 import { defaultNetwork } from "@/lib/stellar/client";
 import { getHorizonServer } from "@/lib/stellar/client";
-import { useWalletStore } from "@/stores/walletStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
 
 const WALLET_STORAGE_KEY = "stellar_wallet_connection";
 

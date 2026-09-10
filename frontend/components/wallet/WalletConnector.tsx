@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Wallet, ChevronDown, LogOut, Copy, ExternalLink, CheckCircle2 } from "lucide-react";
-import { useWalletStore } from "@/stores/walletStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
 import { useStellarWallet } from "./hooks/useStellarWallet";
 import { WalletModal } from "./WalletModal";
 import { WalletNetworkStatus } from "./WalletNetworkStatus";

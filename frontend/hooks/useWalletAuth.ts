@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useStellarWallet } from "@/components/wallet/hooks/useStellarWallet";
 import { useStellarAuth } from "@/components/wallet/hooks/useStellarAuth";
-import { useWalletStore } from "@/stores/walletStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
 import { WalletProvider } from "@/types/stellar";
 
 
