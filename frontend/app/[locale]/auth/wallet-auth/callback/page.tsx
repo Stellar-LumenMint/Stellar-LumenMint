@@ -41,9 +41,10 @@ export default function WalletAuthCallbackPage() {
     }
 
     if (token) {
-      // Persist the token from the redirect
+      // Persist the token from the redirect using the key the rest of the
+      // app reads (fetchWithAuth, auth-store).
       if (typeof window !== "undefined") {
-        localStorage.setItem("auth_token", token);
+        localStorage.setItem("access_token", token);
       }
 
       setStatus("success");

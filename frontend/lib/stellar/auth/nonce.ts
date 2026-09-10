@@ -11,7 +11,9 @@ export async function requestAuthChallenge(publicKey: string): Promise<NonceChal
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ publicKey }),
+    // The backend DTO is WalletChallengeDto ({ walletAddress, walletProvider }),
+    // and the global validation pipe rejects unknown fields.
+    body: JSON.stringify({ walletAddress: publicKey }),
   });
 
   if (!res.ok) {
@@ -23,8 +25,12 @@ export async function requestAuthChallenge(publicKey: string): Promise<NonceChal
 
   return {
     nonce: data.nonce,
-    expiresAt: data.expiresAt,
-    message: buildSignMessage(publicKey, data.nonce),
+    expiresAt: Date.parse(data.expiresAt),
+    // The server-issued challenge message is the single source of truth for
+    // what gets signed. buildSignMessage is only a fallback for servers that
+    // do not return a message; signing a locally rebuilt message when the
+    // server did return one breaks signature verification.
+    message: data.message ?? buildSignMessage(publicKey, data.nonce),
   };
 }
 

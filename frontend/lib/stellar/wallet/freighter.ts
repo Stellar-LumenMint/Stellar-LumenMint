@@ -2,6 +2,7 @@ import {
   isConnected,
   getAddress,
   signTransaction,
+  signMessage,
   requestAccess,
   getNetwork,
 } from "@stellar/freighter-api";
@@ -55,6 +56,29 @@ export async function signWithFreighter(
   }
 
   return result.signedTxXdr;
+}
+
+/**
+ * Produce a raw Ed25519 signature over an arbitrary message via Freighter.
+ * This is what wallet authentication needs: the backend verifies the base64
+ * signature against the exact challenge message bytes with Keypair.verify.
+ * The previous approach wrapped the message in a transaction memo (28-byte
+ * limit) and produced a transaction envelope, which the backend could never
+ * verify against its raw signature check.
+ */
+export async function signMessageWithFreighter(message: string): Promise<string> {
+  const result = await signMessage(message);
+
+  if (result.error || result.signedMessage == null) {
+    throw new Error(
+      typeof result.error === "string" ? result.error : "Freighter message signing failed"
+    );
+  }
+
+  // Freighter v4+ returns a base64 string; older versions return a Buffer
+  // (from the `buffer` npm package, which also supports base64 encoding).
+  const signed = result.signedMessage;
+  return typeof signed === "string" ? signed : signed.toString("base64");
 }
 
 export async function isFreighterConnected(): Promise<boolean> {

@@ -32,9 +32,10 @@ export interface AuthSession {
 
 
 export interface WalletAuthResult {
-  token: string;
+  access_token: string;
+  refresh_token: string;
   user: User;
-  isNewUser: boolean;
+  isNewUser?: boolean;
 }
 
 export interface EmailAuthCredentials {

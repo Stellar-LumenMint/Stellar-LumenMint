@@ -50,7 +50,7 @@ export default function ProfilePage() {
   const getCurrentUser = useAuthStore((state) => state.getCurrentUser);
 
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
   const { connected, address, provider, network, disconnect } =
     useStellarWallet();
@@ -219,7 +219,7 @@ export default function ProfilePage() {
       // 2. Transmit validation block securely to database APIs
       await linkWalletToAccount(
         {
-          publicKey: address,
+          walletAddress: address,
           signature: "VALIDATED_VIA_FLOW",
           nonce: "NONCE_SEQ",
           provider,
