@@ -147,17 +147,4 @@ export class UserRateGuard implements CanActivate {
     }
     return this.tiers.default;
   }
-
-  private async getTtl(key: string): Promise<number | null> {
-    try {
-      // cache-manager v5+ doesn't expose getTtl directly; use a workaround
-      const store = (this.cacheManager as any).store;
-      if (typeof store?.ttl === 'function') {
-        return store.ttl(key);
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
 }
