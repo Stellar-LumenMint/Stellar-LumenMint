@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { CircuitBackground } from "@/components/circuit-background";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -291,7 +292,7 @@ function AuctionCard({ auction, t }: { auction: AuctionItem; t: (key: string, op
 
 // ─── Main Page ────────────────────────────────────────────
 
-export default function AuctionsPage() {
+function AuctionsPage() {
   const { t } = useTranslation();
 
   // State
@@ -625,3 +626,13 @@ export default function AuctionsPage() {
     </main>
   );
 }
+
+// Wrap the page in an error boundary so a render failure shows a
+// recoverable fallback instead of a blank screen.
+const AuctionsPageWithBoundary = () => (
+  <ErrorBoundary componentName="AuctionsPage">
+    <AuctionsPage />
+  </ErrorBoundary>
+);
+
+export default AuctionsPageWithBoundary;
