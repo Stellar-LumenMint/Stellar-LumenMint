@@ -116,10 +116,13 @@ export class BidService {
       'ENABLE_ONCHAIN_SETTLEMENT',
     );
     if (enableOnchain) {
-      // On-chain: call contract to place bid
+      // On-chain: call contract to place bid. The contract expects a Stellar
+      // address as the bidder — passing the DB user id (a UUID) here would
+      // submit an invalid address. The controller already enforced that the
+      // signing key is the authenticated user's linked wallet.
       const result = await this.settlementClient.placeBid(
         Number(auctionId),
-        bidderId,
+        dto.publicKey,
         String(dto.amount),
       );
       return { success: true, result };

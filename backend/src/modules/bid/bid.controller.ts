@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
   ParseUUIDPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import type { Request as ExpressRequest } from 'express';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -16,7 +17,9 @@ import { BidService } from './bid.service';
 import { PlaceBidDto } from './dto/place-bid.dto';
 import { BidQueryDto } from './dto/bid-query.dto';
 
-type AuthRequest = ExpressRequest & { user?: { userId?: string } };
+type AuthRequest = ExpressRequest & {
+  user?: { userId?: string; walletAddress?: string };
+};
 
 /**
  * BidController
@@ -46,6 +49,24 @@ export class BidController {
     @Req() req: AuthRequest,
   ) {
     const bidderId = req.user?.userId as string;
+    const walletAddress = req.user?.walletAddress;
+
+    // The StellarSignatureGuard proves the body was signed by dto.publicKey,
+    // but that key must also belong to the authenticated account. Otherwise a
+    // user could bid on-chain from an arbitrary wallet that is not linked to
+    // their account, and on-chain settlement would pay out to an address with
+    // no identity binding.
+    if (!walletAddress) {
+      throw new ForbiddenException(
+        'A linked wallet is required to place bids',
+      );
+    }
+    if (dto.publicKey !== walletAddress) {
+      throw new ForbiddenException(
+        'Bid must be signed by the wallet linked to your account',
+      );
+    }
+
     return this.bidService.placeBid(auctionId, bidderId, dto);
   }
 

@@ -305,9 +305,11 @@ describe('BidService', () => {
 
       const result = await service.placeBid(auctionId, bidderId, dto);
 
+      // The contract bidder is the signing wallet (dto.publicKey), not the
+      // DB user id — the contract expects a Stellar address.
       expect(settlementClientMock.placeBid).toHaveBeenCalledWith(
         Number(auctionId),
-        bidderId,
+        dto.publicKey,
         dto.amount,
       );
       expect(result).toEqual({ success: true, result: { txHash: 'tx-1' } });

@@ -28,9 +28,11 @@ function makeBid(overrides: Partial<Bid> = {}): Bid {
   } as Bid;
 }
 
-function makeAuthRequest(userId = 'bidder-uuid') {
-  return { user: { userId } } as ExpressRequest & {
-    user?: { userId?: string };
+const LINKED_WALLET = 'GBYYY55WALLETLINKEDTOTHEACCOUNT222222222222222222222222222222';
+
+function makeAuthRequest(userId = 'bidder-uuid', walletAddress = LINKED_WALLET) {
+  return { user: { userId, walletAddress } } as ExpressRequest & {
+    user?: { userId?: string; walletAddress?: string };
   };
 }
 
@@ -67,7 +69,7 @@ describe('BidController', () => {
   describe('placeBid', () => {
     const dto: PlaceBidDto = {
       amount: '15.0000000',
-      publicKey: 'GBYYY...', // shortened for test
+      publicKey: LINKED_WALLET,
       signature: 'dGVzdA==',
     };
 
@@ -107,6 +109,22 @@ describe('BidController', () => {
       await expect(
         controller.placeBid('auction-uuid-1', dto, makeAuthRequest()),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects bids signed by a wallet that is not linked to the user', async () => {
+      await expect(
+        controller.placeBid(
+          'auction-uuid-1',
+          dto,
+          makeAuthRequest('bidder-uuid', 'GBOTHERWALLET2222222222222222222222222222222222222222'),
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects bids when the account has no linked wallet', async () => {
+      await expect(
+        controller.placeBid('auction-uuid-1', dto, makeAuthRequest('bidder-uuid', '')),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
