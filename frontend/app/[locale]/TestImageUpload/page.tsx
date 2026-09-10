@@ -3,31 +3,52 @@
 import { uploadToFirebase } from "@/lib/firebase/uploadtofirebase";
 import { useState } from "react";
 
+const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
 export default function Page() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  const validateFile = (file: File): string | null => {
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      return "Unsupported file type. Please upload PNG, JPEG, WebP or GIF.";
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      return `File is too large. Maximum size is ${MAX_SIZE_BYTES / 1024 / 1024} MB.`;
+    }
+    return null;
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log("Submit triggered");
 
     if (!imageFile) {
-      console.log("No image selected");
+      setError("No image selected.");
       return;
     }
 
-    const ext = imageFile.name.split(".").pop();
-    const filename = `${Date.now()}.${ext}`;
-    console.log("Uploading file:", filename);
+    const validationError = validateFile(imageFile);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setError(null);
 
     try {
       const url = await uploadToFirebase(imageFile);
-      console.log("File uploaded to:", url);
       setFileUrl(url || "");
       setImageFile(null);
-    } catch (error) {
-      console.error("Upload failed:", error);
+      setUploadProgress(0);
+    } catch (uploadError) {
+      setError(
+        uploadError instanceof Error
+          ? `Upload failed: ${uploadError.message}`
+          : "Upload failed. Please try again."
+      );
     }
   };
 
@@ -41,40 +62,47 @@ export default function Page() {
         <input
           type="file"
           id="imageFile"
-          accept="image/*"
+          accept={ACCEPTED_TYPES.join(",")}
+          aria-describedby={error ? "upload-error" : undefined}
           onChange={(e) => {
-            if (e.target.files && e.target.files[0]) {
-              setImageFile(e.target.files[0]);
-              setUploadProgress(0);
-              setFileUrl("");
+            const file = e.target.files?.[0] ?? null;
+            setImageFile(file);
+            setUploadProgress(0);
+            setFileUrl("");
+            setError(null);
+            if (file) {
+              const validationError = validateFile(file);
+              if (validationError) setError(validationError);
             }
           }}
           className="w-full p-2 rounded border border-lumen-border bg-lumen-background text-lumen-text file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-lumen-primary file:text-lumen-text hover:file:bg-lumen-hover"
         />
 
+        {error && (
+          <p id="upload-error" role="alert" className="w-full text-sm text-red-400">
+            {error}
+          </p>
+        )}
+
         <button
           type="submit"
-          className="w-full p-2 rounded text-lumen-text bg-lumen-primary hover:bg-lumen-hover transition-colors"
+          disabled={!imageFile}
+          className="w-full p-2 rounded text-lumen-text bg-lumen-primary hover:bg-lumen-hover transition-colors disabled:opacity-50"
         >
           Upload Image
         </button>
 
-        {uploadProgress > 0 && (
-          <p className="text-sm text-lumen-primary">Uploading: {uploadProgress}%</p>
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <p role="status">Uploading… {uploadProgress}%</p>
         )}
 
         {fileUrl && (
-          <div className="mt-3">
-            <p className="text-sm text-green-400">Upload complete!</p>
-            <img
-              src={fileUrl}
-              alt="Uploaded"
-              className="w-32 h-auto rounded border border-lumen-border"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/images/fallbacks/nft-fallback.svg';
-              }}
-            />
-          </div>
+          <p className="text-sm break-all">
+            Uploaded:{" "}
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="underline">
+              {fileUrl}
+            </a>
+          </p>
         )}
       </form>
     </div>
