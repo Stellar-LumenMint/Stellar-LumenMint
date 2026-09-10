@@ -3,6 +3,9 @@
 import React, { useId } from "react";
 
 export function Vault() {
+  // Decorative component: the SVG and its animation layers carry no
+  // information, so hide everything from assistive technology and keep it
+  // out of the tab order instead of exposing hundreds of SVG nodes.
   // Generate unique IDs for gradients to avoid conflicts
   const metalGradientId = useId();
   const ringGradientId = useId();
@@ -12,7 +15,7 @@ export function Vault() {
   const sheenGradientId = useId();
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" aria-hidden="true" data-decorative="true">
       {/* Subtle background glow */}
       <div className="absolute w-[500px] h-[500px] bg-gradient-to-r from-[#4e3bff]/10 to-[#9747ff]/10 rounded-full filter blur-xl animate-pulse-slow"></div>
 
@@ -25,6 +28,8 @@ export function Vault() {
           width="500"
           height="667"
           className="drop-shadow-2xl"
+          aria-hidden="true"
+          focusable="false"
         >
           {/* Main vault door - outer circle */}
           <circle
