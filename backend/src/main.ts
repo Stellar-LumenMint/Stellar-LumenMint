@@ -23,6 +23,7 @@ import {
   formatGraphqlError,
   getGraphqlConfig,
 } from './config/graphql.config';
+import { getGraphqlValidationRules } from './config/graphql-validation';
 import { StellarErrorInterceptor } from './interceptors/stellar-error.interceptor';
 import { StellarLoggingInterceptor } from './interceptors/stellar-logging.interceptor';
 import { StellarResponseInterceptor } from './interceptors/stellar-response.interceptor';
@@ -326,6 +327,8 @@ async function bootstrapGraphqlGateway() {
     },
     introspection: graphqlConfig.introspectionEnabled,
     formatError: formatGraphqlError,
+    // Reject overly deep or alias-heavy documents before any resolver runs.
+    validationRules: getGraphqlValidationRules(),
     plugins: [
       loggingMiddleware.createPlugin(),
       ...(landingPagePlugin ? [landingPagePlugin] : []),
