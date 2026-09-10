@@ -20,6 +20,7 @@ import { OrderModule } from './modules/order/order.module';
 import { LoggerModule } from 'nestjs-pino';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { getSynchronizeSetting } from './config/database.config';
 import { StorageModule } from './storage/storage.module';
 import { RedisRateGuard } from './common/guards/redis-rate.guard';
 import { SearchModule } from './search/search.module';
@@ -105,7 +106,10 @@ import { OutboxModule } from './common/outbox';
               password: config.get<string>('DB_PASS') || process.env.DB_PASS,
               database: config.get<string>('DB_NAME') || process.env.DB_NAME,
               autoLoadEntities: true,
-              synchronize: true,
+              // Schema changes must go through the SQL migrations in
+              // backend/migrations/. Synchronize is opt-in and defaults off
+              // outside local development (see config/database.config.ts).
+              synchronize: getSynchronizeSetting(process.env.NODE_ENV),
               logging: config.get('NODE_ENV') === 'development',
               extra: {
                 max: parseInt(

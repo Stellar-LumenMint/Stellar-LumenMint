@@ -8,6 +8,7 @@ import { GraphQLSchemaBuilderModule } from '@nestjs/graphql';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getJwtSecret } from '../config/jwt.config';
+import { getSynchronizeSetting } from '../config/database.config';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { GqlAuthGuard } from '../common/guards/gql-auth.guard';
 import { CollectionModule } from '../modules/collection/collection.module';
@@ -58,7 +59,9 @@ const jwtAccessExpiresInSeconds = parseInt(
         password: process.env.DB_PASS,
         database: process.env.DB_NAME,
         autoLoadEntities: true,
-        synchronize: true,
+        // Same policy as the REST app: synchronize only in local dev and
+        // only when explicitly allowed (see config/database.config.ts).
+        synchronize: getSynchronizeSetting(process.env.NODE_ENV),
       }),
     }),
     JwtModule.register({
