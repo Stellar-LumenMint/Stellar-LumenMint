@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 
 jest.mock('@/hooks/useTranslation', () => ({ useTranslation: () => ({ t: (k: string) => k, locale: 'en' }) }));
 
-import { InstallPrompt } from '../components/InstallPrompt';
+import InstallPrompt from '../components/InstallPrompt';
 
 describe('InstallPrompt component', () => {
   it('renders without crashing', () => {
