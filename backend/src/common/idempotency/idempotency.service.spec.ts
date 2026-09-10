@@ -2,6 +2,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { ServiceUnavailableException } from '@nestjs/common';
 import { IdempotencyService } from './idempotency.service';
 
 const mockRedis = {
@@ -69,10 +70,22 @@ describe('IdempotencyService', () => {
       expect(result.originalResult).toBe('result-42');
     });
 
-    it('should fail open on Redis error (isDuplicate=false)', async () => {
+    it('should fail closed by default when Redis is unavailable', async () => {
       mockRedis.set.mockRejectedValue(new Error('Connection refused'));
 
-      const result = await service.checkAndSet('tx-error', 'data');
+      await expect(service.checkAndSet('tx-error', 'data')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('should fail open when IDEMPOTENCY_FAIL_CLOSED=false is configured', async () => {
+      const cfg = new ConfigService({ IDEMPOTENCY_FAIL_CLOSED: 'false' });
+      const failOpenService = new IdempotencyService(cfg);
+      (failOpenService as unknown as { redis: typeof mockRedis }).redis =
+        mockRedis;
+
+      mockRedis.set.mockRejectedValue(new Error('Connection refused'));
+      const result = await failOpenService.checkAndSet('tx-error', 'data');
       expect(result.isDuplicate).toBe(false);
     });
   });

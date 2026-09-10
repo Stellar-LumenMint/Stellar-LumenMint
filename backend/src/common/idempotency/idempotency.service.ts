@@ -1,6 +1,11 @@
 // ── Idempotency Service ──────────────────────────────────────────────────────
 
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { IdempotencyConfig, IdempotencyResult } from './idempotency.types';
@@ -11,6 +16,7 @@ export class IdempotencyService implements OnModuleDestroy {
   private readonly redis: Redis;
   private readonly ttlSeconds: number;
   private readonly keyPrefix: string;
+  private readonly failClosed: boolean;
 
   constructor(private readonly configService: ConfigService) {
     this.keyPrefix =
@@ -19,6 +25,14 @@ export class IdempotencyService implements OnModuleDestroy {
       configService.get('IDEMPOTENCY_TTL_SECONDS') || '86400',
       10,
     );
+
+    // Fail-closed by default: if the idempotency store is unreachable, the
+    // request is rejected rather than allowed through without protection.
+    // Allowing it through risks double-execution of payments, bids, and
+    // other non-idempotent operations. Set IDEMPOTENCY_FAIL_CLOSED=false
+    // explicitly for endpoints where availability outweighs exactly-once
+    // guarantees (e.g. read-only flows that share the service).
+    this.failClosed = configService.get('IDEMPOTENCY_FAIL_CLOSED') !== 'false';
 
     this.redis = new Redis({
       host: configService.get('REDIS_HOST') || 'localhost',
@@ -85,11 +99,16 @@ export class IdempotencyService implements OnModuleDestroy {
       };
     } catch (err) {
       this.logger.warn(
-        `Idempotency check failed for key '${key}': ${(err as Error).message}. ` +
-          `Allowing request through (fail-open) to avoid blocking legitimate traffic.`,
+        `Idempotency check failed for key '${key}': ${(err as Error).message}.`,
       );
-      // On Redis failure, assume NOT a duplicate (fail open to avoid
-      // blocking legitimate requests due to infrastructure issues)
+      if (this.failClosed) {
+        // Reject rather than risk double-execution of the underlying
+        // operation when the dedupe store is unavailable.
+        throw new ServiceUnavailableException(
+          'Idempotency store unavailable — request rejected to prevent double execution',
+        );
+      }
+      // Explicit opt-out: assume NOT a duplicate (fail open).
       return { isDuplicate: false };
     }
   }
