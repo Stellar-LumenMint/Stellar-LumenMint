@@ -6,9 +6,9 @@ import "@testing-library/jest-dom";
 // =============================================================================
 // Helper: Component that throws
 // =============================================================================
-function ThrowingComponent({ message = "Test error" }: { message?: string }) {
+const ThrowingComponent: React.ComponentType<{ message?: string }> = ({ message = "Test error" }) => {
   throw new Error(message);
-}
+};
 
 function SafeComponent() {
   return <div>All good</div>;
@@ -188,12 +188,22 @@ describe("ErrorBoundary", () => {
   describe("development mode", () => {
     const originalEnv = process.env.NODE_ENV;
 
+    const setNodeEnv = (value: string) => {
+      Object.defineProperty(process.env, "NODE_ENV", {
+        value,
+        configurable: true,
+      });
+    };
+
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv;
+      Object.defineProperty(process.env, "NODE_ENV", {
+        value: originalEnv,
+        configurable: true,
+      });
     });
 
     it("shows error details in development mode", () => {
-      process.env.NODE_ENV = "development";
+      setNodeEnv("development");
       render(
         <ErrorBoundary>
           <ThrowingComponent />
