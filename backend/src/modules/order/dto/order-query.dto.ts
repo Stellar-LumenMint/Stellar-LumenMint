@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsString,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { OrderStatus, OrderType } from './create-order.dto';
 
 export class OrderQueryDto {
@@ -38,10 +39,12 @@ export class OrderQueryDto {
   toDate?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   page?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   limit?: number;
 

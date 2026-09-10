@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -16,6 +17,7 @@ export class CreateListingDto {
   @IsNotEmpty()
   nftTokenId: string;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0.0000001)
   price: number;

@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -22,9 +23,11 @@ export class CreateAuctionDto {
   @IsNotEmpty()
   nftTokenId: string;
 
+  @Type(() => Number)
   @IsNumber()
   startPrice: number;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   reservePrice?: number;

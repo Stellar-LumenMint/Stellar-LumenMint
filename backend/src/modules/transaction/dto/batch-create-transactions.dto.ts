@@ -31,6 +31,7 @@ export class BatchCreateTransactionBlueprintDto {
   @MaxLength(128)
   nftTokenId: string;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   amount: number;

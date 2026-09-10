@@ -1,4 +1,5 @@
 import { IsOptional, IsString, IsIn, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ListingStatus } from '../interfaces/listing.interface';
 
 export class ListingQueryDto {
@@ -19,10 +20,12 @@ export class ListingQueryDto {
   nftTokenId?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   page?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   limit?: number;
 }

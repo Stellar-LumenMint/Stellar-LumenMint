@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -16,6 +17,7 @@ export class CreateOfferDto {
   @IsNotEmpty()
   nftTokenId: string;
 
+  @Type(() => Number)
   @IsNumber()
   @IsPositive()
   amount: number;

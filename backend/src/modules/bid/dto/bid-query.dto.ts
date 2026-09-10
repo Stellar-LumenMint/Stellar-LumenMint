@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
 
 export class BidQueryDto {
   /**
@@ -7,12 +7,14 @@ export class BidQueryDto {
    * Pass the `ledgerSequence` of the last bid returned to get the next page.
    */
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(0)
   @Type(() => Number)
   cursor?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)

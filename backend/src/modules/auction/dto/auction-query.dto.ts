@@ -1,4 +1,5 @@
 import { IsOptional, IsString, IsIn, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
 import { AuctionStatus } from '../interfaces/auction.interface';
 
 export class AuctionQueryDto {
@@ -19,10 +20,12 @@ export class AuctionQueryDto {
   nftTokenId?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   page?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   limit?: number;
 }

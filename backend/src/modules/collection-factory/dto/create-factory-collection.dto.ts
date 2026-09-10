@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -35,6 +36,7 @@ export class CreateFactoryCollectionDto {
   @ValidateIf(
     (dto: CreateFactoryCollectionDto) => dto.royaltyPercentage !== undefined,
   )
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   @Max(100)

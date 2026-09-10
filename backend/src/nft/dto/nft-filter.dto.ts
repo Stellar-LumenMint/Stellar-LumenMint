@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsString, IsOptional, IsNumber, Min } from 'class-validator';
 
 export class NftFilterDto {
@@ -13,12 +14,14 @@ export class NftFilterDto {
   owner?: string;
 
   @ApiProperty({ required: false, minimum: 1, default: 1 })
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   @IsOptional()
   page?: number = 1;
 
   @ApiProperty({ required: false, minimum: 1, default: 10 })
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   @IsOptional()

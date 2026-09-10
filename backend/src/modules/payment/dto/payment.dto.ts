@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsPositive, IsString, IsIn } from 'class-validator';
 
 /**
@@ -13,6 +14,7 @@ export class CreatePaymentIntentDto {
     example: 99.99,
     minimum: 0.01,
   })
+  @Type(() => Number)
   @IsNumber()
   @IsPositive()
   amount: number;

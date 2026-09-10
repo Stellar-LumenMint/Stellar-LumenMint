@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -15,6 +16,7 @@ export class BatchExecuteTransactionsDto {
   config?: Record<string, unknown>;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   maxGas?: number;

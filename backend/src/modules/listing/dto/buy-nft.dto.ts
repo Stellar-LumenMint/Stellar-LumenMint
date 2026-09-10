@@ -37,6 +37,7 @@ export class BuyNftDto {
   tokenAddress?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   @Max(100)

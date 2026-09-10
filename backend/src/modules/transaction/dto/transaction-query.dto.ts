@@ -1,4 +1,5 @@
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TransactionState } from '../enums/transaction-state.enum';
 
 export class TransactionQueryDto {
@@ -11,11 +12,13 @@ export class TransactionQueryDto {
   nftId?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   page?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   limit?: number;

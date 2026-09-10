@@ -154,8 +154,12 @@ function createValidationPipe() {
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
+    // Implicit conversion coerces query strings into numbers/booleans
+    // before validation runs, which can bypass type checks (e.g. "1e999"
+    // → Infinity, "false" → true). Every DTO declares explicit @Type()
+    // decorators instead, so coercion is intentional and bounded.
     transformOptions: {
-      enableImplicitConversion: true,
+      enableImplicitConversion: false,
     },
   });
 }
