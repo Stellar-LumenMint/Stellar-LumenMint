@@ -16,7 +16,7 @@ interface PopularCollectionProps {
 }
 
 const PopularCollection: React.FC<PopularCollectionProps> = ({ title }) => {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const defaultTitle = title || t("popularCollection.title");
 
   const { data, loading, error, refetch } = usePopularCollectionsQuery({
@@ -49,7 +49,7 @@ const PopularCollection: React.FC<PopularCollectionProps> = ({ title }) => {
           <h2 id="popular-collection-heading" className="text-2xl md:text-3xl font-bold text-white">
             {defaultTitle}
           </h2>
-          <Link href="/explore" legacyBehavior>
+          <Link href={`/${locale}/explore`} legacyBehavior>
             <a
               onClick={handleExploreMoreClick}
               className="text-purple-400 hover:text-purple-300 font-medium text-sm md:text-base flex items-center gap-1 transition-colors duration-200"
