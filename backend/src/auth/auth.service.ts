@@ -64,10 +64,6 @@ export class AuthService {
     process.env.JWT_REFRESH_EXPIRES_IN_SECONDS || '604800',
     10,
   );
-  private readonly challengeRateLimitByIp = new Map<
-    string,
-    { count: number; windowStart: number }
-  >();
 
   constructor(
     private readonly jwtService: JwtService,
@@ -134,7 +130,7 @@ export class AuthService {
     dto: WalletChallengeDto,
     requestIp?: string,
   ): Promise<WalletChallengeResponseDto> {
-    this.assertChallengeRateLimit(requestIp);
+    await this.assertChallengeRateLimit(requestIp);
 
     if (!this.stellarStrategy.isValidPublicKey(dto.walletAddress)) {
       throw new BadRequestException('Invalid Stellar wallet address');
@@ -405,28 +401,45 @@ export class AuthService {
     return this.buildTokenPair(user);
   }
 
-  private assertChallengeRateLimit(requestIp?: string) {
+  /**
+   * Sliding-window rate limit for wallet challenge issuance, stored in the
+   * shared Redis cache instead of an in-process Map. The previous in-memory
+   * implementation was per-instance (bypassable across replicas) and grew
+   * unbounded for every distinct IP that ever called the endpoint.
+   */
+  private async assertChallengeRateLimit(requestIp?: string) {
     const key = requestIp || 'unknown';
+    const cacheKey = `rl:wallet-challenge:${key}`;
     const now = Date.now();
-    const current = this.challengeRateLimitByIp.get(key);
 
-    if (
-      !current ||
-      now - current.windowStart > this.challengeRateLimitWindowMs
-    ) {
-      this.challengeRateLimitByIp.set(key, { count: 1, windowStart: now });
-      return;
+    const record = await this.cacheManager.get<{
+      count: number;
+      windowStart: number;
+    }>(cacheKey);
+
+    let count: number;
+    let windowStart: number;
+    if (!record || now - record.windowStart > this.challengeRateLimitWindowMs) {
+      count = 1;
+      windowStart = now;
+    } else {
+      count = record.count + 1;
+      windowStart = record.windowStart;
     }
 
-    if (current.count >= this.challengeRateLimitMax) {
+    if (count > this.challengeRateLimitMax) {
       throw new HttpException(
         'Too many wallet challenge requests. Please try again later.',
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
-    current.count += 1;
-    this.challengeRateLimitByIp.set(key, current);
+    // TTL = window length keeps the key bounded; expired keys expire away.
+    await this.cacheManager.set(
+      cacheKey,
+      { count, windowStart },
+      this.challengeRateLimitWindowMs,
+    );
   }
 
   private buildChallengeMessage(
