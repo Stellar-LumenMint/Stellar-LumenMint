@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 interface AuctionCountdownProps {
-  endTime: string;       // ISO string or timestamp from backend
-  serverTimeOnMount: string; // Server time reference string
+  endTime: string;          // ISO string or timestamp from backend
+  serverTimeOnMount?: string; // Server time reference string (skew correction)
   onAuctionEnd?: () => void;
 }
 
@@ -11,24 +11,31 @@ export const AuctionCountdown: React.FC<AuctionCountdownProps> = ({
   serverTimeOnMount,
   onAuctionEnd,
 }) => {
-  // 1. Calculate clock drift correction factor on mount
+  // 1. Calculate clock drift correction factor on mount.
+  //    If the server time reference is missing or unparseable, fall back
+  //    to the client clock rather than producing NaN and breaking the
+  //    whole countdown.
   const clockOffset = useMemo(() => {
+    if (!serverTimeOnMount) return 0;
     const serverMs = new Date(serverTimeOnMount).getTime();
-    const clientMs = Date.now();
-    return serverMs - clientMs; // Add this to Date.now() to mirror server time
+    if (Number.isNaN(serverMs)) return 0;
+    return serverMs - Date.now(); // Add this to Date.now() to mirror server time
   }, [serverTimeOnMount]);
 
-  const targetTime = useMemo(() => new Date(endTime).getTime(), [endTime]);
+  const targetTime = useMemo(() => {
+    const t = new Date(endTime).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }, [endTime]);
 
-  const calculateTimeLeft = (): number => {
+  const calculateTimeLeft = useCallback((): number => {
     const correctedCurrentTime = Date.now() + clockOffset;
     return Math.max(0, targetTime - correctedCurrentTime);
-  };
+  }, [clockOffset, targetTime]);
 
   const [msRemaining, setMsRemaining] = useState<number>(calculateTimeLeft);
 
   useEffect(() => {
-    if (msRemaining <= 0) return;
+    if (targetTime <= 0) return;
 
     const intervalId = setInterval(() => {
       const timeLeft = calculateTimeLeft();
@@ -36,13 +43,12 @@ export const AuctionCountdown: React.FC<AuctionCountdownProps> = ({
 
       if (timeLeft <= 0) {
         clearInterval(intervalId);
-        if (onAuctionEnd) onAuctionEnd();
+        onAuctionEnd?.();
       }
     }, 1000);
 
-    // Required Change: Prevent memory leaks via interval cleanup mapping
     return () => clearInterval(intervalId);
-  }, [targetTime, clockOffset]);
+  }, [calculateTimeLeft, onAuctionEnd, targetTime]);
 
   // 2. Formatting Engine
   const formatTime = (totalMs: number): string => {
@@ -75,7 +81,7 @@ export const AuctionCountdown: React.FC<AuctionCountdownProps> = ({
   else if (isUnderTenMinutes) textClass = 'text-amber-500 font-mono font-bold';
 
   return (
-    <div className="flex items-center space-x-1.5">
+    <div className="flex items-center space-x-1.5" data-testid="auction-countdown">
       <span className={textClass}>
         {isEnded ? 'Auction Ended' : formatTime(msRemaining)}
       </span>
