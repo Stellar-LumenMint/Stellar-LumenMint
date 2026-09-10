@@ -6,7 +6,7 @@ import TopSellersSkeleton from "@/components/Skeleton/TopSellersSkeleton";
 import ExploreCategoriesSkeleton from "@/components/Skeleton/ExploreCategoriesSkeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useEffect, useRef, useState } from "react";
-import PopularThisWeekSkeleton from "@/components/Skeleton/PopluarThisWeekSkeleton";
+import PopularThisWeekSkeleton from "@/components/Skeleton/PopularThisWeekSkeleton";
 // import PopularThisWeekMarqueeParent from "@/components/PopularThisWeekMarqueeParent";
 // import PopularCollection from '@/components/PopularCollection';
 
