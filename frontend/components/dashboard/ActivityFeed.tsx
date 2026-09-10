@@ -51,7 +51,10 @@ export function ActivityFeed({
             {t("creatorDashboard.recentActivity") || "Recent Activity"}
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center p-6 text-center bg-red-500/10 border border-red-500/20 rounded-xl">
+        <div
+          role="alert"
+          className="flex flex-col items-center justify-center p-6 text-center bg-red-500/10 border border-red-500/20 rounded-xl"
+        >
           <AlertCircle className="w-8 h-8 text-red-400 mb-2" />
           <span className="text-sm font-semibold text-red-200">{error}</span>
         </div>
