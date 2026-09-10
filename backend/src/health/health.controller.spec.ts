@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { ServiceUnavailableException } from '@nestjs/common';
 
@@ -30,6 +31,19 @@ describe('HealthController', () => {
         {
           provide: DataSource,
           useValue: mockDataSource,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              const fallbacks: Record<string, string> = {
+                CACHE_TTL_SECONDS: '300',
+                HEALTH_TIMEOUT_MS: '2000',
+                DB_TIMEOUT_MS: '2000',
+              };
+              return fallbacks[key];
+            }),
+          },
         },
       ],
     }).compile();
