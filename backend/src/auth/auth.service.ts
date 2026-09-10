@@ -35,6 +35,8 @@ type JwtUserPayload = {
   username?: string;
   email?: string;
   walletAddress?: string;
+  role?: string;
+  isBanned?: boolean;
 };
 
 type JwtRefreshPayload = {
@@ -586,6 +588,8 @@ export class AuthService {
       username: user.username,
       email: resolvedEmail,
       walletAddress: resolvedWalletAddress,
+      role: user.role,
+      isBanned: user.isBanned,
     });
 
     return {
@@ -626,6 +630,8 @@ export class AuthService {
       username: user.username,
       email: user.email,
       walletAddress: user.walletAddress,
+      role: user.role,
+      isBanned: user.isBanned,
       type: 'access',
     });
     const refreshToken = this.jwtService.sign(

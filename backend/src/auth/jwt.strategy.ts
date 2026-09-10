@@ -19,15 +19,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     username?: string;
     email?: string;
     role?: string;
-    stellarAddress?: string;
+    isBanned?: boolean;
+    walletAddress?: string;
   }) {
-    // Return user object with role from JWT payload
+    // Return user object with role/ban status from the JWT payload so
+    // authorization guards (RolesGuard, admin routes) can evaluate them.
     return {
       userId: payload.sub,
       username: payload.username,
       email: payload.email,
-      role: payload.role, // Ensure role is included in JWT payload
-      stellarAddress: payload.stellarAddress,
+      role: payload.role,
+      isBanned: payload.isBanned,
+      walletAddress: payload.walletAddress,
     };
   }
 }
