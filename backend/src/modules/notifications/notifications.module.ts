@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
+import { getJwtSecret } from '../../config/jwt.config';
 import { NotificationsGateway } from './notifications.gateway';
 import { NotificationsService } from './notifications.service';
 
@@ -39,7 +40,7 @@ import { NotificationsService } from './notifications.service';
   imports: [
     ConfigModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      secret: getJwtSecret(process.env.JWT_SECRET, process.env),
     }),
     ScheduleModule.forRoot(),
   ],

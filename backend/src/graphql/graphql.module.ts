@@ -7,6 +7,7 @@ import { PassportModule } from '@nestjs/passport';
 import { GraphQLSchemaBuilderModule } from '@nestjs/graphql';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { getJwtSecret } from '../config/jwt.config';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { GqlAuthGuard } from '../common/guards/gql-auth.guard';
 import { CollectionModule } from '../modules/collection/collection.module';
@@ -61,7 +62,7 @@ const jwtAccessExpiresInSeconds = parseInt(
       }),
     }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      secret: getJwtSecret(process.env.JWT_SECRET, process.env),
       signOptions: {
         expiresIn: jwtAccessExpiresInSeconds,
       },

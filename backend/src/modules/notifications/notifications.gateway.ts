@@ -14,6 +14,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
+import { getJwtSecret } from '../../config/jwt.config';
 import { getNotificationsConfig } from './notifications.config';
 import {
   AuthenticatedSocketUser,
@@ -93,6 +94,13 @@ export class NotificationsGateway
 
   private staleThresholdMs!: number;
 
+  /** Resolved once at boot; fails fast in production if JWT_SECRET is missing. */
+  private readonly jwtSecret = getJwtSecret(
+    process.env.JWT_SECRET,
+    process.env,
+    new Logger(NotificationsGateway.name),
+  );
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -167,8 +175,7 @@ export class NotificationsGateway
         username?: string;
         email?: string;
       }>(token, {
-        secret:
-          process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+        secret: this.jwtSecret,
       });
 
       const user: AuthenticatedSocketUser = {

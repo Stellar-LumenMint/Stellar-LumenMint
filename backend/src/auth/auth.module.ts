@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from './jwt.strategy';
+import { getJwtSecret } from '../config/jwt.config';
 import { User } from '../users/user.entity';
 import { UserWallet } from './entities/user-wallet.entity';
 import { WalletSession } from './entities/wallet-session.entity';
@@ -20,7 +21,7 @@ const jwtAccessExpiresInSeconds = parseInt(
     PassportModule,
     TypeOrmModule.forFeature([User, UserWallet, WalletSession]),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      secret: getJwtSecret(process.env.JWT_SECRET, process.env),
       signOptions: {
         expiresIn: jwtAccessExpiresInSeconds,
       },
