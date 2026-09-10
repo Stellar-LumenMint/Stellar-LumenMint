@@ -4,6 +4,7 @@ import React, { Component, ErrorInfo, ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Home, MessageCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";
+import { telemetry } from "@/lib/telemetry";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -25,6 +26,11 @@ interface ErrorBoundaryState {
 }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  // Suppress duplicate reports of the same (component, message) within a
+  // window so a crashing render loop cannot flood the telemetry queue.
+  private readonly lastReportedAt = new Map<string, number>();
+  private static readonly REPORT_DEDUPE_MS = 60_000;
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -40,27 +46,33 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     const { componentName = "UnknownComponent", onError } = this.props;
-    
-    // Log to console
-    console.error(`Error in ${componentName}:`, error);
-    console.error("Component stack:", errorInfo.componentStack);
 
     // Update state with error info
     this.setState({ errorInfo });
 
-    // Log to telemetry if available
-    if (typeof window !== "undefined") {
+    // Report through the real telemetry pipeline (sanitized, sampled and
+    // queued by lib/telemetry). Previously this relied on a magic
+    // window.__TELEMETRY__ global that nothing ever set, so errors were
+    // only ever logged to the console.
+    const dedupeKey = `${componentName}:${error.message}`;
+    const now = Date.now();
+    if (now - (this.lastReportedAt.get(dedupeKey) ?? 0) >= ErrorBoundary.REPORT_DEDUPE_MS) {
+      this.lastReportedAt.set(dedupeKey, now);
       try {
-        const telemetry = (window as any).__TELEMETRY__;
-        if (telemetry?.captureException) {
-          telemetry.captureException(error, {
-            tags: { component: componentName },
-            extra: { componentStack: errorInfo.componentStack },
-          });
-        }
+        telemetry.track("error_boundary_caught", {
+          component: componentName,
+          error_name: error.name,
+          error_message: error.message,
+          component_stack: errorInfo.componentStack,
+        });
       } catch (telemetryError) {
-        // Silently fail if telemetry not available
+        // Telemetry must never break rendering.
       }
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.error(`Error in ${componentName}:`, error);
+      console.error("Component stack:", errorInfo.componentStack);
     }
 
     // Call custom error handler
@@ -100,7 +112,16 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   handleReport = (): void => {
     const { error, errorInfo } = this.state;
     const { componentName = "UnknownComponent" } = this.props;
-    
+
+    try {
+      telemetry.track("error_boundary_reported", {
+        component: componentName,
+        error_message: error?.message,
+      });
+    } catch {
+      // Telemetry must never break the report flow.
+    }
+
     const report = {
       component: componentName,
       error: error?.toString(),
