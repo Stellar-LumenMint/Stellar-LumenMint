@@ -520,8 +520,33 @@ fn test_emergency_withdraw_non_admin_fails() {
 }
 
 #[test]
+fn test_emergency_withdrawal_disabled_by_default() {
+    let (env, _cid, client, admin) = new_env();
+    let reason = Bytes::from_slice(&env, b"stuck");
+    // Emergency withdrawal must start disabled: even the admin cannot
+    // withdraw until it has been explicitly enabled.
+    assert!(client
+        .try_emergency_withdraw(&1u64, &reason, &admin)
+        .is_err());
+}
+
+#[test]
+fn test_admin_can_toggle_emergency_withdrawal() {
+    let (env, _cid, client, admin) = new_env();
+
+    // Enable the capability; withdrawal itself still requires a real stuck
+    // transaction, so only the toggle is asserted here.
+    client.set_emergency_withdrawal(&admin, &true);
+
+    // Non-admin cannot toggle the capability.
+    let attacker = Address::generate(&env);
+    assert!(client.try_set_emergency_withdrawal(&attacker, &true).is_err());
+}
+
+#[test]
 fn test_reentrancy_guard_emergency_withdraw() {
     let (env, cid, client, admin) = new_env();
+    client.set_emergency_withdrawal(&admin, &true);
     env.as_contract(&cid, || {
         env.storage()
             .instance()

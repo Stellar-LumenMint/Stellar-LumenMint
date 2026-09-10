@@ -51,7 +51,11 @@ impl MarketplaceSettlement {
     ) -> Result<(), SettlementError> {
         let admin_config = AdminConfig {
             admin: admin.clone(),
-            emergency_withdrawal_enabled: true,
+            // Emergency withdrawal is a high-impact capability that moves user
+            // funds. It starts disabled and must be explicitly enabled by the
+            // admin (set_emergency_withdrawal) so it cannot be triggered by
+            // default or by accident on a fresh deployment.
+            emergency_withdrawal_enabled: false,
             max_transaction_duration: 2592000, // 30 days
             max_auction_duration: 604800,      // 7 days
             min_bid_increment_bps: 100,        // 1%
@@ -938,6 +942,37 @@ impl MarketplaceSettlement {
             }
 
             AtomicSwapEngine::emergency_withdraw(&env, transaction_id, &admin, &reason)
+        })
+    }
+
+    /// Enable or disable the emergency withdrawal capability (admin only).
+    ///
+    /// Emergency withdrawal moves user funds out of stuck transactions, so it
+    /// is a privileged, audit-worthy operation. Keeping it disabled unless
+    /// explicitly enabled prevents accidental or premature withdrawals.
+    pub fn set_emergency_withdrawal(
+        env: Env,
+        admin: Address,
+        enabled: bool,
+    ) -> Result<(), SettlementError> {
+        admin.require_auth();
+        ReentrancyGuard::execute(&env, &admin, "set_emergency_withdrawal", || {
+            let mut admin_config: AdminConfig = env
+                .storage()
+                .instance()
+                .get(&symbol_short!("admin_cfg"))
+                .ok_or(SettlementError::Unauthorized)?;
+
+            if admin_config.admin != admin {
+                return Err(SettlementError::Unauthorized);
+            }
+
+            admin_config.emergency_withdrawal_enabled = enabled;
+            env.storage()
+                .instance()
+                .set(&symbol_short!("admin_cfg"), &admin_config);
+
+            Ok(())
         })
     }
 
