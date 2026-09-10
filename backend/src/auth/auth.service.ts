@@ -42,6 +42,7 @@ type JwtUserPayload = {
 type JwtRefreshPayload = {
   sub: string;
   type: string;
+  tokenVersion?: number;
 };
 
 const scryptAsync = promisify(crypto.scrypt);
@@ -618,6 +619,7 @@ export class AuthService {
       walletAddress: resolvedWalletAddress,
       role: user.role,
       isBanned: user.isBanned,
+      tokenVersion: user.tokenVersion,
     });
 
     return {
@@ -646,13 +648,19 @@ export class AuthService {
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
+      // A token issued before the latest token-version bump (password
+      // change, forced logout) is stale and must be rejected, no matter
+      // how long it still has to live.
+      if ((payload.tokenVersion ?? 0) !== user.tokenVersion) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
       return this.buildAuthResponse(user);
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
-  private buildTokenPair(user: JwtUserPayload) {
+  private buildTokenPair(user: JwtUserPayload & { tokenVersion?: number }) {
     const accessToken = this.jwtService.sign({
       sub: user.sub,
       username: user.username,
@@ -660,11 +668,13 @@ export class AuthService {
       walletAddress: user.walletAddress,
       role: user.role,
       isBanned: user.isBanned,
+      tokenVersion: user.tokenVersion ?? 0,
       type: 'access',
     });
     const refreshToken = this.jwtService.sign(
       {
         sub: user.sub,
+        tokenVersion: user.tokenVersion ?? 0,
         type: 'refresh',
       },
       { expiresIn: this.refreshTokenTtlSeconds },

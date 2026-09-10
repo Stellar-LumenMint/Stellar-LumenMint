@@ -69,6 +69,12 @@ export class User {
   @Column({ name: 'is_banned', type: 'boolean', default: false })
   isBanned!: boolean;
 
+  // Bumped whenever outstanding tokens must be invalidated (password
+  // change, forced logout, ban). Tokens embed the version at issue time
+  // and are rejected if it no longer matches.
+  @Column({ name: 'token_version', type: 'int', default: 0 })
+  tokenVersion!: number;
+
   @Column({
     name: 'wallet_address',
     type: 'varchar',

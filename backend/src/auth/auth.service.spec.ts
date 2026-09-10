@@ -267,4 +267,43 @@ describe('AuthService', () => {
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
+
+  it('rejects a refresh token issued before a token-version bump', async () => {
+    jwtService.verify = jest.fn().mockReturnValue({
+      sub: 'user-1',
+      type: 'refresh',
+      tokenVersion: 0, // stale: user is now at version 1
+    });
+    userRepository.findOne.mockResolvedValue({
+      id: 'user-1',
+      tokenVersion: 1,
+    });
+
+    await expect(
+      service.refreshTokens('stale-refresh-token'),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('accepts a refresh token matching the current token version', async () => {
+    jwtService.verify = jest.fn().mockReturnValue({
+      sub: 'user-1',
+      type: 'refresh',
+      tokenVersion: 2,
+    });
+    userRepository.findOne.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@stellar-lumenmint.io',
+      username: 'user1',
+      tokenVersion: 2,
+      role: 'user',
+      isBanned: false,
+    });
+    jwtService.sign
+      .mockReturnValueOnce('new-access')
+      .mockReturnValueOnce('new-refresh');
+
+    const result = await service.refreshTokens('valid-refresh-token');
+    expect(result.access_token).toBe('new-access');
+    expect(result.refresh_token).toBe('new-refresh');
+  });
 });
