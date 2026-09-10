@@ -53,7 +53,7 @@ jest.mock("@/lib/telemetry/sanitizer", () => ({
   sanitizeTelemetryPayload: (p: any) => p,
 }));
 
-jest.mock("./image", () => ({
+jest.mock("../image", () => ({
   OptimizedImage: (props: any) => <img {...props} alt={props.alt} />,
 }));
 
