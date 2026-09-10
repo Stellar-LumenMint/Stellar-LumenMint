@@ -135,6 +135,61 @@ describe('OutboxService', () => {
     });
   });
 
+  describe('claimPendingEvents', () => {
+    it('returns an empty list when nothing is claimable', async () => {
+      const selectQb = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        setLock: jest.fn().mockReturnThis(),
+        setOnLocked: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([]),
+      };
+      mockRepo.createQueryBuilder.mockReturnValue(selectQb);
+
+      const result = await service.claimPendingEvents();
+      expect(result).toEqual([]);
+      // No update should run when nothing was claimed.
+      expect(mockRepo.createQueryBuilder).toHaveBeenCalledTimes(1);
+    });
+
+    it('claims rows atomically with SKIP LOCKED before returning them', async () => {
+      const selectQb = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        setLock: jest.fn().mockReturnThis(),
+        setOnLocked: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([{ id: 'evt-1' }, { id: 'evt-2' }]),
+      };
+      const updateQb = {
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        whereInIds: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 2 }),
+      };
+      mockRepo.createQueryBuilder
+        .mockReturnValueOnce(selectQb)
+        .mockReturnValueOnce(updateQb);
+      mockRepo.find.mockResolvedValue([
+        { id: 'evt-1' },
+        { id: 'evt-2' },
+      ]);
+
+      const result = await service.claimPendingEvents(50);
+
+      expect(selectQb.setLock).toHaveBeenCalledWith('pessimistic_write');
+      expect(selectQb.setOnLocked).toHaveBeenCalledWith('skip_locked');
+      expect(updateQb.set).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'publishing' }),
+      );
+      expect(updateQb.whereInIds).toHaveBeenCalledWith(['evt-1', 'evt-2']);
+      expect(result).toHaveLength(2);
+    });
+  });
+
   describe('getFailedEvents', () => {
     it('should return failed events with pagination', async () => {
       mockRepo.findAndCount.mockResolvedValue([

@@ -2,7 +2,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, LessThanOrEqual } from 'typeorm';
+import { Repository, EntityManager, In, LessThanOrEqual } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OutboxEvent, OutboxStatus } from './outbox.entity';
@@ -12,6 +12,9 @@ export class OutboxService {
   private readonly logger = new Logger(OutboxService.name);
   private readonly MAX_ATTEMPTS = 10;
   private readonly BATCH_SIZE = 50;
+  // A claim older than this is presumed abandoned (worker crash) and can
+  // be picked up by another relay instance.
+  private readonly CLAIM_STALE_MS = 60_000;
   private relayProcessing = false;
 
   constructor(
@@ -115,6 +118,60 @@ export class OutboxService {
   }
 
   /**
+   * Atomically claim due pending events for this worker.
+   *
+   * Relies on PostgreSQL's `UPDATE ... WHERE id IN (SELECT ... FOR UPDATE
+   * SKIP LOCKED)` so two app instances can never claim the same row. Any
+   * row stuck in `publishing` past the stale window (worker crashed mid-
+   * relay) is reclaimed as well.
+   */
+  async claimPendingEvents(
+    limit: number = this.BATCH_SIZE,
+  ): Promise<OutboxEvent[]> {
+    const staleBefore = new Date(Date.now() - this.CLAIM_STALE_MS);
+    const now = new Date();
+
+    // Use a correlated claim: select the ids to claim, then flip them.
+    const claimable = await this.outboxRepo
+      .createQueryBuilder('event')
+      .select('event.id', 'id')
+      .where(
+        `(
+          (event.status = :pending AND (
+            event.attempts = 0 OR event.next_retry_at <= :now
+          ))
+          OR (event.status = :publishing AND event.claimed_at <= :staleBefore)
+        )`,
+        {
+          pending: 'pending',
+          publishing: 'publishing',
+          now,
+          staleBefore,
+        },
+      )
+      .orderBy('event.created_at', 'ASC')
+      .limit(limit)
+      .setLock('pessimistic_write')
+      .setOnLocked('skip_locked')
+      .getRawMany<{ id: string }>();
+
+    const ids = claimable.map((row) => row.id);
+    if (ids.length === 0) return [];
+
+    await this.outboxRepo
+      .createQueryBuilder()
+      .update(OutboxEvent)
+      .set({ status: 'publishing' as OutboxStatus, claimedAt: now })
+      .whereInIds(ids)
+      .execute();
+
+    return this.outboxRepo.find({
+      where: { id: In(ids) },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  /**
    * Get failed outbox events for manual inspection.
    */
   async getFailedEvents(
@@ -182,7 +239,8 @@ export class OutboxService {
     this.relayProcessing = true;
 
     try {
-      const events = await this.getPendingEvents();
+      // Claim rows atomically so a second instance cannot relay them too.
+      const events = await this.claimPendingEvents();
       if (events.length === 0) return;
 
       let published = 0;
