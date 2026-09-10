@@ -14,7 +14,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { promisify } from 'util';
-import { IsNull, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { EmailLoginDto, EmailRegisterDto } from './dto/email-auth.dto';
 import {
   WalletChallengeDto,
@@ -248,22 +248,38 @@ export class AuthService {
       throw new ConflictException('Wallet is already linked to another user');
     }
 
-    const session = await this.walletSessionRepository.findOne({
-      where: {
-        walletAddress: dto.walletAddress,
-        nonce: dto.nonce,
-        consumedAt: IsNull(),
-      },
-      order: { createdAt: 'DESC' },
-    });
+    // Challenges issued by generateWalletChallenge are stored in the shared
+    // Redis cache under `nonce:<walletAddress>` and consumed on use. They are
+    // never written to the WalletSession table, so querying the database here
+    // meant linkWallet could never succeed — the rows simply never existed.
+    // Read from the same store generateWalletChallenge writes to so the two
+    // flows agree on a single source of truth for pending challenges.
+    const sessionKey = `nonce:${dto.walletAddress}`;
+    const sessionData = await this.cacheManager.get<{
+      nonce: string;
+      challengeMessage: string;
+      walletAddress: string;
+      expiresAt: string;
+    }>(sessionKey);
 
-    if (!session || session.nonceExpiresAt <= new Date()) {
-      throw new UnauthorizedException('Wallet challenge is invalid or expired');
+    if (!sessionData) {
+      throw new UnauthorizedException(
+        'Wallet challenge not found or already used',
+      );
+    }
+
+    if (sessionData.nonce !== dto.nonce) {
+      throw new UnauthorizedException('Invalid nonce');
+    }
+
+    if (new Date(sessionData.expiresAt) <= new Date()) {
+      await this.cacheManager.del(sessionKey);
+      throw new UnauthorizedException('Wallet challenge has expired');
     }
 
     const isValid = this.stellarStrategy.verifySignedMessage(
       dto.walletAddress,
-      session.challengeMessage,
+      sessionData.challengeMessage,
       dto.signature,
     );
 
@@ -278,9 +294,8 @@ export class AuthService {
       false,
     );
 
-    session.userId = userId;
-    session.consumedAt = new Date();
-    await this.walletSessionRepository.save(session);
+    // One-time use: consume the challenge so the nonce cannot be replayed.
+    await this.cacheManager.del(sessionKey);
 
     return {
       success: true,
