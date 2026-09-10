@@ -127,7 +127,7 @@ export function Navbar() {
                 className={`${navLinkBase} ${navLinkActive} px-3 py-2 rounded-lg hover:bg-white/[0.04]`}
                 onClick={e => handleNavClick(e, id, NAV_PLACEMENTS.NAVBAR_DESKTOP, href, "expanded")}
               >
-                <Icon className="h-[15px] w-[15px]" />
+                <Icon aria-hidden="true" className="h-[15px] w-[15px]" />
                 <span>{label}</span>
               </Link>
             ))}
@@ -235,14 +235,14 @@ export function Navbar() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#141B24] group-hover:bg-[#1C2433] transition-colors border border-[#1E2D3D]">
-                      <Icon className="h-4 w-4 flex-shrink-0 group-hover:text-[#00D4FF] transition-colors" />
+                      <Icon aria-hidden="true" className="h-4 w-4 flex-shrink-0 group-hover:text-[#00D4FF] transition-colors" />
                     </div>
                     <div>
                       <span>{label}</span>
                       <p className="text-xs text-[#6B7A8D]">{desc}</p>
                     </div>
                   </div>
-                  <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40 transition-all duration-200 -translate-x-2 group-hover:translate-x-0" />
+                  <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40 transition-all duration-200 -translate-x-2 group-hover:translate-x-0" />
                 </Link>
               ))}
 
@@ -263,14 +263,14 @@ export function Navbar() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#141B24] group-hover:bg-[#1C2433] transition-colors border border-[#1E2D3D]">
-                      <Icon className="h-4 w-4 flex-shrink-0 group-hover:text-[#00D4FF] transition-colors" />
+                      <Icon aria-hidden="true" className="h-4 w-4 flex-shrink-0 group-hover:text-[#00D4FF] transition-colors" />
                     </div>
                     <div>
                       <span>{label}</span>
                       <p className="text-xs text-[#6B7A8D]">{desc}</p>
                     </div>
                   </div>
-                  <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40 transition-all duration-200 -translate-x-2 group-hover:translate-x-0" />
+                  <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40 transition-all duration-200 -translate-x-2 group-hover:translate-x-0" />
                 </Link>
               ))}
 
@@ -283,14 +283,14 @@ export function Navbar() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#141B24] group-hover:bg-[#1C2433] transition-colors border border-[#1E2D3D]">
-                        <Layers className="h-4 w-4 flex-shrink-0 group-hover:text-[#00D4FF] transition-colors" />
+                        <Layers aria-hidden="true" className="h-4 w-4 flex-shrink-0 group-hover:text-[#00D4FF] transition-colors" />
                       </div>
                       <div>
                         <span>{t("navigation.dashboard")}</span>
                         <p className="text-xs text-[#6B7A8D]">Creator tools</p>
                       </div>
                     </div>
-                    <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40 transition-all duration-200 -translate-x-2 group-hover:translate-x-0" />
+                    <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40 transition-all duration-200 -translate-x-2 group-hover:translate-x-0" />
                   </Link>
                   <Link
                     href={`/${locale}/creator-dashboard/settings`}
@@ -299,14 +299,14 @@ export function Navbar() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#141B24] group-hover:bg-[#1C2433] transition-colors border border-[#1E2D3D]">
-                        <Settings className="h-4 w-4 flex-shrink-0 group-hover:text-[#00D4FF] transition-colors" />
+                        <Settings aria-hidden="true" className="h-4 w-4 flex-shrink-0 group-hover:text-[#00D4FF] transition-colors" />
                       </div>
                       <div>
                         <span>Settings</span>
                         <p className="text-xs text-[#6B7A8D]">Preferences</p>
                       </div>
                     </div>
-                    <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40 transition-all duration-200 -translate-x-2 group-hover:translate-x-0" />
+                    <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40 transition-all duration-200 -translate-x-2 group-hover:translate-x-0" />
                   </Link>
                 </>
               )}
