@@ -6,6 +6,46 @@ import { ConfigService } from '@nestjs/config';
 
 export { AuditAction };
 
+// Fields that must never land in the audit trail, even inside nested state
+// snapshots. passwordHash is the obvious one; tokens, secrets, and private
+// contact details are equally sensitive when an admin edits a user.
+const REDACTED_KEYS = new Set([
+  'passwordHash',
+  'password_hash',
+  'password',
+  'secretKey',
+  'secret_key',
+  'privateKey',
+  'private_key',
+  'accessToken',
+  'access_token',
+  'refreshToken',
+  'refresh_token',
+  'token',
+  'apiKey',
+  'api_key',
+  'authorization',
+  'Authorization',
+]);
+
+const REDACTED_VALUE = '[REDACTED]';
+
+function redactState(value: unknown, depth = 0): unknown {
+  if (value === null || typeof value !== 'object' || depth > 6) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => redactState(item, depth + 1));
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+    out[key] = REDACTED_KEYS.has(key)
+      ? REDACTED_VALUE
+      : redactState(val, depth + 1);
+  }
+  return out;
+}
+
 @Injectable()
 export class AuditService {
   constructor(
@@ -30,13 +70,19 @@ export class AuditService {
       throw new UnauthorizedException('adminId is required for audit logging');
     }
 
+    // Strip credentials and secrets before persisting: state snapshots are
+    // usually whole entities, and a user entity carries passwordHash.
     const log = this.auditLogRepository.create({
       action,
       adminId: metadata.adminId,
       entityType: metadata.entityType,
       entityId: metadata.entityId,
-      beforeState: metadata.beforeState,
-      afterState: metadata.afterState,
+      beforeState: metadata.beforeState
+        ? (redactState(metadata.beforeState) as Record<string, unknown>)
+        : undefined,
+      afterState: metadata.afterState
+        ? (redactState(metadata.afterState) as Record<string, unknown>)
+        : undefined,
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });
