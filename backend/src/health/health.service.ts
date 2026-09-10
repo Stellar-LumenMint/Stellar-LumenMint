@@ -39,9 +39,23 @@ export class HealthService {
         this.checkSorobanRpc(),
       ]);
 
+    // Postgres and Redis are always required. Meilisearch and Soroban RPC are
+    // only required when the deployment actually configures them, so a
+    // minimal deployment without search or a configured RPC endpoint is still
+    // reported ready. This also keeps unit tests (which configure no URLs)
+    // deterministic.
+    const meilisearchConfigured = Boolean(
+      this.configService.get<string>('MEILISEARCH_HOST'),
+    );
+    const sorobanConfigured = Boolean(
+      this.configService.get<string>('SOROBAN_RPC_URL'),
+    );
+
     const isHealthy =
       postgresStatus === 'up' &&
-      redisStatus === 'up';
+      redisStatus === 'up' &&
+      (!meilisearchConfigured || meilisearchStatus === 'up') &&
+      (!sorobanConfigured || sorobanStatus === 'up');
 
     if (!isHealthy) {
       this.logger.error(
@@ -101,7 +115,10 @@ export class HealthService {
       clearTimeout(timeout);
       return res.ok ? 'up' : 'down';
     } catch {
-      return 'degraded';
+      // A failed probe is a hard 'down', not a soft 'degraded' — readiness
+      // consumers (K8s probes, load balancers) treat degraded as healthy and
+      // keep routing traffic to a broken dependency.
+      return 'down';
     }
   }
 
@@ -127,9 +144,9 @@ export class HealthService {
 
       if (!res.ok) return 'down';
       const json = await res.json();
-      return json?.result?.status === 'healthy' ? 'up' : 'degraded';
+      return json?.result?.status === 'healthy' ? 'up' : 'down';
     } catch {
-      return 'degraded';
+      return 'down';
     }
   }
 }
