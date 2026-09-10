@@ -102,7 +102,9 @@
       "price": "Preis",
       "category": "Kategorie",
       "royalties": "Lizenzgebühren",
-      "mint": "NFT prägen"
+      "mint": "NFT prägen",
+      "followError": "Konnte dem Creator nicht folgen. Bitte versuche es erneut.",
+      "unfollowError": "Konnte dem Creator nicht entfolgen. Bitte versuche es erneut."
     },
     "creatorProfile": {
       "verified": "Verifiziert",

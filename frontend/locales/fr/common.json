@@ -102,7 +102,9 @@
     "price": "Prix",
     "category": "Catégorie",
     "royalties": "Revenus",
-    "mint": "Minter le NFT"
+    "mint": "Minter le NFT",
+    "followError": "Impossible de suivre le créateur. Veuillez réessayer.",
+    "unfollowError": "Impossible de ne plus suivre le créateur. Veuillez réessayer."
   },
   "creatorProfile": {
     "verified": "Vérifié",

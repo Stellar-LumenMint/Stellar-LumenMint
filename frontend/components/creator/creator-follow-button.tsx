@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useStellarWallet } from "@/components/wallet/hooks/useStellarWallet";
 import { WalletModal } from "@/components/wallet/WalletModal";
+import { useToast } from "@/lib/stores";
 import {
   FOLLOW_CREATOR_MUTATION,
   UNFOLLOW_CREATOR_MUTATION,
@@ -28,11 +29,21 @@ export function CreatorFollowButton({
   className,
 }: CreatorFollowButtonProps) {
   const { t } = useTranslation();
+  const { showError } = useToast();
   const authUser = useAuthStore((state) => state.user);
   const { connected } = useStellarWallet();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [followerCount, setFollowerCount] = useState(initialFollowerCount);
+
+  // Snapshot of the state just before the in-flight mutation, so a failed
+  // request restores exactly what the user saw — not the mount-time values.
+  const preMutationState = useRef({ isFollowing, followerCount });
+
+  const restorePreMutationState = () => {
+    setIsFollowing(preMutationState.current.isFollowing);
+    setFollowerCount(preMutationState.current.followerCount);
+  };
 
   const [followCreator, followState] = useMutation(FOLLOW_CREATOR_MUTATION, {
     optimisticResponse: {
@@ -48,8 +59,8 @@ export function CreatorFollowButton({
       setFollowerCount(data.followCreator.followerCount);
     },
     onError: () => {
-      setIsFollowing(initialFollowing);
-      setFollowerCount(initialFollowerCount);
+      restorePreMutationState();
+      showError(t("creator.followError"));
     },
   });
 
@@ -69,8 +80,8 @@ export function CreatorFollowButton({
         setFollowerCount(data.unfollowCreator.followerCount);
       },
       onError: () => {
-        setIsFollowing(initialFollowing);
-        setFollowerCount(initialFollowerCount);
+        restorePreMutationState();
+        showError(t("creator.unfollowError"));
       },
     },
   );
@@ -84,15 +95,15 @@ export function CreatorFollowButton({
       return;
     }
 
+    // The optimistic response in the mutation options applies the UI update;
+    // snapshot first so the rollback path can restore it precisely.
+    preMutationState.current = { isFollowing, followerCount };
+
     if (isFollowing) {
-      setIsFollowing(false);
-      setFollowerCount((count) => Math.max(0, count - 1));
       await unfollowCreator({ variables: { creatorId } });
       return;
     }
 
-    setIsFollowing(true);
-    setFollowerCount((count) => count + 1);
     await followCreator({ variables: { creatorId } });
   };
 

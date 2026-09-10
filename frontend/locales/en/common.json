@@ -102,7 +102,9 @@
     "price": "Price",
     "category": "Category",
     "royalties": "Royalties",
-    "mint": "Mint NFT"
+    "mint": "Mint NFT",
+    "followError": "Couldn't follow creator. Please try again.",
+    "unfollowError": "Couldn't unfollow creator. Please try again."
   },
   "creatorProfile": {
     "verified": "Verified",

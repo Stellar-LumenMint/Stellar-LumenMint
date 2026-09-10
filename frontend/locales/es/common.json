@@ -102,7 +102,9 @@
       "price": "Precio",
       "category": "Categoría",
       "royalties": "Regalías",
-      "mint": "Acuñar NFT"
+      "mint": "Acuñar NFT",
+      "followError": "No se pudo seguir al creador. Inténtalo de nuevo.",
+      "unfollowError": "No se pudo dejar de seguir al creador. Inténtalo de nuevo."
     },
     "creatorProfile": {
       "verified": "Verificado",
