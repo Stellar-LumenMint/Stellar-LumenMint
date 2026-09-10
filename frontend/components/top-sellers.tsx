@@ -28,7 +28,7 @@ export function TopSellers() {
     {
       id: "1",
       name: isMarketplacePage ? "Crispyn Berry" : "Leighton Kramer",
-      amount: isMarketplacePage ? "24.5 STRK" : "276.4 STK",
+      amount: isMarketplacePage ? "24.5 XLM" : "276.4 XLM",
       avatar: "/avatars/avatar-1.jpg",
       highlight: true,
       bgColor: "bg-yellow-400",
@@ -36,21 +36,21 @@ export function TopSellers() {
     {
       id: "2",
       name: isMarketplacePage ? "Samuel Rust" : "Haylie Arcand",
-      amount: isMarketplacePage ? "20.8 STRK" : "146.8 STK",
+      amount: isMarketplacePage ? "20.8 XLM" : "146.8 XLM",
       avatar: "/avatars/avatar-2.jpg",
       bgColor: "bg-teal-400",
     },
     {
       id: "3",
       name: isMarketplacePage ? "Tommy Alvarez" : "Bowen Higgins",
-      amount: isMarketplacePage ? "19.3 STRK" : "98.2 STK",
+      amount: isMarketplacePage ? "19.3 XLM" : "98.2 XLM",
       avatar: "/avatars/avatar-3.jpg",
       bgColor: "bg-purple-400",
     },
     {
       id: "4",
       name: isMarketplacePage ? "Wilbur Lane" : "Saige Fuentes",
-      amount: isMarketplacePage ? "18.7 STRK" : "94.7 STK",
+      amount: isMarketplacePage ? "18.7 XLM" : "94.7 XLM",
       avatar: "/avatars/avatar-4.jpg",
       bgColor: "bg-violet-400",
     },
