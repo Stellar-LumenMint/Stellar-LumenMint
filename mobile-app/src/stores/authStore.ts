@@ -132,10 +132,35 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'stellar-lumenmint-auth-storage',
+      // The persist middleware fires these writes from the synchronous `set()`
+      // path and does not await them, so a rejected keychain write would
+      // surface as an unhandled promise rejection — enough to take down the
+      // JS runtime. Persisted state is a convenience (the user is
+      // re-authenticated through SecureStorage), so a failed read/write must
+      // degrade to "not persisted" rather than crash the app.
       storage: createJSONStorage(() => ({
-        getItem: async (key: string) => await SecureStore.getItemAsync(key),
-        setItem: async (key: string, value: string) => await SecureStore.setItemAsync(key, value),
-        removeItem: async (key: string) => await SecureStore.deleteItemAsync(key),
+        getItem: async (key: string) => {
+          try {
+            return await SecureStore.getItemAsync(key);
+          } catch {
+            return null;
+          }
+        },
+        setItem: async (key: string, value: string) => {
+          try {
+            await SecureStore.setItemAsync(key, value);
+          } catch {
+            // Best effort: the session is already in memory and the wallet
+            // remains protected by SecureStorage.
+          }
+        },
+        removeItem: async (key: string) => {
+          try {
+            await SecureStore.deleteItemAsync(key);
+          } catch {
+            // Best effort: stale state is harmless once the store is cleared.
+          }
+        },
       })),
       // Only persist non-sensitive state; credentials are managed by SecureStorage
       partialize: (state) => ({
