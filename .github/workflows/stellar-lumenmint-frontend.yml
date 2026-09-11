@@ -87,6 +87,14 @@ jobs:
             npx prettier --check "**/*.{ts,tsx,js,jsx}"
           fi
 
+      - name: Validate translations
+        run: |
+          if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
+            pnpm run validate-translations
+          else
+            npm run validate-translations
+          fi
+
       - name: Run tests (if available)
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then

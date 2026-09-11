@@ -16,7 +16,8 @@
     "test": "jest",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps",
-    "validate-translations": "node scripts/validate-translations.js"
+    "validate-translations": "node scripts/validate-translations.js",
+    "validate-translations:strict": "node scripts/validate-translations.js --strict"
   },
   "dependencies": {
     "@albedo-link/intent": "^0.13.0",
