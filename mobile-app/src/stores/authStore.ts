@@ -38,7 +38,9 @@ export const useAuthStore = create<AuthState>()(
           await SecureStore.setItemAsync(AUTH_TOKEN_KEY, 'true');
           set({ user, isAuthenticated: true });
         } catch (err) {
-          const message = (err as { message?: string })?.message ?? 'Email login failed';
+          // `new Error()` has `message === ''`, which is not nullish, so a
+          // plain `??` fallback would surface a blank error to the user.
+          const message = (err as { message?: string })?.message?.trim() || 'Email login failed';
           set({ error: message });
           throw err;
         } finally {
@@ -69,7 +71,7 @@ export const useAuthStore = create<AuthState>()(
           await SecureStore.setItemAsync(AUTH_TOKEN_KEY, 'true');
           set({ user, isAuthenticated: true });
         } catch (err) {
-          const message = (err as { message?: string })?.message ?? 'Email registration failed';
+          const message = (err as { message?: string })?.message?.trim() || 'Email registration failed';
           set({ error: message });
           throw err;
         } finally {
