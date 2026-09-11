@@ -175,6 +175,46 @@ impl CollectionFactory {
         collections
     }
 
+    /// Paginated view over the collections deployed by this factory.
+    ///
+    /// `get_collections_by_factory` walks every collection ever created, so a
+    /// busy factory returns an unbounded `Vec` in a single call and can exceed
+    /// ledger limits. This bounded variant lets callers page through the list;
+    /// `limit` is capped so one call can never materialize the whole set.
+    pub fn get_collections_page(env: Env, start: u32, limit: u32) -> Vec<Address> {
+        const MAX_PAGE_SIZE: u32 = 100;
+
+        let count: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::CollectionCount)
+            .unwrap_or(0);
+
+        let mut collections = Vec::new(&env);
+
+        if limit == 0 || start >= count {
+            return collections;
+        }
+
+        let effective_limit = if limit > MAX_PAGE_SIZE {
+            MAX_PAGE_SIZE
+        } else {
+            limit
+        };
+
+        let end = start.saturating_add(effective_limit).min(count);
+
+        let mut i = start;
+        while i < end {
+            if let Some(address) = env.storage().instance().get(&DataKey::CollectionAddress(i)) {
+                collections.push_back(address);
+            }
+            i += 1;
+        }
+
+        collections
+    }
+
     /* Operational Admin Functions */
 
     pub fn update_creator_limit(env: Env, new_limit: u32) {

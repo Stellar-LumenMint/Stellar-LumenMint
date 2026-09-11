@@ -1,5 +1,6 @@
 use crate::collection::{NftCollection, NftCollectionClient};
 use crate::factory::{CollectionFactory, CollectionFactoryClient};
+use crate::storage::DataKey;
 use crate::types::CollectionConfig;
 use soroban_sdk::testutils::Events;
 use soroban_sdk::TryFromVal;
@@ -808,4 +809,48 @@ fn test_get_collections_by_factory() {
     // In a real scenario, collections would be deployed via factory.create_collection
     let collections = factory_client.get_collections_by_factory();
     assert_eq!(collections.len(), 0); // No collections deployed through factory in this test
+}
+
+#[test]
+fn test_get_collections_page_respects_bounds_and_offset() {
+    let env = Env::default();
+    let factory_id = env.register(CollectionFactory, ());
+    let factory_client = CollectionFactoryClient::new(&env, &factory_id);
+
+    let first = Address::generate(&env);
+    let second = Address::generate(&env);
+    let third = Address::generate(&env);
+
+    // Seed the registry directly so the pagination boundaries can be checked
+    // without running four full deployments.
+    env.as_contract(&factory_id, || {
+        env.storage()
+            .instance()
+            .set(&DataKey::CollectionCount, &3u32);
+        env.storage()
+            .instance()
+            .set(&DataKey::CollectionAddress(0), &first);
+        env.storage()
+            .instance()
+            .set(&DataKey::CollectionAddress(1), &second);
+        env.storage()
+            .instance()
+            .set(&DataKey::CollectionAddress(2), &third);
+    });
+
+    // A full page returns every registered collection.
+    assert_eq!(factory_client.get_collections_page(&0, &10).len(), 3);
+
+    // An offset page returns exactly the requested window.
+    let page = factory_client.get_collections_page(&1, &1);
+    assert_eq!(page.len(), 1);
+    assert_eq!(page.get(0).unwrap(), second);
+
+    // A zero limit and a start past the end both return nothing rather than
+    // walking the whole registry.
+    assert_eq!(factory_client.get_collections_page(&0, &0).len(), 0);
+    assert_eq!(factory_client.get_collections_page(&99, &10).len(), 0);
+
+    // An oversized limit is clamped, so the call still succeeds.
+    assert_eq!(factory_client.get_collections_page(&0, &u32::MAX).len(), 3);
 }
