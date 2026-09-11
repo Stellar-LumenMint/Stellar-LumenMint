@@ -7,6 +7,9 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
+# Minimum supported Rust version; kept in sync with rust-toolchain.toml and
+# the CI toolchain so builds are reproducible across contributors and runners.
+rust-version = "1.85"
 
 [workspace.metadata.versioning]
 strategy = "semver+git"
