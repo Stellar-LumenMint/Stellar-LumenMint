@@ -48,6 +48,25 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
+  secret-scan:
+    name: Secret Scan (gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history so gitleaks can scan commits, not just the worktree.
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   dependency-audit:
     name: Dependency Audit (${{ matrix.workspace }})
     runs-on: ubuntu-latest
