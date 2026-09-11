@@ -9,6 +9,7 @@ import {
   getStellarConfig,
   type StellarRuntimeConfig,
 } from '../config/stellar.config';
+import { CircuitBreaker } from '../common/resilience/circuit-breaker';
 
 export type SorobanRpcRetryMetrics = {
   totalRetryAttempts: number;
@@ -208,7 +209,35 @@ export async function retrySorobanRpcCall<T>(
 export class SorobanRpcService implements OnModuleInit {
   private readonly logger = new Logger(SorobanRpcService.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  /**
+   * Fails fast once the RPC endpoint is clearly unhealthy, so a struggling
+   * Soroban RPC does not absorb every request's full retry budget. Only
+   * retryable (infrastructure) errors count — an invalid transaction must not
+   * open the circuit for everyone else.
+   */
+  private readonly circuitBreaker: CircuitBreaker;
+
+  constructor(private readonly configService: ConfigService) {
+    this.circuitBreaker = new CircuitBreaker({
+      failureThreshold: this.readPositiveInt(
+        'SOROBAN_RPC_CIRCUIT_FAILURE_THRESHOLD',
+        5,
+      ),
+      resetTimeoutMs: this.readPositiveInt(
+        'SOROBAN_RPC_CIRCUIT_RESET_MS',
+        30_000,
+      ),
+      shouldCountFailure: isRetryableSorobanRpcError,
+      onStateChange: (from, to) => {
+        this.logger.warn(`Soroban RPC circuit breaker: ${from} -> ${to}`);
+      },
+    });
+  }
+
+  private readPositiveInt(key: string, fallback: number): number {
+    const parsed = parseInt(this.configService.get<string>(key) ?? '', 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  }
 
   async onModuleInit(): Promise<void> {
     const config = this.getRuntimeConfig();
@@ -275,11 +304,18 @@ export class SorobanRpcService implements OnModuleInit {
   ): Promise<T> {
     const config = this.getRuntimeConfig();
 
-    return retrySorobanRpcCall(operation, {
-      config,
-      methodName,
-      logger: this.logger,
-    });
+    return this.circuitBreaker.execute(() =>
+      retrySorobanRpcCall(operation, {
+        config,
+        methodName,
+        logger: this.logger,
+      }),
+    );
+  }
+
+  /** Current circuit state, for health reporting. */
+  getCircuitState() {
+    return this.circuitBreaker.getState();
   }
 
   getNetworkContext() {

@@ -21,6 +21,13 @@ export interface CircuitBreakerOptions {
   halfOpenMaxRequests?: number;
   /** Callback invoked on state changes */
   onStateChange?: (from: CircuitState, to: CircuitState) => void;
+  /**
+   * Predicate deciding whether a thrown error represents a dependency
+   * failure. Defaults to counting every error. Return false for caller
+   * mistakes (invalid input, failed simulation) so a client error cannot
+   * trip the circuit and block healthy traffic.
+   */
+  shouldCountFailure?: (error: unknown) => boolean;
 }
 
 export class CircuitBreaker {
@@ -37,12 +44,14 @@ export class CircuitBreaker {
     from: CircuitState,
     to: CircuitState,
   ) => void;
+  private readonly shouldCountFailure: (error: unknown) => boolean;
 
   constructor(options: CircuitBreakerOptions = {}) {
     this.failureThreshold = options.failureThreshold ?? 5;
     this.resetTimeoutMs = options.resetTimeoutMs ?? 30_000;
     this.halfOpenMaxRequests = options.halfOpenMaxRequests ?? 3;
     this.onStateChange = options.onStateChange;
+    this.shouldCountFailure = options.shouldCountFailure ?? (() => true);
   }
 
   /**
@@ -74,7 +83,11 @@ export class CircuitBreaker {
       this.onSuccess();
       return result;
     } catch (error) {
-      this.onFailure();
+      // Only dependency failures should trip the circuit; caller mistakes are
+      // rethrown without counting against the threshold.
+      if (this.shouldCountFailure(error)) {
+        this.onFailure();
+      }
       throw error;
     }
   }

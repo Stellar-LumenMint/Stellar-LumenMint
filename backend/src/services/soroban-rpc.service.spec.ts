@@ -125,4 +125,56 @@ describe('SorobanRpcService', () => {
       );
     });
   });
+
+  describe('circuit breaker', () => {
+    // The breaker snapshots its thresholds from ConfigService at construction
+    // time, so build a dedicated instance with the desired env values.
+    const buildService = (values: Record<string, string | undefined>) =>
+      new SorobanRpcService({
+        get: (key: string) => values[key],
+      } as unknown as ConfigService);
+
+    it('opens after consecutive retryable failures, then fails fast', async () => {
+      const service = buildService({
+        SOROBAN_RPC_CIRCUIT_FAILURE_THRESHOLD: '2',
+        SOROBAN_RPC_MAX_RETRIES: '1',
+      });
+
+      const operation = jest.fn().mockRejectedValue(new Error('timeout'));
+
+      await expect(
+        service.retryRpcCall(operation, 'getLatestLedger'),
+      ).rejects.toThrow('timeout');
+      await expect(
+        service.retryRpcCall(operation, 'getLatestLedger'),
+      ).rejects.toThrow('timeout');
+
+      expect(service.getCircuitState()).toBe('OPEN');
+
+      operation.mockClear();
+      await expect(
+        service.retryRpcCall(operation, 'getLatestLedger'),
+      ).rejects.toThrow(/Circuit is OPEN/);
+      expect(operation).not.toHaveBeenCalled();
+    });
+
+    it('does not open on caller errors like a failed simulation', async () => {
+      const service = buildService({
+        SOROBAN_RPC_CIRCUIT_FAILURE_THRESHOLD: '2',
+        SOROBAN_RPC_MAX_RETRIES: '1',
+      });
+
+      const operation = jest
+        .fn()
+        .mockRejectedValue(new Error('simulation failed: invalid argument'));
+
+      for (let i = 0; i < 4; i += 1) {
+        await expect(
+          service.retryRpcCall(operation, 'simulateTransaction'),
+        ).rejects.toThrow('simulation failed');
+      }
+
+      expect(service.getCircuitState()).toBe('CLOSED');
+    });
+  });
 });
