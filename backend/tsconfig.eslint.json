@@ -1,0 +1,14 @@
+{
+  // ESLint needs a TypeScript program that contains every file it lints.
+  // The build tsconfig deliberately excludes specs, so pointing the linter
+  // at it produced "file was not found by the project service" parsing
+  // errors instead of real lint results. This config includes the test tree
+  // and emits nothing.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
