@@ -19,7 +19,10 @@ build_timestamp_env = "BUILD_TIMESTAMP"
 rustc_version_env = "RUSTC_VERSION"
 
 [workspace.dependencies]
-soroban-sdk = "23"
+# Pinned to the exact patch that Cargo.lock resolves. A caret/`23` range
+# would let `cargo update` silently move a deployed contract onto a new SDK
+# patch, changing generated code and the Wasm hash without review.
+soroban-sdk = "=23.5.3"
 
 [profile.release]
 opt-level = "z"
