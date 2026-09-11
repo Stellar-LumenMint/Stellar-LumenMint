@@ -1,6 +1,9 @@
 {
   "name": "stellar-lumenmint-backend",
   "version": "0.0.1",
+  "engines": {
+    "node": ">=20"
+  },
   "description": "",
   "author": "",
   "private": true,

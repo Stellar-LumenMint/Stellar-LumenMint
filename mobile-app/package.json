@@ -1,6 +1,9 @@
 {
   "name": "stellar-lumenmint-mobile-app",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "index.ts",
   "scripts": {
     "start": "expo start",

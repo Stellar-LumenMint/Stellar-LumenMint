@@ -1,6 +1,9 @@
 {
   "name": "stellar-lumenmint-packages",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "shared-types",
     "sdk",
