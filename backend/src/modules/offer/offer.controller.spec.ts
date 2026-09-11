@@ -32,7 +32,11 @@ describe('OfferController', () => {
 
   describe('createOffer', () => {
     it('should call offerService.create with DTO and bidderId', async () => {
-      const dto = { nftContractId: 'contract-1', tokenId: '1', price: '100' } as any;
+      const dto = {
+        nftContractId: 'contract-1',
+        tokenId: '1',
+        price: '100',
+      } as any;
       offerService.create.mockResolvedValue({ id: 'offer-1' } as any);
 
       const result = await controller.createOffer(dto, mockReq);
@@ -45,13 +49,19 @@ describe('OfferController', () => {
     it('should parse contractId:tokenId and call findByNft', async () => {
       offerService.findByNft.mockResolvedValue([]);
       await controller.listOffers('contract-1:token-123');
-      expect(offerService.findByNft).toHaveBeenCalledWith('contract-1', 'token-123');
+      expect(offerService.findByNft).toHaveBeenCalledWith(
+        'contract-1',
+        'token-123',
+      );
     });
 
     it('should handle token IDs with colons', async () => {
       offerService.findByNft.mockResolvedValue([]);
       await controller.listOffers('contract-1:abc:def');
-      expect(offerService.findByNft).toHaveBeenCalledWith('contract-1', 'abc:def');
+      expect(offerService.findByNft).toHaveBeenCalledWith(
+        'contract-1',
+        'abc:def',
+      );
     });
   });
 

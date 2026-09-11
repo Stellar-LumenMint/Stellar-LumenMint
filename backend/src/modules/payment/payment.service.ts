@@ -34,14 +34,25 @@ export class PaymentService {
     currency: 'XLM' | 'USD' = 'USD',
     metadata?: Record<string, unknown>,
   ): Promise<PaymentIntent> {
-    const stripeKey = this.configService.get('STRIPE_SECRET_KEY');
+    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
 
     if (stripeKey && currency === 'USD') {
-      this.logger.log({ event: 'payment_intent_create', provider: 'stripe', amount, currency }, 'Creating Stripe payment intent');
+      this.logger.log(
+        {
+          event: 'payment_intent_create',
+          provider: 'stripe',
+          amount,
+          currency,
+        },
+        'Creating Stripe payment intent',
+      );
       return this.createStripeIntent(amount, metadata);
     }
 
-    this.logger.log({ event: 'payment_intent_create', provider: 'xlm', amount, currency }, 'Creating XLM payment intent');
+    this.logger.log(
+      { event: 'payment_intent_create', provider: 'xlm', amount, currency },
+      'Creating XLM payment intent',
+    );
     return this.createXlmPayment(amount, metadata);
   }
 
@@ -53,17 +64,24 @@ export class PaymentService {
    * 2. Sign with the platform's distribution key
    * 3. Submit to Horizon and return the transaction hash
    */
-  async processPayout(request: PayoutRequest): Promise<{ success: boolean; txHash?: string }> {
+  processPayout(
+    request: PayoutRequest,
+  ): Promise<{ success: boolean; txHash?: string }> {
     const maskedAddress = `${request.recipientAddress.slice(0, 5)}...${request.recipientAddress.slice(-5)}`;
     this.logger.log(
-      { event: 'payout_process', amount: request.amount, currency: request.currency, recipient: maskedAddress },
+      {
+        event: 'payout_process',
+        amount: request.amount,
+        currency: request.currency,
+        recipient: maskedAddress,
+      },
       'Processing payout',
     );
 
-    return {
+    return Promise.resolve({
       success: true,
       txHash: undefined, // Would be the actual Horizon transaction hash
-    };
+    });
   }
 
   /**
@@ -77,27 +95,25 @@ export class PaymentService {
 
   // ── Private: Stripe ──────────────────────────────────────────────────────
 
-  private async createStripeIntent(
+  private createStripeIntent(
     amount: number,
-    metadata?: Record<string, unknown>,
+    _metadata?: Record<string, unknown>,
   ): Promise<PaymentIntent> {
-    const amountCents = Math.round(amount * 100);
-
-    return {
+    return Promise.resolve({
       id: `pi_${Date.now()}`,
       amount: amount.toString(),
       currency: 'USD',
       status: 'requires_payment_method',
       clientSecret: `pi_secret_${Date.now()}`,
       createdAt: new Date().toISOString(),
-    };
+    });
   }
 
   // ── Private: XLM Native ─────────────────────────────────────────────────
 
   private createXlmPayment(
     amount: number,
-    metadata?: Record<string, unknown>,
+    _metadata?: Record<string, unknown>,
   ): PaymentIntent {
     return {
       id: `xlm_pay_${Date.now()}`,

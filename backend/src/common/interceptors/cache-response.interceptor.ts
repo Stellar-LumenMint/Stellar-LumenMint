@@ -94,15 +94,13 @@ export class CacheResponseInterceptor implements NestInterceptor {
     }
 
     return next.handle().pipe(
-      tap(async (data) => {
+      tap((data) => {
         if (data !== undefined && data !== null) {
-          try {
-            // Default TTL: 30 seconds, overridden by @CacheTTL decorator
-            const effectiveTtl = (ttl ?? 30) * 1000; // convert to ms
-            await this.cacheManager.set(cacheKey, data, effectiveTtl);
-          } catch {
+          // Default TTL: 30 seconds, overridden by @CacheTTL decorator
+          const effectiveTtl = (ttl ?? 30) * 1000; // convert to ms
+          void this.cacheManager.set(cacheKey, data, effectiveTtl).catch(() => {
             // Silently fail cache writes
-          }
+          });
         }
       }),
     );
@@ -111,7 +109,8 @@ export class CacheResponseInterceptor implements NestInterceptor {
   private buildCacheKey(request: Request, prefix?: string): string {
     const base = `${request.method}:${request.originalUrl || request.url}`;
     // Use authenticated user ID for per-user cache isolation, fall back to anonymous
-    const userId = (request as any).user?.id ?? 'anon';
+    const userId =
+      (request as Request & { user?: { id?: string } }).user?.id ?? 'anon';
     return `cache:${prefix ?? 'api'}:${base}:user:${userId}`;
   }
 }

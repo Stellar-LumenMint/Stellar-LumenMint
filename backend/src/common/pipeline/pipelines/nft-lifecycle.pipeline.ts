@@ -144,9 +144,7 @@ export class NftLifecyclePipeline {
     return ctx;
   }
 
-  private async unindexFromSearch(
-    ctx: NftLifecycleContext,
-  ): Promise<void> {
+  private async unindexFromSearch(ctx: NftLifecycleContext): Promise<void> {
     this.eventEmitter.emit('search.nft.delete', { nftId: ctx.nftId });
     this.logger.warn(`Rolled back search index for NFT ${ctx.nftId}`);
   }

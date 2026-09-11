@@ -22,7 +22,9 @@ describe('CollectionFactoryController', () => {
       providers: [{ provide: CollectionFactoryService, useValue: mockService }],
     }).compile();
 
-    controller = module.get<CollectionFactoryController>(CollectionFactoryController);
+    controller = module.get<CollectionFactoryController>(
+      CollectionFactoryController,
+    );
     service = module.get(CollectionFactoryService);
   });
 
@@ -50,11 +52,20 @@ describe('CollectionFactoryController', () => {
 
   describe('mintToken', () => {
     it('should call service.mintToken with params', async () => {
-      const dto = { to: 'G...', metadataUri: 'ipfs://x', attributes: {} } as any;
+      const dto = {
+        to: 'G...',
+        metadataUri: 'ipfs://x',
+        attributes: {},
+      } as any;
       service.mintToken.mockResolvedValue({ returnValue: 'ok' });
       const result = await controller.mintToken('CABC...', dto);
       expect(result).toBeDefined();
-      expect(service.mintToken).toHaveBeenCalledWith('CABC...', 'G...', 'ipfs://x', {});
+      expect(service.mintToken).toHaveBeenCalledWith(
+        'CABC...',
+        'G...',
+        'ipfs://x',
+        {},
+      );
     });
   });
 

@@ -1,4 +1,7 @@
-import { ValidationPipe as NestValidationPipe, ValidationPipeOptions } from '@nestjs/common';
+import {
+  ValidationPipe as NestValidationPipe,
+  ValidationPipeOptions,
+} from '@nestjs/common';
 
 /**
  * Global validation pipe configuration.
@@ -20,4 +23,6 @@ export const validationPipeOptions: ValidationPipeOptions = {
   },
 };
 
-export const GlobalValidationPipe = new NestValidationPipe(validationPipeOptions);
+export const GlobalValidationPipe = new NestValidationPipe(
+  validationPipeOptions,
+);

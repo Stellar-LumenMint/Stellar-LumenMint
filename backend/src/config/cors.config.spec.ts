@@ -7,7 +7,9 @@ import {
 
 describe('getWebSocketOrigins', () => {
   it('returns dev localhost origins outside production', () => {
-    const origins = getWebSocketOrigins({ NODE_ENV: 'development' } as NodeJS.ProcessEnv);
+    const origins = getWebSocketOrigins({
+      NODE_ENV: 'development',
+    });
     expect(origins).toContain('http://localhost:3000');
     expect(origins).toContain('http://127.0.0.1:3000');
     expect(origins).not.toContain('*');
@@ -17,7 +19,7 @@ describe('getWebSocketOrigins', () => {
     const origins = getWebSocketOrigins({
       NODE_ENV: 'development',
       CORS_ORIGIN_DEV: 'http://mydevice.local:8080',
-    } as NodeJS.ProcessEnv);
+    });
     expect(origins).toContain('http://mydevice.local:8080');
   });
 
@@ -25,20 +27,20 @@ describe('getWebSocketOrigins', () => {
     const origins = getWebSocketOrigins({
       NODE_ENV: 'production',
       CORS_ALLOWED_ORIGINS: 'https://app.stellar-lumenmint.com',
-    } as NodeJS.ProcessEnv);
+    });
     expect(origins).not.toContain('*');
     expect(origins).toContain('https://app.stellar-lumenmint.com');
   });
 
   it('fails closed in production when no allowlist is configured', () => {
-    expect(() =>
-      getWebSocketOrigins({ NODE_ENV: 'production' } as NodeJS.ProcessEnv),
-    ).toThrow(BadRequestException);
+    expect(() => getWebSocketOrigins({ NODE_ENV: 'production' })).toThrow(
+      BadRequestException,
+    );
     expect(() =>
       getWebSocketOrigins({
         NODE_ENV: 'production',
         CORS_ALLOWED_ORIGINS: '   ',
-      } as NodeJS.ProcessEnv),
+      }),
     ).toThrow(BadRequestException);
   });
 });
@@ -92,10 +94,7 @@ describe('getAllowedOrigins', () => {
         corsAllowedOrigins:
           'https://app.stellar-lumenmint.com,http://localhost:3000',
       }),
-    ).toEqual([
-      'https://app.stellar-lumenmint.com',
-      'http://localhost:3000',
-    ]);
+    ).toEqual(['https://app.stellar-lumenmint.com', 'http://localhost:3000']);
   });
 });
 
@@ -107,7 +106,9 @@ describe('validateCorsOrigin', () => {
   });
 
   it('accepts subdomain wildcards', () => {
-    expect(() => validateCorsOrigin('*.stellar-lumenmint.com', true)).not.toThrow();
+    expect(() =>
+      validateCorsOrigin('*.stellar-lumenmint.com', true),
+    ).not.toThrow();
   });
 
   it('rejects the bare wildcard origin', () => {

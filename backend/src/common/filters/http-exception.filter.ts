@@ -34,8 +34,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // The full error is still recorded in the server logs below.
     const errorResponse: ErrorResponse = {
       statusCode: status,
-      message:
-        status >= 500 ? 'Internal server error' : 'Request failed',
+      message: status >= 500 ? 'Internal server error' : 'Request failed',
       timestamp: new Date().toISOString(),
       path: request.url,
     };

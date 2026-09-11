@@ -36,7 +36,9 @@ describe('GraphQL query-shape validation', () => {
 
     it('rejects a query deeper than the configured depth', () => {
       // depth 4
-      const errors = depthErrors('{ node { child { child { child { id } } } } }');
+      const errors = depthErrors(
+        '{ node { child { child { child { id } } } } }',
+      );
       expect(errors).toHaveLength(1);
       expect(errors[0]).toContain('too deep');
     });
@@ -78,20 +80,14 @@ describe('GraphQL query-shape validation', () => {
     const aliasRule = createAliasLimitRule(2);
 
     it('allows aliases up to the configured limit', () => {
-      const errors = validate(
-        schema,
-        parse('{ a: id b: id }'),
-        [aliasRule],
-      );
+      const errors = validate(schema, parse('{ a: id b: id }'), [aliasRule]);
       expect(errors).toEqual([]);
     });
 
     it('rejects a document with too many aliases and reports once', () => {
-      const errors = validate(
-        schema,
-        parse('{ a: id b: id c: id d: id }'),
-        [aliasRule],
-      );
+      const errors = validate(schema, parse('{ a: id b: id c: id d: id }'), [
+        aliasRule,
+      ]);
       expect(errors).toHaveLength(1);
       expect(errors[0].message).toContain('Too many aliased fields');
     });

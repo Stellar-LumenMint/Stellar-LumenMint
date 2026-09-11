@@ -6,7 +6,6 @@ import Redis from 'ioredis';
 import { randomUUID } from 'crypto';
 import {
   Job,
-  JobStatus,
   JobPriority,
   QueueConfig,
   EnqueueOptions,
@@ -234,11 +233,7 @@ export class JobQueueService implements OnModuleDestroy {
         redisKey(queueName, `job:${jobId}`),
         JSON.stringify(job),
       );
-      await this.redis.zadd(
-        redisKey(queueName, 'active'),
-        Date.now(),
-        jobId,
-      );
+      await this.redis.zadd(redisKey(queueName, 'active'), Date.now(), jobId);
 
       // Execute handler
       const handler = this.handlers.get(queueName);
@@ -282,20 +277,20 @@ export class JobQueueService implements OnModuleDestroy {
           redisKey(queueName, `job:${jobId}`),
           JSON.stringify(job),
         );
-      await this.redis.zadd(
-        redisKey(queueName, 'completed'),
-        Date.now(),
-        jobId,
-      );
-      await this.redis.expire(
-        redisKey(queueName, `job:${jobId}`),
-        config.completedJobTtlSeconds,
-      );
-      // Also set TTL on the completed sorted-set member (cleanup cron as safety net)
-      await this.redis.expire(
-        redisKey(queueName, 'completed'),
-        config.completedJobTtlSeconds + 3600,
-      );
+        await this.redis.zadd(
+          redisKey(queueName, 'completed'),
+          Date.now(),
+          jobId,
+        );
+        await this.redis.expire(
+          redisKey(queueName, `job:${jobId}`),
+          config.completedJobTtlSeconds,
+        );
+        // Also set TTL on the completed sorted-set member (cleanup cron as safety net)
+        await this.redis.expire(
+          redisKey(queueName, 'completed'),
+          config.completedJobTtlSeconds + 3600,
+        );
       }
     }
   }
@@ -308,7 +303,7 @@ export class JobQueueService implements OnModuleDestroy {
   ): Promise<void> {
     await this.redis.zrem(redisKey(queueName, 'active'), jobId);
 
-    let job = await this.getJob(queueName, jobId);
+    const job = await this.getJob(queueName, jobId);
     if (!job) return;
 
     job.attemptsMade++;
@@ -340,16 +335,8 @@ export class JobQueueService implements OnModuleDestroy {
         redisKey(queueName, `job:${jobId}`),
         JSON.stringify(job),
       );
-      await this.redis.zadd(
-        redisKey(queueName, 'failed'),
-        Date.now(),
-        jobId,
-      );
-      await this.redis.zadd(
-        redisKey(queueName, DLQ_SUFFIX),
-        Date.now(),
-        jobId,
-      );
+      await this.redis.zadd(redisKey(queueName, 'failed'), Date.now(), jobId);
+      await this.redis.zadd(redisKey(queueName, DLQ_SUFFIX), Date.now(), jobId);
       await this.redis.expire(
         redisKey(queueName, `job:${jobId}`),
         config.failedJobTtlSeconds,

@@ -81,7 +81,7 @@ describe('OrderService', () => {
         nftId: 'nft-id',
         price: '100',
       };
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
       await expect(service.create(dto as any)).rejects.toThrow(
         'Bundle orders must contain at least 2 items',
       );
@@ -101,7 +101,7 @@ describe('OrderService', () => {
         nftId: 'nft-id',
         price: '0',
       };
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
       await expect(service.create(dto as any)).rejects.toThrow(
         'Bundle orders require a valid totalPrice > 0',
       );
@@ -121,7 +121,7 @@ describe('OrderService', () => {
         nftId: 'nft-id',
         price: '100',
       };
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
       await expect(service.create(dto as any)).rejects.toThrow(
         'Bundle duration must be between 1 second and 30 days',
       );

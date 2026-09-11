@@ -1,6 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsPositive, IsString, IsIn } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsIn,
+} from 'class-validator';
 
 /**
  * DTO for creating a payment intent (POST /api/payments/intent).

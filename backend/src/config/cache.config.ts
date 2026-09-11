@@ -123,9 +123,7 @@ export function cacheEnvFromConfig(config: ConfigService): CacheEnv {
  * is only instantiated when Redis is configured; the returned Keyv connects
  * lazily on first use.
  */
-export function createCacheModuleOptions(
-  env: CacheEnv,
-): CacheManagerOptions {
+export function createCacheModuleOptions(env: CacheEnv): CacheManagerOptions {
   const resolved = resolveCacheConfig(env);
   const base: CacheManagerOptions = {
     ttl: resolved.ttlMs,
@@ -138,6 +136,6 @@ export function createCacheModuleOptions(
 
   return {
     ...base,
-    stores: [createKeyv(resolved.redisUrl as string)],
+    stores: [createKeyv(resolved.redisUrl)],
   };
 }

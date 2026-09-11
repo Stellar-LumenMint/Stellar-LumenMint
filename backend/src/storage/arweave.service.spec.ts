@@ -9,7 +9,8 @@ import { ArweaveService } from './arweave.service';
 import type { UploadedFile } from './storage.types';
 
 const createFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => {
-  const buffer = overrides.buffer ?? Buffer.from('stellar-lumenmint-arweave-file');
+  const buffer =
+    overrides.buffer ?? Buffer.from('stellar-lumenmint-arweave-file');
 
   return {
     originalname: 'asset.png',
@@ -125,7 +126,6 @@ describe('ArweaveService', () => {
       const serviceWithoutWallet = module.get<ArweaveService>(ArweaveService);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         (serviceWithoutWallet as any).getWalletJwk(),
       ).rejects.toBeInstanceOf(InternalServerErrorException);
     });
@@ -147,7 +147,6 @@ describe('ArweaveService', () => {
       const serviceWithoutWallet = module.get<ArweaveService>(ArweaveService);
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         await (serviceWithoutWallet as any).getWalletJwk();
         fail('Should have thrown InternalServerErrorException');
       } catch (error) {
@@ -181,7 +180,6 @@ describe('ArweaveService', () => {
         module.get<ArweaveService>(ArweaveService);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         (serviceWithInvalidWallet as any).getWalletJwk(),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
@@ -203,7 +201,6 @@ describe('ArweaveService', () => {
         module.get<ArweaveService>(ArweaveService);
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         await (serviceWithInvalidWallet as any).getWalletJwk();
         fail('Should have thrown BadRequestException');
       } catch (error) {
@@ -234,7 +231,6 @@ describe('ArweaveService', () => {
 
       const serviceWithValidWallet = module.get<ArweaveService>(ArweaveService);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       const wallet = await (serviceWithValidWallet as any).getWalletJwk();
       expect(wallet).toEqual({
         kty: 'RSA',

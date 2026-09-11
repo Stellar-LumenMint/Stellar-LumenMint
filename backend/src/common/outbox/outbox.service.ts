@@ -72,7 +72,9 @@ export class OutboxService {
       event.attempts += 1;
       await this.outboxRepo.save(event);
 
-      this.logger.debug(`Published outbox event ${event.id} (${event.eventType})`);
+      this.logger.debug(
+        `Published outbox event ${event.id} (${event.eventType})`,
+      );
       return true;
     } catch (err) {
       event.lastError = err instanceof Error ? err.message : String(err);
@@ -100,7 +102,9 @@ export class OutboxService {
   /**
    * Get pending outbox events (oldest first, with retry time respected).
    */
-  async getPendingEvents(limit: number = this.BATCH_SIZE): Promise<OutboxEvent[]> {
+  async getPendingEvents(
+    limit: number = this.BATCH_SIZE,
+  ): Promise<OutboxEvent[]> {
     return this.outboxRepo.find({
       where: [
         {
@@ -161,7 +165,7 @@ export class OutboxService {
     await this.outboxRepo
       .createQueryBuilder()
       .update(OutboxEvent)
-      .set({ status: 'publishing' as OutboxStatus, claimedAt: now })
+      .set({ status: 'publishing', claimedAt: now })
       .whereInIds(ids)
       .execute();
 
@@ -216,7 +220,7 @@ export class OutboxService {
     const result = await this.outboxRepo
       .createQueryBuilder()
       .update(OutboxEvent)
-      .set({ status: 'archived' as OutboxStatus })
+      .set({ status: 'archived' })
       .where('status IN (:...statuses)', {
         statuses: ['published', 'failed'],
       })

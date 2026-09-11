@@ -53,7 +53,10 @@ describe('SocialController', () => {
       socialService.unfollowUser.mockResolvedValue(undefined);
       const result = await controller.unfollowUser(mockReq, 'user-2');
       expect(result.success).toBe(true);
-      expect(socialService.unfollowUser).toHaveBeenCalledWith('user-1', 'user-2');
+      expect(socialService.unfollowUser).toHaveBeenCalledWith(
+        'user-1',
+        'user-2',
+      );
     });
   });
 
@@ -76,10 +79,21 @@ describe('SocialController', () => {
 
   describe('getFeed', () => {
     it('should return feed with default pagination', async () => {
-      socialService.getFeed.mockResolvedValue({ data: [], total: 0, page: 1, limit: 20, hasMore: false });
+      socialService.getFeed.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        hasMore: false,
+      });
       const result = await controller.getFeed(mockReq);
       expect(result.total).toBe(0);
-      expect(socialService.getFeed).toHaveBeenCalledWith('user-1', 1, 20, undefined);
+      expect(socialService.getFeed).toHaveBeenCalledWith(
+        'user-1',
+        1,
+        20,
+        undefined,
+      );
     });
 
     it('should throw BadRequestException for invalid before date', async () => {

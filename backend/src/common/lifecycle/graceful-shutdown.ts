@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  OnApplicationShutdown,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, OnApplicationShutdown, Logger } from '@nestjs/common';
 import { INestApplication } from '@nestjs/common';
 
 /**
@@ -35,16 +31,23 @@ export class GracefulShutdownService implements OnApplicationShutdown {
     if (this.shutdownInProgress) return;
     this.shutdownInProgress = true;
 
-    this.logger.log(`Starting graceful shutdown (signal: ${signal ?? 'unknown'})`);
+    this.logger.log(
+      `Starting graceful shutdown (signal: ${signal ?? 'unknown'})`,
+    );
 
     try {
       if (this.app) {
         // Stop accepting new connections
-        const httpServer = this.app.getHttpServer();
-        if (httpServer?.close) {
+        const httpServer = this.app.getHttpServer() as {
+          close?: (callback?: () => void) => void;
+        };
+        const closeHttpServer = httpServer?.close;
+        if (closeHttpServer) {
           await new Promise<void>((resolve) => {
-            httpServer.close(() => {
-              this.logger.log('HTTP server closed — no longer accepting connections');
+            closeHttpServer(() => {
+              this.logger.log(
+                'HTTP server closed — no longer accepting connections',
+              );
               resolve();
             });
           });
@@ -55,7 +58,9 @@ export class GracefulShutdownService implements OnApplicationShutdown {
         this.logger.log('NestJS application closed successfully');
       }
     } catch (error) {
-      this.logger.error(`Error during graceful shutdown: ${(error as Error).message}`);
+      this.logger.error(
+        `Error during graceful shutdown: ${(error as Error).message}`,
+      );
     }
 
     this.logger.log('Graceful shutdown complete');
@@ -65,7 +70,7 @@ export class GracefulShutdownService implements OnApplicationShutdown {
   private createSignalHandler(): (signal: string) => void {
     return (signal: string) => {
       this.logger.log(`Received ${signal} — initiating graceful shutdown`);
-      this.onApplicationShutdown(signal).catch((err) => {
+      this.onApplicationShutdown(signal).catch((err: Error) => {
         this.logger.error(`Shutdown error: ${err.message}`);
         process.exit(1);
       });

@@ -51,7 +51,7 @@ describe('IpfsService', () => {
         module.get<IpfsService>(IpfsService);
 
       // Mock getStorageConfig to return unsupported provider
-      /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment */
+      /* eslint-disable @typescript-eslint/no-require-imports */
       jest
         .spyOn(require('./storage.config'), 'getStorageConfig')
         .mockReturnValue({
@@ -99,7 +99,7 @@ describe('IpfsService', () => {
         module.get<IpfsService>(IpfsService);
 
       // Mock getStorageConfig to return unsupported provider
-      /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+      /* eslint-disable @typescript-eslint/no-require-imports */
       jest
         .spyOn(require('./storage.config'), 'getStorageConfig')
         .mockReturnValue({
@@ -159,7 +159,6 @@ describe('IpfsService', () => {
       const serviceWithoutJwt = module.get<IpfsService>(IpfsService);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         (serviceWithoutJwt as any).uploadWithPinata(createFile()),
       ).rejects.toBeInstanceOf(InternalServerErrorException);
     });
@@ -180,7 +179,6 @@ describe('IpfsService', () => {
       const serviceWithoutJwt = module.get<IpfsService>(IpfsService);
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         await (serviceWithoutJwt as any).uploadWithPinata(createFile());
         fail('Should have thrown InternalServerErrorException');
       } catch (error) {
@@ -213,7 +211,6 @@ describe('IpfsService', () => {
       const serviceWithoutToken = module.get<IpfsService>(IpfsService);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         (serviceWithoutToken as any).uploadWithStorageApi(
           createFile(),
           'web3storage',
@@ -238,7 +235,6 @@ describe('IpfsService', () => {
       const serviceWithoutToken = module.get<IpfsService>(IpfsService);
 
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         (serviceWithoutToken as any).uploadWithStorageApi(
           createFile(),
           'nftstorage',
@@ -263,7 +259,6 @@ describe('IpfsService', () => {
       const serviceWithoutToken = module.get<IpfsService>(IpfsService);
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         await (serviceWithoutToken as any).uploadWithStorageApi(
           createFile(),
           'web3storage',

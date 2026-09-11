@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { IdempotencyConfig, IdempotencyResult } from './idempotency.types';
+import { IdempotencyResult } from './idempotency.types';
 
 @Injectable()
 export class IdempotencyService implements OnModuleDestroy {
@@ -19,8 +19,7 @@ export class IdempotencyService implements OnModuleDestroy {
   private readonly failClosed: boolean;
 
   constructor(private readonly configService: ConfigService) {
-    this.keyPrefix =
-      configService.get('IDEMPOTENCY_KEY_PREFIX') || 'idem';
+    this.keyPrefix = configService.get('IDEMPOTENCY_KEY_PREFIX') || 'idem';
     this.ttlSeconds = parseInt(
       configService.get('IDEMPOTENCY_TTL_SECONDS') || '86400',
       10,
@@ -65,10 +64,7 @@ export class IdempotencyService implements OnModuleDestroy {
    * @param key - The idempotency key (e.g. a transaction hash or request ID).
    * @param result - The result to cache for this key (only used on first call).
    */
-  async checkAndSet(
-    key: string,
-    result?: string,
-  ): Promise<IdempotencyResult> {
+  async checkAndSet(key: string, result?: string): Promise<IdempotencyResult> {
     const redisKey = `${this.keyPrefix}:${key}`;
 
     try {

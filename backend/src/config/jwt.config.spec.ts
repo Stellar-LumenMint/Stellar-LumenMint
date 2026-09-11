@@ -8,9 +8,9 @@ describe('getJwtSecret', () => {
   });
 
   it('throws in production when JWT_SECRET is missing (fail closed)', () => {
-    expect(() =>
-      getJwtSecret(undefined, { NODE_ENV: 'production' }),
-    ).toThrow(/JWT_SECRET must be set in production/);
+    expect(() => getJwtSecret(undefined, { NODE_ENV: 'production' })).toThrow(
+      /JWT_SECRET must be set in production/,
+    );
   });
 
   it('throws in production when JWT_SECRET is whitespace-only', () => {
@@ -24,6 +24,8 @@ describe('getJwtSecret', () => {
       'your-secret-key-change-in-production',
     );
     // Defaults to process.env when env not passed
-    expect(getJwtSecret(undefined)).toBe('your-secret-key-change-in-production');
+    expect(getJwtSecret(undefined)).toBe(
+      'your-secret-key-change-in-production',
+    );
   });
 });

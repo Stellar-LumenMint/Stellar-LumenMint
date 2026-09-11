@@ -41,7 +41,8 @@ describe('CollectionFactoryService', () => {
       owner: 'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
       metadataUri: 'ipfs://abc',
       royaltyPercentage: 5,
-      royaltyRecipient: 'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
+      royaltyRecipient:
+        'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
     };
 
     it('should invoke create_collection on the factory contract', async () => {
@@ -50,7 +51,9 @@ describe('CollectionFactoryService', () => {
 
       await service.createCollection(validDto);
 
-      expect(configService.get).toHaveBeenCalledWith('COLLECTION_FACTORY_CONTRACT_ID');
+      expect(configService.get).toHaveBeenCalledWith(
+        'COLLECTION_FACTORY_CONTRACT_ID',
+      );
       expect(sorobanService.invokeContract).toHaveBeenCalledWith(
         'CACTUSFACTORY...',
         'create_collection',
@@ -93,14 +96,14 @@ describe('CollectionFactoryService', () => {
     it('should validate addresses and invoke mint_token', async () => {
       sorobanService.invokeContract.mockResolvedValue({ returnValue: 'ok' });
 
-      await service.mintToken(
-        'CABC...',
-        'GBZX...',
-        'ipfs://metadata',
-      );
+      await service.mintToken('CABC...', 'GBZX...', 'ipfs://metadata');
 
-      expect(sorobanService.ensureValidContractAddress).toHaveBeenCalledWith('CABC...');
-      expect(sorobanService.ensureValidAccountAddress).toHaveBeenCalledWith('GBZX...');
+      expect(sorobanService.ensureValidContractAddress).toHaveBeenCalledWith(
+        'CABC...',
+      );
+      expect(sorobanService.ensureValidAccountAddress).toHaveBeenCalledWith(
+        'GBZX...',
+      );
       expect(sorobanService.invokeContract).toHaveBeenCalledWith(
         'CABC...',
         'mint_token',

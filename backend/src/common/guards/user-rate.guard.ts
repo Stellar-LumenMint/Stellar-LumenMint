@@ -85,7 +85,10 @@ export class UserRateGuard implements CanActivate {
         await this.cacheManager.set(key, window, limit.duration * 1000);
 
         response.setHeader('X-RateLimit-Limit', String(limit.points));
-        response.setHeader('X-RateLimit-Remaining', String(Math.max(0, limit.points - 1)));
+        response.setHeader(
+          'X-RateLimit-Remaining',
+          String(Math.max(0, limit.points - 1)),
+        );
         return true;
       }
 
@@ -129,7 +132,7 @@ export class UserRateGuard implements CanActivate {
   }
 
   private buildKey(request: Request): string {
-    const userId = (request as any).user?.id;
+    const userId = (request as Request & { user?: { id?: string } }).user?.id;
     if (userId) {
       return `rate:user:${userId}:${request.method}:${request.path}`;
     }
@@ -141,7 +144,7 @@ export class UserRateGuard implements CanActivate {
   }
 
   private getUserLimit(request: Request): RateLimitOptions {
-    const role = (request as any).user?.role as string | undefined;
+    const role = (request as Request & { user?: { role?: string } }).user?.role;
     if (role && this.tiers[role]) {
       return this.tiers[role];
     }

@@ -55,7 +55,8 @@ describe('AuthService — wallet challenge contract', () => {
     del: jest.fn(),
   };
 
-  const walletAddress = 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF';
+  const walletAddress =
+    'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF';
 
   // In-memory stand-in for Redis so a challenge stored by
   // generateWalletChallenge is observable by verifyWalletChallenge.
@@ -67,12 +68,10 @@ describe('AuthService — wallet challenge contract', () => {
     cacheManager.get.mockImplementation((key: string) =>
       Promise.resolve(sessionStore.get(key)),
     );
-    cacheManager.set.mockImplementation(
-      (key: string, value: unknown) => {
-        sessionStore.set(key, value);
-        return Promise.resolve();
-      },
-    );
+    cacheManager.set.mockImplementation((key: string, value: unknown) => {
+      sessionStore.set(key, value);
+      return Promise.resolve();
+    });
     cacheManager.del.mockImplementation((key: string) => {
       sessionStore.delete(key);
       return Promise.resolve();
@@ -86,8 +85,14 @@ describe('AuthService — wallet challenge contract', () => {
         // the exact server-issued message verifies.
         StellarSignatureStrategy,
         { provide: getRepositoryToken(User), useValue: userRepository },
-        { provide: getRepositoryToken(UserWallet), useValue: userWalletRepository },
-        { provide: getRepositoryToken(WalletSession), useValue: walletSessionRepository },
+        {
+          provide: getRepositoryToken(UserWallet),
+          useValue: userWalletRepository,
+        },
+        {
+          provide: getRepositoryToken(WalletSession),
+          useValue: walletSessionRepository,
+        },
         { provide: CACHE_MANAGER, useValue: cacheManager },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
@@ -96,7 +101,7 @@ describe('AuthService — wallet challenge contract', () => {
     service = moduleRef.get(AuthService);
   });
 
-  function mockWalletResolution() {
+  function _mockWalletResolution() {
     userWalletRepository.findOne
       .mockResolvedValueOnce(null) // resolveUserByWallet: no linked wallet
       .mockResolvedValueOnce(null); // upsertLinkedWallet: no existing row

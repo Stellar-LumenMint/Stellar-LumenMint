@@ -90,7 +90,9 @@ describe('PaymentService', () => {
       const result = await service.createPaymentIntent(100, 'USD');
       const createdAt = new Date(result.createdAt);
 
-      expect(createdAt.getTime()).toBeGreaterThanOrEqual(before.getTime() - 1000);
+      expect(createdAt.getTime()).toBeGreaterThanOrEqual(
+        before.getTime() - 1000,
+      );
     });
   });
 
@@ -99,7 +101,8 @@ describe('PaymentService', () => {
   describe('processPayout', () => {
     it('should return success for a valid payout request', async () => {
       const result = await service.processPayout({
-        recipientAddress: 'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
+        recipientAddress:
+          'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
         amount: '100',
         currency: 'XLM',
         memo: 'payout-123',
@@ -110,7 +113,8 @@ describe('PaymentService', () => {
 
     it('should handle payout without memo', async () => {
       const result = await service.processPayout({
-        recipientAddress: 'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
+        recipientAddress:
+          'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
         amount: '50',
         currency: 'XLM',
       });
@@ -131,9 +135,11 @@ describe('PaymentService', () => {
     });
 
     it('should return false for an invalid address (wrong prefix)', () => {
-      expect(service.isValidStellarAddress('SBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS')).toBe(
-        false,
-      );
+      expect(
+        service.isValidStellarAddress(
+          'SBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
+        ),
+      ).toBe(false);
     });
 
     it('should return false for a short address', () => {

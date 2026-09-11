@@ -52,9 +52,7 @@ export function validateCorsOrigin(
   if (origin.startsWith(SUBDOMAIN_WILDCARD_PREFIX)) {
     const domain = origin.slice(SUBDOMAIN_WILDCARD_PREFIX.length);
     if (!domain || domain.includes('/') || domain.includes(':')) {
-      throw new BadRequestException(
-        `Invalid CORS origin wildcard: ${origin}`,
-      );
+      throw new BadRequestException(`Invalid CORS origin wildcard: ${origin}`);
     }
     return;
   }

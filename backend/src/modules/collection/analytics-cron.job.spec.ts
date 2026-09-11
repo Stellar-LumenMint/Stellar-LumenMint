@@ -8,7 +8,9 @@ describe('AnalyticsCronJob', () => {
   let cacheLock: { acquire: jest.Mock; release: jest.Mock };
 
   beforeEach(() => {
-    analyticsService = { aggregateStatsForDate: jest.fn().mockResolvedValue(undefined) };
+    analyticsService = {
+      aggregateStatsForDate: jest.fn().mockResolvedValue(undefined),
+    };
     cacheLock = {
       acquire: jest.fn().mockResolvedValue('token-1'),
       release: jest.fn().mockResolvedValue(undefined),

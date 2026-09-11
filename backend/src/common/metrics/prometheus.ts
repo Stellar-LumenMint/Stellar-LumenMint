@@ -71,7 +71,6 @@ const businessTransactionsSettledTotal = new Counter({
 export class PrometheusService {
   private readonly logger = new Logger(PrometheusService.name);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   startRequestTimer(_method?: string, _route?: string): () => number {
     const start = Date.now();
     return () => (Date.now() - start) / 1000;
@@ -89,7 +88,7 @@ export class PrometheusService {
         durationSeconds,
       );
     } catch (error) {
-      this.logger.warn(`Failed to observe request duration: ${error}`);
+      this.logger.warn(`Failed to observe request duration: ${String(error)}`);
     }
   }
 
@@ -105,7 +104,9 @@ export class PrometheusService {
         status_code: String(statusCode),
       });
     } catch (error) {
-      this.logger.warn(`Failed to increment http_requests_total: ${error}`);
+      this.logger.warn(
+        `Failed to increment http_requests_total: ${String(error)}`,
+      );
     }
   }
 
@@ -121,7 +122,9 @@ export class PrometheusService {
         status_code: String(statusCode),
       });
     } catch (error) {
-      this.logger.warn(`Failed to increment http_errors_total: ${error}`);
+      this.logger.warn(
+        `Failed to increment http_errors_total: ${String(error)}`,
+      );
     }
   }
 
@@ -129,7 +132,7 @@ export class PrometheusService {
     try {
       businessNftMintsTotal.inc({ collection_id: collectionId ?? 'unknown' });
     } catch (error) {
-      this.logger.warn(`Failed to increment nft_mints_total: ${error}`);
+      this.logger.warn(`Failed to increment nft_mints_total: ${String(error)}`);
     }
   }
 
@@ -137,7 +140,9 @@ export class PrometheusService {
     try {
       businessListingsCreatedTotal.inc({ nft_id: nftId });
     } catch (error) {
-      this.logger.warn(`Failed to increment listings_created_total: ${error}`);
+      this.logger.warn(
+        `Failed to increment listings_created_total: ${String(error)}`,
+      );
     }
   }
 
@@ -145,7 +150,9 @@ export class PrometheusService {
     try {
       businessSalesCompletedTotal.inc({ seller_id: sellerId });
     } catch (error) {
-      this.logger.warn(`Failed to increment sales_completed_total: ${error}`);
+      this.logger.warn(
+        `Failed to increment sales_completed_total: ${String(error)}`,
+      );
     }
   }
 
@@ -153,7 +160,9 @@ export class PrometheusService {
     try {
       businessAuctionBidsTotal.inc({ auction_id: auctionId });
     } catch (error) {
-      this.logger.warn(`Failed to increment auction_bids_total: ${error}`);
+      this.logger.warn(
+        `Failed to increment auction_bids_total: ${String(error)}`,
+      );
     }
   }
 
@@ -162,7 +171,7 @@ export class PrometheusService {
       businessTransactionsSettledTotal.inc({ status });
     } catch (error) {
       this.logger.warn(
-        `Failed to increment transactions_settled_total: ${error}`,
+        `Failed to increment transactions_settled_total: ${String(error)}`,
       );
     }
   }

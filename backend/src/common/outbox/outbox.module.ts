@@ -8,10 +8,7 @@ import { OutboxEvent } from './outbox.entity';
 
 @Global()
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([OutboxEvent]),
-    EventEmitterModule,
-  ],
+  imports: [TypeOrmModule.forFeature([OutboxEvent]), EventEmitterModule],
   providers: [OutboxService],
   exports: [OutboxService],
 })

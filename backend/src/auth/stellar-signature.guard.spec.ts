@@ -96,16 +96,14 @@ describe('StellarSignatureGuard', () => {
 
   it('rejects an invalid signature without consuming the nonce', async () => {
     await expect(
-      guard.canActivate(
-        makeContext(signedBody({ signature: 'aW52YWxpZA==' })),
-      ),
+      guard.canActivate(makeContext(signedBody({ signature: 'aW52YWxpZA==' }))),
     ).rejects.toThrow('Invalid Stellar wallet signature');
     expect(mockCache.set).not.toHaveBeenCalled();
   });
 
   it('rejects a request missing publicKey, signature or amount', async () => {
-    await expect(
-      guard.canActivate(makeContext({ amount })),
-    ).rejects.toThrow('Missing publicKey, signature, or amount');
+    await expect(guard.canActivate(makeContext({ amount }))).rejects.toThrow(
+      'Missing publicKey, signature, or amount',
+    );
   });
 });

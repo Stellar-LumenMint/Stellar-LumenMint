@@ -1,7 +1,12 @@
 // ── Job Queue Types ─────────────────────────────────────────────────────────
 
 /** Status of a job as it moves through the queue lifecycle. */
-export type JobStatus = 'pending' | 'active' | 'completed' | 'failed' | 'delayed';
+export type JobStatus =
+  | 'pending'
+  | 'active'
+  | 'completed'
+  | 'failed'
+  | 'delayed';
 
 /** Priority levels for job scheduling. Lower number = higher priority. */
 export enum JobPriority {
@@ -82,7 +87,9 @@ export interface Job<T = Record<string, unknown>> {
 }
 
 /** Handler function that processes a job. */
-export type JobHandler<T = Record<string, unknown>> = (job: Job<T>) => Promise<void>;
+export type JobHandler<T = Record<string, unknown>> = (
+  job: Job<T>,
+) => Promise<void>;
 
 /** Job queue statistics. */
 export interface QueueStats {

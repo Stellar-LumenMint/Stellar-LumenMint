@@ -3,7 +3,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JobQueueService } from './job-queue.service';
-import { JobPriority } from './job-queue.types';
 
 // Mock ioredis
 const mockRedis = {
@@ -61,9 +60,7 @@ describe('JobQueueService', () => {
   describe('registerQueue', () => {
     it('should register a queue with a handler', () => {
       service.registerQueue({ name: 'test-queue' }, handler);
-      expect(() =>
-        service.enqueue('test-queue', {}),
-      ).not.toThrow();
+      expect(() => service.enqueue('test-queue', {})).not.toThrow();
     });
   });
 

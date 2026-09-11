@@ -156,7 +156,7 @@ describe('SearchService', () => {
     it('retries configuration after a transient failure', async () => {
       mockNftIndex.updateSearchableAttributes
         .mockRejectedValueOnce(new Error('meilisearch unavailable'))
-        .mockResolvedValue({} as never);
+        .mockResolvedValue({});
 
       await expect(searchOnce()).rejects.toThrow('meilisearch unavailable');
 

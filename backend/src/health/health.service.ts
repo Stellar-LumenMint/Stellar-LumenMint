@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, Optional } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { DataSource } from 'typeorm';
@@ -103,8 +103,11 @@ export class HealthService {
 
   private async checkMeilisearch(): Promise<string> {
     try {
-      const host = this.configService.get<string>('MEILISEARCH_HOST') || 'http://localhost:7700';
-      const apiKey = this.configService.get<string>('MEILISEARCH_API_KEY') || '';
+      const host =
+        this.configService.get<string>('MEILISEARCH_HOST') ||
+        'http://localhost:7700';
+      const apiKey =
+        this.configService.get<string>('MEILISEARCH_API_KEY') || '';
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 3000);
 
@@ -143,8 +146,8 @@ export class HealthService {
       clearTimeout(timeout);
 
       if (!res.ok) return 'down';
-      const json = await res.json();
-      return json?.result?.status === 'healthy' ? 'up' : 'down';
+      const json = (await res.json()) as { result?: { status?: string } };
+      return json.result?.status === 'healthy' ? 'up' : 'down';
     } catch {
       return 'down';
     }

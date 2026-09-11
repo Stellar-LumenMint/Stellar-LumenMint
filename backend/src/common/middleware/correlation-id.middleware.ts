@@ -34,9 +34,14 @@ export class CorrelationIdMiddleware implements NestMiddleware {
     // Set response header so clients can trace their requests
     res.setHeader(CorrelationIdMiddleware.HEADER_NAME, correlationId);
 
-    // Inject into pino log context for this request
-    if (req.log && typeof (req.log as any).setBindings === 'function') {
-      (req.log as any).setBindings({ correlationId });
+    // Inject into pino log context for this request. `req.log` comes from
+    // pino-http and is not structurally typed in the request interface, so
+    // narrow it before use instead of falling back to `any`.
+    const requestLogger = req.log as
+      | { setBindings?: (bindings: Record<string, unknown>) => void }
+      | undefined;
+    if (typeof requestLogger?.setBindings === 'function') {
+      requestLogger.setBindings({ correlationId });
     }
 
     next();

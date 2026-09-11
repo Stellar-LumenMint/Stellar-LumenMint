@@ -23,7 +23,8 @@ import {
 } from './utils/uri.utils';
 
 const createFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => {
-  const buffer = overrides.buffer ?? Buffer.from('stellar-lumenmint-storage-file');
+  const buffer =
+    overrides.buffer ?? Buffer.from('stellar-lumenmint-storage-file');
 
   return {
     originalname: 'asset.png',
@@ -256,7 +257,11 @@ describe('StorageService', () => {
     await service.storeAsset(file, 'user-1', { type: 'nft' });
 
     expect(referenceRepository.upsert).toHaveBeenCalledWith(
-      { assetId: 'asset-shared', uploadedBy: 'user-1', metadata: { type: 'nft' } },
+      {
+        assetId: 'asset-shared',
+        uploadedBy: 'user-1',
+        metadata: { type: 'nft' },
+      },
       ['assetId', 'uploadedBy'],
     );
 
@@ -269,9 +274,11 @@ describe('StorageService', () => {
       primaryStorage: 'ipfs',
       fileSize: String(file.size),
       mimeType: file.mimetype,
-    } as StoredAsset);
+    });
 
-    const result = await service.storeAsset(file, 'user-2', { listingId: 'l1' });
+    const result = await service.storeAsset(file, 'user-2', {
+      listingId: 'l1',
+    });
 
     expect(ipfsService.upload).toHaveBeenCalledTimes(1);
     expect(referenceRepository.upsert).toHaveBeenLastCalledWith(

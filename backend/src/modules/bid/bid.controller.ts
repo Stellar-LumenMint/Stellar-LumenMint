@@ -59,9 +59,7 @@ export class BidController {
     // their account, and on-chain settlement would pay out to an address with
     // no identity binding.
     if (!walletAddress) {
-      throw new ForbiddenException(
-        'A linked wallet is required to place bids',
-      );
+      throw new ForbiddenException('A linked wallet is required to place bids');
     }
     if (dto.publicKey !== walletAddress) {
       throw new ForbiddenException(

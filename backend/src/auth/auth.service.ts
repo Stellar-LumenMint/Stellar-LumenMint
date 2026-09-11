@@ -622,12 +622,12 @@ export class AuthService {
 
   private async hashPassword(password: string): Promise<string> {
     const salt = crypto.randomBytes(16).toString('hex');
-    const hash = (await scryptAsync(password, salt, 64, {
+    const hash = await scryptAsync(password, salt, 64, {
       N: SCRYPT_N,
       r: SCRYPT_R,
       p: SCRYPT_P,
       maxmem: SCRYPT_MAXMEM,
-    })) as Buffer;
+    });
     return `${salt}:${hash.toString('hex')}`;
   }
 
@@ -640,12 +640,12 @@ export class AuthService {
       return false;
     }
 
-    const derivedHash = (await scryptAsync(password, salt, 64, {
+    const derivedHash = await scryptAsync(password, salt, 64, {
       N: SCRYPT_N,
       r: SCRYPT_R,
       p: SCRYPT_P,
       maxmem: SCRYPT_MAXMEM,
-    })) as Buffer;
+    });
     const storedHashBuffer = Buffer.from(storedHash, 'hex');
 
     if (storedHashBuffer.length !== derivedHash.length) {

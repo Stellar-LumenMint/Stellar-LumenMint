@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SocialService } from './social.service';
 import { Follow } from './entities/follow.entity';
-import { Activity, ActivityType } from './entities/activity.entity';
+import { Activity } from './entities/activity.entity';
 import { User } from '../../users/user.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
@@ -87,8 +87,15 @@ describe('SocialService', () => {
         walletAddress: 'GABC...',
       } as User);
       followRepository.findOne.mockResolvedValue(null);
-      followRepository.create.mockReturnValue({ followerId: 'user-1', followingId: 'user-2' } as Follow);
-      followRepository.save.mockResolvedValue({ id: 'f1', followerId: 'user-1', followingId: 'user-2' } as Follow);
+      followRepository.create.mockReturnValue({
+        followerId: 'user-1',
+        followingId: 'user-2',
+      } as Follow);
+      followRepository.save.mockResolvedValue({
+        id: 'f1',
+        followerId: 'user-1',
+        followingId: 'user-2',
+      } as Follow);
       activityRepository.create.mockReturnValue({ id: 'a1' } as Activity);
       activityRepository.save.mockResolvedValue({ id: 'a1' } as Activity);
       activityRepository.count.mockResolvedValue(5);

@@ -48,7 +48,10 @@ function selectionSetDepth(
   for (const selection of selectionSet.selections) {
     let childDepth = 0;
 
-    if (selection.kind === Kind.FIELD || selection.kind === Kind.INLINE_FRAGMENT) {
+    if (
+      selection.kind === Kind.FIELD ||
+      selection.kind === Kind.INLINE_FRAGMENT
+    ) {
       childDepth = selection.selectionSet
         ? selectionSetDepth(
             selection.selectionSet,
@@ -161,8 +164,5 @@ export function getGraphqlValidationRules(
   maxDepth: number = MAX_QUERY_DEPTH,
   maxAliases: number = MAX_QUERY_ALIASES,
 ): ValidationRule[] {
-  return [
-    createDepthLimitRule(maxDepth),
-    createAliasLimitRule(maxAliases),
-  ];
+  return [createDepthLimitRule(maxDepth), createAliasLimitRule(maxAliases)];
 }

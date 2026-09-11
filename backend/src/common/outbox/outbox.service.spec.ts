@@ -70,10 +70,9 @@ describe('OutboxService', () => {
       expect(result).toBe(true);
       expect(event.status).toBe('published');
       expect(event.publishedAt).toBeDefined();
-      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
-        'nft.created',
-        { nftId: '1' },
-      );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('nft.created', {
+        nftId: '1',
+      });
     });
 
     it('should mark as failed after max attempts', async () => {
@@ -162,7 +161,9 @@ describe('OutboxService', () => {
         limit: jest.fn().mockReturnThis(),
         setLock: jest.fn().mockReturnThis(),
         setOnLocked: jest.fn().mockReturnThis(),
-        getRawMany: jest.fn().mockResolvedValue([{ id: 'evt-1' }, { id: 'evt-2' }]),
+        getRawMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'evt-1' }, { id: 'evt-2' }]),
       };
       const updateQb = {
         update: jest.fn().mockReturnThis(),
@@ -173,10 +174,7 @@ describe('OutboxService', () => {
       mockRepo.createQueryBuilder
         .mockReturnValueOnce(selectQb)
         .mockReturnValueOnce(updateQb);
-      mockRepo.find.mockResolvedValue([
-        { id: 'evt-1' },
-        { id: 'evt-2' },
-      ]);
+      mockRepo.find.mockResolvedValue([{ id: 'evt-1' }, { id: 'evt-2' }]);
 
       const result = await service.claimPendingEvents(50);
 

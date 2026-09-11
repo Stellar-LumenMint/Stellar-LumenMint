@@ -55,8 +55,7 @@ export class DlqRetryWorker {
       // stop burning retries on it. Replaying a week-old payload would
       // likely re-index stale chain state anyway.
       const firstFailed = dlq.firstFailedAt?.getTime?.() ?? Date.now();
-      const ageDays =
-        (Date.now() - firstFailed) / (24 * 60 * 60 * 1000);
+      const ageDays = (Date.now() - firstFailed) / (24 * 60 * 60 * 1000);
       if (ageDays >= this.MAX_AGE_DAYS) {
         dlq.status = 'exhausted';
         dlq.errorMessage =

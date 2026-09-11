@@ -1,7 +1,4 @@
-import {
-  getSynchronizeSetting,
-  isSynchronizeEnabled,
-} from './database.config';
+import { getSynchronizeSetting, isSynchronizeEnabled } from './database.config';
 
 describe('database.config', () => {
   describe('isSynchronizeEnabled', () => {

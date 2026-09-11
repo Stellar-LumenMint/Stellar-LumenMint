@@ -35,11 +35,7 @@ export class PipelineService {
     options: PipelineOptions = {},
   ): Promise<PipelineResult<TContext>> {
     const startTime = Date.now();
-    const {
-      haltOnFailure = true,
-      timeoutMs = 60000,
-      verbose = true,
-    } = options;
+    const { haltOnFailure = true, timeoutMs = 60000, verbose = true } = options;
 
     const timings: StepTiming[] = [];
     let context: TContext = { ...initialContext };
@@ -80,7 +76,8 @@ export class PipelineService {
           attempt++;
 
           if (attempt <= maxRetries) {
-            const delay = (step.retryDelayMs ?? 1000) * Math.pow(2, attempt - 1);
+            const delay =
+              (step.retryDelayMs ?? 1000) * Math.pow(2, attempt - 1);
             this.logger.warn(
               `[${name}] Step '${step.name}' failed (attempt ${attempt}/${maxRetries + 1}), ` +
                 `retrying in ${delay}ms: ${lastError.message}`,
@@ -170,18 +167,15 @@ export class PipelineService {
       fn(context),
       new Promise<never>((_, reject) =>
         setTimeout(
-          () => reject(new Error(`Pipeline step timed out after ${timeoutMs}ms`)),
+          () =>
+            reject(new Error(`Pipeline step timed out after ${timeoutMs}ms`)),
           timeoutMs,
         ),
       ),
     ]);
   }
 
-  private logStart(
-    name: string,
-    stepCount: number,
-    verbose: boolean,
-  ): void {
+  private logStart(name: string, stepCount: number, verbose: boolean): void {
     if (verbose) {
       this.logger.log(`[${name}] Starting pipeline with ${stepCount} steps`);
     }

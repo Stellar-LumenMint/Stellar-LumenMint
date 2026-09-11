@@ -6,7 +6,7 @@ import { NotificationsService } from './notifications.service';
 
 describe('NotificationsGateway', () => {
   let gateway: NotificationsGateway;
-  let notificationsService: jest.Mocked<Partial<NotificationsService>>;
+  let _notificationsService: jest.Mocked<Partial<NotificationsService>>;
   let jwtService: { verify: jest.Mock };
 
   beforeEach(async () => {
@@ -55,7 +55,10 @@ describe('NotificationsGateway', () => {
     gateway.afterInit();
 
     expect(gateway.getServer()).toBe(mockServer);
-    expect(mockServer.on).toHaveBeenCalledWith('connection_error', expect.any(Function));
+    expect(mockServer.on).toHaveBeenCalledWith(
+      'connection_error',
+      expect.any(Function),
+    );
   });
 
   it('should handle bid notifications', () => {
@@ -70,7 +73,10 @@ describe('NotificationsGateway', () => {
       type: 'refresh',
     });
     const rejectClient = jest
-      .spyOn(gateway as unknown as { rejectClient: (c: unknown, r: string) => void }, 'rejectClient')
+      .spyOn(
+        gateway as unknown as { rejectClient: (c: unknown, r: string) => void },
+        'rejectClient',
+      )
       .mockImplementation(() => undefined);
     const client = {
       id: 'socket-1',
@@ -93,7 +99,10 @@ describe('NotificationsGateway', () => {
       type: 'access',
     });
     const rejectClient = jest
-      .spyOn(gateway as unknown as { rejectClient: (c: unknown, r: string) => void }, 'rejectClient')
+      .spyOn(
+        gateway as unknown as { rejectClient: (c: unknown, r: string) => void },
+        'rejectClient',
+      )
       .mockImplementation(() => undefined);
     const client = {
       id: 'socket-2',

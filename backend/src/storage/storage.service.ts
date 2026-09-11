@@ -190,9 +190,7 @@ export class StorageService {
     };
 
     await this.storedAssetReferenceRepository.upsert(
-      reference as Parameters<
-        Repository<StoredAssetReference>['upsert']
-      >[0],
+      reference as Parameters<Repository<StoredAssetReference>['upsert']>[0],
       ['assetId', 'uploadedBy'],
     );
   }

@@ -52,9 +52,13 @@ describe('PaymentController', () => {
       });
 
       expect(result).toEqual(mockIntent);
-      expect(paymentService.createPaymentIntent).toHaveBeenCalledWith(99, 'USD', {
-        nftId: 'nft-1',
-      });
+      expect(paymentService.createPaymentIntent).toHaveBeenCalledWith(
+        99,
+        'USD',
+        {
+          nftId: 'nft-1',
+        },
+      );
     });
 
     it('should default currency to USD when not provided', async () => {
@@ -68,9 +72,13 @@ describe('PaymentController', () => {
 
       await controller.createIntent({ amount: 50 });
 
-      expect(paymentService.createPaymentIntent).toHaveBeenCalledWith(50, 'USD', {
-        nftId: undefined,
-      });
+      expect(paymentService.createPaymentIntent).toHaveBeenCalledWith(
+        50,
+        'USD',
+        {
+          nftId: undefined,
+        },
+      );
     });
   });
 
@@ -85,7 +93,8 @@ describe('PaymentController', () => {
       });
 
       const body = {
-        recipientAddress: 'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
+        recipientAddress:
+          'GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMKJS',
         amount: '100',
         currency: 'XLM' as const,
       };
@@ -93,7 +102,9 @@ describe('PaymentController', () => {
       const result = await controller.processPayout(body);
 
       expect(result).toEqual({ success: true, txHash: 'abc123' });
-      expect(paymentService.isValidStellarAddress).toHaveBeenCalledWith(body.recipientAddress);
+      expect(paymentService.isValidStellarAddress).toHaveBeenCalledWith(
+        body.recipientAddress,
+      );
       expect(paymentService.processPayout).toHaveBeenCalledWith(body);
     });
 
@@ -151,7 +162,9 @@ describe('PaymentController', () => {
       const result = controller.validateAddress('bad-address');
 
       expect(result).toEqual({ valid: false });
-      expect(paymentService.isValidStellarAddress).toHaveBeenCalledWith('bad-address');
+      expect(paymentService.isValidStellarAddress).toHaveBeenCalledWith(
+        'bad-address',
+      );
     });
   });
 });

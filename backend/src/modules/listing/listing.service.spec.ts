@@ -73,7 +73,7 @@ describe('ListingService', () => {
           nftTokenId: '1',
           price: 100,
           currency: 'XLM',
-        } as any,
+        },
         'seller-1',
       );
 
@@ -122,9 +122,15 @@ describe('ListingService', () => {
         take: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([{ id: 'listing-1' } as Listing]),
       };
-      (listingRepository as any).createQueryBuilder = jest.fn().mockReturnValue(qb);
+      (listingRepository as any).createQueryBuilder = jest
+        .fn()
+        .mockReturnValue(qb);
 
-      const result = await service.findAll({ status: 'ACTIVE', page: 1, limit: 20 } as any);
+      const result = await service.findAll({
+        status: 'ACTIVE',
+        page: 1,
+        limit: 20,
+      } as any);
       expect(result).toHaveLength(1);
       expect(qb.andWhere).toHaveBeenCalled();
     });
@@ -136,13 +142,15 @@ describe('ListingService', () => {
         take: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([]),
       };
-      (listingRepository as any).createQueryBuilder = jest.fn().mockReturnValue(qb);
+      (listingRepository as any).createQueryBuilder = jest
+        .fn()
+        .mockReturnValue(qb);
 
-      await service.findAll({ page: 999999, limit: 1000000000 } as any);
+      await service.findAll({ page: 999999, limit: 1000000000 });
       expect(qb.skip).toHaveBeenCalledWith(99999800); // page kept (>= 1)
       expect(qb.take).toHaveBeenCalledWith(100); // limit capped at 100
 
-      await service.findAll({ page: -5, limit: -10 } as any);
+      await service.findAll({ page: -5, limit: -10 });
       expect(qb.skip).toHaveBeenCalledWith(0); // negative page clamped to 1
       expect(qb.take).toHaveBeenCalledWith(20); // default size
     });

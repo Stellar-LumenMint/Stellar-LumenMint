@@ -83,7 +83,9 @@ describe('CacheLockService', () => {
   it('swallows release failures', async () => {
     mockRedis.eval.mockRejectedValue(new Error('redis down'));
 
-    await expect(service.release('job:1', 'token-123')).resolves.toBeUndefined();
+    await expect(
+      service.release('job:1', 'token-123'),
+    ).resolves.toBeUndefined();
   });
 
   describe('withLock', () => {
@@ -100,7 +102,9 @@ describe('CacheLockService', () => {
       mockRedis.set.mockResolvedValue(null);
       const fn = jest.fn();
 
-      await expect(service.withLock('job:1', 1000, fn)).resolves.toBeUndefined();
+      await expect(
+        service.withLock('job:1', 1000, fn),
+      ).resolves.toBeUndefined();
       expect(fn).not.toHaveBeenCalled();
       expect(mockRedis.eval).not.toHaveBeenCalled();
     });

@@ -45,9 +45,17 @@ describe('AuctionController', () => {
     it('should call auctionService.placeBid', async () => {
       auctionService.placeBid.mockResolvedValue({ id: 'bid-1' } as any);
       const req = { user: { userId: 'buyer-1' } };
-      const result = await controller.placeBid('auction-1', { amount: '150' } as any, req as any);
+      const result = await controller.placeBid(
+        'auction-1',
+        { amount: '150' } as any,
+        req as any,
+      );
       expect(result).toBeDefined();
-      expect(auctionService.placeBid).toHaveBeenCalledWith('auction-1', 'buyer-1', { amount: '150' });
+      expect(auctionService.placeBid).toHaveBeenCalledWith(
+        'auction-1',
+        'buyer-1',
+        { amount: '150' },
+      );
     });
   });
 
@@ -57,7 +65,10 @@ describe('AuctionController', () => {
       const req = { user: { userId: 'caller-1' } };
       const result = await controller.settle('auction-1', req as any);
       expect(result).toBeDefined();
-      expect(auctionService.settleAuction).toHaveBeenCalledWith('auction-1', 'caller-1');
+      expect(auctionService.settleAuction).toHaveBeenCalledWith(
+        'auction-1',
+        'caller-1',
+      );
     });
   });
 
@@ -76,7 +87,10 @@ describe('AuctionController', () => {
       const req = { user: { userId: 'caller-1' } };
       const result = await controller.cancel('auction-1', req as any);
       expect(result).toBeDefined();
-      expect(auctionService.cancelAuction).toHaveBeenCalledWith('auction-1', 'caller-1');
+      expect(auctionService.cancelAuction).toHaveBeenCalledWith(
+        'auction-1',
+        'caller-1',
+      );
     });
   });
 

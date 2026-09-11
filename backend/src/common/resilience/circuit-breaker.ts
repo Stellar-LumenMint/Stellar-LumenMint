@@ -126,10 +126,7 @@ export class CircuitBreaker {
     this.lastFailureTime = Date.now();
     this.successCount = 0;
 
-    if (
-      this.state === 'CLOSED' &&
-      this.failureCount >= this.failureThreshold
-    ) {
+    if (this.state === 'CLOSED' && this.failureCount >= this.failureThreshold) {
       this.transitionTo('OPEN');
     }
 

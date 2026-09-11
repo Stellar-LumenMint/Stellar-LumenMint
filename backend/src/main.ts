@@ -173,12 +173,17 @@ async function bootstrapRestApi() {
   // resolve req.ip from a sanitized X-Forwarded-For chain. It must stay
   // off when the API is directly reachable, otherwise clients could spoof
   // their IP and bypass rate limiting.
+  const expressApp = app.getHttpAdapter().getInstance() as {
+    set: (key: string, value: unknown) => void;
+    disable: (key: string) => void;
+  };
+
   if (process.env.TRUST_PROXY === 'true') {
-    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+    expressApp.set('trust proxy', 1);
   }
 
   // Do not advertise the framework via X-Powered-By.
-  app.getHttpAdapter().getInstance().disable('x-powered-by');
+  expressApp.disable('x-powered-by');
 
   const sorobanRpcService = app.get<SorobanRpcService>(SorobanRpcService);
   const stellarAccountService = app.get<StellarAccountService>(
@@ -238,7 +243,9 @@ async function bootstrapRestApi() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Stellar-LumenMint API')
-    .setDescription('Stellar-LumenMint — Stellar NFT Marketplace API Documentation')
+    .setDescription(
+      'Stellar-LumenMint — Stellar NFT Marketplace API Documentation',
+    )
     .setVersion('1.0')
     .addTag('health', 'Liveness and readiness probes')
     .addTag('nft', 'NFT operations')

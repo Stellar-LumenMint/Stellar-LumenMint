@@ -27,13 +27,10 @@ export class MetricsController {
       this.logger.error(
         'METRICS_TOKEN is not configured; refusing to serve /metrics',
       );
-      return res
-        .status(503)
-        .json({ error: 'Metrics token not configured' });
+      return res.status(503).json({ error: 'Metrics token not configured' });
     }
 
-    const provided =
-      typeof req.query.token === 'string' ? req.query.token : '';
+    const provided = typeof req.query.token === 'string' ? req.query.token : '';
 
     if (!provided) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -42,7 +39,9 @@ export class MetricsController {
     // Compare SHA-256 digests of equal length so timingSafeEqual cannot throw
     // on length mismatch and timing is not correlated with the token length.
     const providedHash = createHash('sha256').update(provided).digest();
-    const configuredHash = createHash('sha256').update(configuredToken).digest();
+    const configuredHash = createHash('sha256')
+      .update(configuredToken)
+      .digest();
 
     if (!timingSafeEqual(providedHash, configuredHash)) {
       return res.status(401).json({ error: 'Unauthorized' });
