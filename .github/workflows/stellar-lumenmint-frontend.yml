@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "frontend/**"
+      - ".github/workflows/stellar-lumenmint-frontend.yml"
     branches: [main, develop]
   pull_request:
     paths:
       - "frontend/**"
+      - ".github/workflows/stellar-lumenmint-frontend.yml"
     branches: [main, develop]
   workflow_dispatch:
 
@@ -67,7 +69,7 @@ jobs:
             pnpm exec tsc --noEmit
           else
             npx tsc --noEmit
-          fi || echo "::warning::Type check issues found (non-blocking)"
+          fi
 
       - name: Lint
         run: |
