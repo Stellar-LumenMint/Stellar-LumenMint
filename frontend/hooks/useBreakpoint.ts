@@ -87,5 +87,11 @@ export function useBreakpointBetween(
   lower: BreakpointKey,
   upper: BreakpointKey,
 ): boolean {
-  return useBreakpointUp(lower) && useBreakpointDown(upper);
+  // Both hooks must run on every render. Short-circuiting through `&&` would
+  // skip the second call whenever the first returned false, so React would
+  // see a different number of hooks between renders and the hook state would
+  // shift between them.
+  const atOrAboveLower = useBreakpointUp(lower);
+  const belowUpper = useBreakpointDown(upper);
+  return atOrAboveLower && belowUpper;
 }
