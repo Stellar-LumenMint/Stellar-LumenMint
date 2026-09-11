@@ -76,7 +76,7 @@ Stellar-LumenMint Backend is the service backbone of the platform. It owns authe
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (see the repository `.nvmrc`)
 - Docker and Docker Compose
 - PostgreSQL and Redis access, either local or containerized
 
@@ -222,7 +222,6 @@ backend/
 │   ├── storage/             # IPFS and Arweave adapters
 │   └── users/               # User entity and controller
 ├── docker-compose.yml       # Postgres, Redis, Meilisearch
-├── README-SETUP.md          # Older setup notes
 └── package.json             # Scripts and dependencies
 ```
 
@@ -243,4 +242,13 @@ The codebase is configured with Jest, ESLint, Prettier, and strict TypeScript su
 - JWT guards protect authenticated routes.
 - Request logging uses Pino with sensitive header redaction.
 - A Redis-backed guard provides rate limiting support.
-- The service currently uses TypeORM `synchronize: true`; that is acceptable for development only and should be replaced with migration-driven schema control for production.
+- TypeORM schema synchronization is gated by `getSynchronizeSetting`: it is
+  on only for local development and must be explicitly opted into in
+  staging/production, where migrations (`backend/migrations`) are the source
+  of truth.
+- Refresh tokens carry a `type` claim and are rejected wherever an access
+  token is expected; an access token is required for REST, GraphQL, and the
+  notifications WebSocket.
+- Soroban operator signing keys are cross-checked at startup: the public key
+  and the key derived from `STELLAR_OPERATOR_SECRET` must match, or the app
+  refuses to start in production.
