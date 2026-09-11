@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthService } from './auth.service';
 import { User } from '../users/user.entity';
 import { UserWallet } from './entities/user-wallet.entity';
@@ -52,6 +53,10 @@ describe('AuthService', () => {
     del: jest.fn(),
   };
 
+  const eventEmitter = {
+    emit: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -81,6 +86,10 @@ describe('AuthService', () => {
         {
           provide: CACHE_MANAGER,
           useValue: cacheManager,
+        },
+        {
+          provide: EventEmitter2,
+          useValue: eventEmitter,
         },
       ],
     }).compile();
@@ -240,6 +249,12 @@ describe('AuthService', () => {
     expect(result.access_token).toBe('access-token-email');
     expect(result.refresh_token).toBe('refresh-token-email');
     expect(result.user.email).toBe('user@stellar-lumenmint.io');
+
+    // Registration must queue a profile index so new users are searchable.
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(eventEmitter.emit).toHaveBeenCalledWith('search.user.upsert', {
+      userId: 'user-email-1',
+    });
   });
 
   it('fails email registration when email already exists', async () => {

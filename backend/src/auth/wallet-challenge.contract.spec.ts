@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Keypair } from 'stellar-sdk';
 import { AuthService } from './auth.service';
 import { User } from '../users/user.entity';
@@ -88,6 +89,7 @@ describe('AuthService — wallet challenge contract', () => {
         { provide: getRepositoryToken(UserWallet), useValue: userWalletRepository },
         { provide: getRepositoryToken(WalletSession), useValue: walletSessionRepository },
         { provide: CACHE_MANAGER, useValue: cacheManager },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

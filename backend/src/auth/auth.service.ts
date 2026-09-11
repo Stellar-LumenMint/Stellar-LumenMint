@@ -11,6 +11,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { promisify } from 'util';
@@ -92,7 +93,18 @@ export class AuthService {
     @InjectRepository(WalletSession)
     private readonly walletSessionRepository: Repository<WalletSession>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  /**
+   * Queues a profile-index refresh. Deferred so indexing can never delay or
+   * fail the auth response it follows; search is eventually consistent.
+   */
+  private emitSearchUserUpsert(userId: string): void {
+    setImmediate(() => {
+      this.eventEmitter.emit('search.user.upsert', { userId });
+    });
+  }
 
   async registerWithEmail(dto: EmailRegisterDto) {
     const normalizedEmail = this.normalizeEmail(dto.email);
@@ -115,6 +127,10 @@ export class AuthService {
         isEmailVerified: false,
       }),
     );
+
+    // Newly registered creators must be searchable without waiting for them
+    // to edit their profile.
+    this.emitSearchUserUpsert(user.id);
 
     return this.buildAuthResponse(user);
   }
@@ -516,7 +532,7 @@ export class AuthService {
       return byPrimaryWallet;
     }
 
-    return this.userRepository.save(
+    const user = await this.userRepository.save(
       this.userRepository.create({
         address: walletAddress,
         walletAddress,
@@ -525,6 +541,12 @@ export class AuthService {
         walletConnectedAt: new Date(),
       }),
     );
+
+    // Wallet-first accounts are created here; index them so their profile is
+    // discoverable as soon as they sign up.
+    this.emitSearchUserUpsert(user.id);
+
+    return user;
   }
 
   private async upsertLinkedWallet(
