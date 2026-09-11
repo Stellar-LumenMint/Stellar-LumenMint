@@ -51,9 +51,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: ${{ steps.detect.outputs.manager }}
-          cache-dependency-path: |
-            admin/pnpm-lock.yaml
-            admin/package-lock.json
+          cache-dependency-path: admin/package-lock.json
 
       - name: Setup pnpm
         if: steps.detect.outputs.manager == 'pnpm'
@@ -70,28 +68,28 @@ jobs:
             pnpm exec tsc --noEmit
           else
             npx tsc --noEmit
-          fi || echo "::warning::Type check issues found (non-blocking)"
+          fi
 
       - name: Lint (if available)
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
-            pnpm run lint --if-present || echo "::warning::Lint issues found"
+            pnpm run lint --if-present
           else
-            npm run lint --if-present || echo "::warning::Lint issues found"
+            npm run lint --if-present
           fi
 
       - name: Run tests (if available)
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
-            pnpm run test --if-present || echo "::warning::Tests failed"
+            pnpm run test --if-present
           else
-            npm run test --if-present || echo "::warning::Tests failed"
+            npm run test --if-present
           fi
 
       - name: Build Vite app
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
-            pnpm run build || echo "::warning::Build failed"
+            pnpm run build
           else
-            npm run build || echo "::warning::Build failed"
+            npm run build
           fi
