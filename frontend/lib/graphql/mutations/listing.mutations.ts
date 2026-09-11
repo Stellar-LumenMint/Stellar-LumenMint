@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const BUY_NFT_MUTATION = gql`
   mutation BuyNFT($listingId: ID!) {

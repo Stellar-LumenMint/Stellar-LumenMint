@@ -1,4 +1,4 @@
-import { useParams } from "next/navigation";
+import { useParams } from 'next/navigation';
 
 // Utility to get current locale from params
 export function useCurrentLocale() {
@@ -9,7 +9,7 @@ export function useCurrentLocale() {
 // Utility to build localized routes
 export function buildLocalizedRoute(locale: string, path: string): string {
   // Ensure path starts with /
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   // Build /{locale}{path}
   return `/${locale}${normalizedPath}`;
 }

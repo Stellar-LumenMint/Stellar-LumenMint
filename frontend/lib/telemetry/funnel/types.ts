@@ -75,10 +75,7 @@ export interface FunnelStageExitedPayload {
 }
 
 export type AbandonmentSignalType =
-  | 'stalled_no_interaction'
-  | 'max_retries_exceeded'
-  | 'error_loop'
-  | 'repeated_back_nav';
+  'stalled_no_interaction' | 'max_retries_exceeded' | 'error_loop' | 'repeated_back_nav';
 
 export interface NavigationAbandonmentSignalPayload {
   stage: FunnelStage;

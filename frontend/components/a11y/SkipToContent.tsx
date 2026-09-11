@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useCallback } from "react";
+import React, { useCallback } from 'react';
 
 export interface SkipToContentProps {
   /** The id of the main content element to skip to */
@@ -16,23 +16,23 @@ export interface SkipToContentProps {
  * Inspired by WCAG 2.1 SC 2.4.1 (Bypass Blocks).
  */
 export function SkipToContent({
-  targetId = "main-content",
-  label = "Skip to main content",
+  targetId = 'main-content',
+  label = 'Skip to main content',
 }: SkipToContentProps) {
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
       const target = document.getElementById(targetId);
       if (target) {
-        target.setAttribute("tabindex", "-1");
+        target.setAttribute('tabindex', '-1');
         target.focus({ preventScroll: false });
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         // Remove tabindex after blur so it's not in the normal tab order
         const handleBlur = () => {
-          target.removeAttribute("tabindex");
-          target.removeEventListener("blur", handleBlur);
+          target.removeAttribute('tabindex');
+          target.removeEventListener('blur', handleBlur);
         };
-        target.addEventListener("blur", handleBlur);
+        target.addEventListener('blur', handleBlur);
       }
     },
     [targetId],

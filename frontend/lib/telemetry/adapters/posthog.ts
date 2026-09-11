@@ -1,6 +1,6 @@
-import { TelemetryAdapter } from "./base";
-import { getTelemetryConfig } from "../config";
-import type { EnrichedTelemetryEvent } from "../context/types";
+import { TelemetryAdapter } from './base';
+import { getTelemetryConfig } from '../config';
+import type { EnrichedTelemetryEvent } from '../context/types';
 
 // Placeholder for PostHog SDK type
 type PostHogType = {
@@ -19,7 +19,7 @@ function safe(fn: () => void) {
   } catch (e) {
     if (getTelemetryConfig().debug) {
       // eslint-disable-next-line no-console
-      console.debug("[Telemetry][PostHog] Error:", e);
+      console.debug('[Telemetry][PostHog] Error:', e);
     }
   }
 }
@@ -28,20 +28,20 @@ export const posthogAdapter: TelemetryAdapter = {
   async init() {
     if (initialized) return;
     const config = getTelemetryConfig();
-    if (!config.enabled || config.provider !== "posthog") return;
+    if (!config.enabled || config.provider !== 'posthog') return;
     // Lazy import PostHog SDK
     try {
       // @ts-ignore
-      const mod = await import("posthog-js");
+      const mod = await import('posthog-js');
       posthog = mod.default || mod;
       if (posthog) {
-        posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "");
+        posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || '');
       }
       initialized = true;
     } catch (e) {
       if (config.debug) {
         // eslint-disable-next-line no-console
-        console.debug("[Telemetry][PostHog] SDK load failed:", e);
+        console.debug('[Telemetry][PostHog] SDK load failed:', e);
       }
     }
   },
@@ -49,7 +49,7 @@ export const posthogAdapter: TelemetryAdapter = {
     if (!initialized || !posthog) return;
     // Flatten enriched event: merge context and payload
     let flatPayload: Record<string, unknown> = {};
-    if (payload && typeof payload === "object" && "context" in payload && "payload" in payload) {
+    if (payload && typeof payload === 'object' && 'context' in payload && 'payload' in payload) {
       const enriched = payload as any;
       // Optionally prefix context fields to avoid collisions
       flatPayload = { ...enriched.context, ...enriched.payload };

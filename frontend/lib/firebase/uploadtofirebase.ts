@@ -20,10 +20,7 @@ const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024;
 export class FirebaseUploadError extends Error {
   constructor(
     message: string,
-    public readonly code:
-      | 'INVALID_TYPE'
-      | 'FILE_TOO_LARGE'
-      | 'STORAGE_UPLOAD_FAILED',
+    public readonly code: 'INVALID_TYPE' | 'FILE_TOO_LARGE' | 'STORAGE_UPLOAD_FAILED',
   ) {
     super(message);
     this.name = 'FirebaseUploadError';
@@ -45,8 +42,7 @@ export function validateUploadFile(
   file: File,
   options: { acceptedTypes?: Set<string>; maxSizeBytes?: number } = {},
 ): void {
-  const { acceptedTypes = ACCEPTED_IMAGE_TYPES, maxSizeBytes = MAX_FILE_SIZE_BYTES } =
-    options;
+  const { acceptedTypes = ACCEPTED_IMAGE_TYPES, maxSizeBytes = MAX_FILE_SIZE_BYTES } = options;
 
   if (!acceptedTypes.has(file.type)) {
     throw new FirebaseUploadError(
@@ -82,19 +78,13 @@ export async function uploadToFirebase(
 
   const userId = options.userId || useAuthStore.getState().user?.id || 'anonymous';
   const uniqueId = uuidv4();
-  const storageRef = ref(
-    storage,
-    `users/${userId}/${uniqueId}-${sanitizeFileName(file.name)}`,
-  );
+  const storageRef = ref(storage, `users/${userId}/${uniqueId}-${sanitizeFileName(file.name)}`);
 
   try {
     const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
     return downloadURL;
   } catch (error) {
-    throw new FirebaseUploadError(
-      'Upload failed. Please try again.',
-      'STORAGE_UPLOAD_FAILED',
-    );
+    throw new FirebaseUploadError('Upload failed. Please try again.', 'STORAGE_UPLOAD_FAILED');
   }
 }

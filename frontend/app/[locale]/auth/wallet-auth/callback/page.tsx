@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
-type CallbackStatus = "processing" | "success" | "error";
+type CallbackStatus = 'processing' | 'success' | 'error';
 
 /**
  * Wallet auth callback page.
@@ -27,15 +27,15 @@ export default function WalletAuthCallbackPage() {
   const searchParams = useSearchParams();
   const { locale } = useTranslation();
 
-  const [status, setStatus] = useState<CallbackStatus>("processing");
-  const [message, setMessage] = useState("Completing wallet authentication…");
+  const [status, setStatus] = useState<CallbackStatus>('processing');
+  const [message, setMessage] = useState('Completing wallet authentication…');
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const error = searchParams.get("error");
+    const token = searchParams.get('token');
+    const error = searchParams.get('error');
 
     if (error) {
-      setStatus("error");
+      setStatus('error');
       setMessage(decodeURIComponent(error));
       return;
     }
@@ -43,12 +43,12 @@ export default function WalletAuthCallbackPage() {
     if (token) {
       // Persist the token from the redirect using the key the rest of the
       // app reads (fetchWithAuth, auth-store).
-      if (typeof window !== "undefined") {
-        localStorage.setItem("access_token", token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', token);
       }
 
-      setStatus("success");
-      setMessage("Wallet authenticated successfully! Redirecting…");
+      setStatus('success');
+      setMessage('Wallet authenticated successfully! Redirecting…');
 
       setTimeout(() => {
         router.replace(`/${locale}/creator-dashboard`);
@@ -57,16 +57,15 @@ export default function WalletAuthCallbackPage() {
     }
 
     // No token and no error — unexpected state
-    setStatus("error");
-    setMessage("Authentication could not be completed. Please try again.");
+    setStatus('error');
+    setMessage('Authentication could not be completed. Please try again.');
   }, [searchParams, router, locale]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
       <div className="max-w-sm w-full text-center">
         <div className="border border-purple-500/20 rounded-2xl p-10 bg-gray-900/80 backdrop-blur-md shadow-2xl">
-
-          {status === "processing" && (
+          {status === 'processing' && (
             <>
               <div className="flex justify-center mb-6">
                 <div className="relative">
@@ -80,7 +79,7 @@ export default function WalletAuthCallbackPage() {
             </>
           )}
 
-          {status === "success" && (
+          {status === 'success' && (
             <>
               <div className="flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center">
@@ -92,7 +91,7 @@ export default function WalletAuthCallbackPage() {
             </>
           )}
 
-          {status === "error" && (
+          {status === 'error' && (
             <>
               <div className="flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">

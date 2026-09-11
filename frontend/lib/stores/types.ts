@@ -1,4 +1,4 @@
-import type { WalletChallenge } from "@/lib/services/profile";
+import type { WalletChallenge } from '@/lib/services/profile';
 
 // Auth Store Types
 export interface User {
@@ -58,8 +58,18 @@ export type AuthStore = {
 
   // Wallet auth
   getWalletChallenge: (walletAddress: string, walletProvider?: string) => Promise<WalletChallenge>;
-  verifyWalletSignature: (walletAddress: string, nonce: string, signature: string, walletProvider?: string) => Promise<void>;
-  linkWallet: (walletAddress: string, nonce: string, signature: string, walletProvider?: string) => Promise<unknown>;
+  verifyWalletSignature: (
+    walletAddress: string,
+    nonce: string,
+    signature: string,
+    walletProvider?: string,
+  ) => Promise<void>;
+  linkWallet: (
+    walletAddress: string,
+    nonce: string,
+    signature: string,
+    walletProvider?: string,
+  ) => Promise<unknown>;
   unlinkWallet: (walletAddress: string) => Promise<unknown>;
   listWallets: () => Promise<unknown>;
 
@@ -70,7 +80,7 @@ export type AuthStore = {
     signature: [string, string],
     nonce: string,
     walletProvider: 'freighter' | 'albedo' | 'walletconnect',
-    locale: string
+    locale: string,
   ) => Promise<void>;
 
   // Token / session
@@ -166,7 +176,9 @@ export interface CollectionActions {
   clearError: () => void;
   setPagination: (
     type: 'collections' | 'nfts',
-    pagination: Partial<CollectionState['pagination']['collections'] | CollectionState['pagination']['nfts']>
+    pagination: Partial<
+      CollectionState['pagination']['collections'] | CollectionState['pagination']['nfts']
+    >,
   ) => void;
   fetchCollections: () => Promise<void>;
   fetchUserCollections: () => Promise<void>;

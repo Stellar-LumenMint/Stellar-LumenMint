@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { emitCtaClicked, CTA_PLACEMENTS } from "@/lib/telemetry/navigation-instrumentation";
-import { useTranslation } from "@/hooks/useTranslation";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useState, useEffect } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { emitCtaClicked, CTA_PLACEMENTS } from '@/lib/telemetry/navigation-instrumentation';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export function MarketplaceFilters() {
   const { t } = useTranslation();
@@ -13,18 +13,18 @@ export function MarketplaceFilters() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const debouncedSearch = useDebounce(search, 300);
-  const sortBy = searchParams.get("sortBy") || "newest";
-  const minPrice = searchParams.get("minPrice") || "";
-  const maxPrice = searchParams.get("maxPrice") || "";
+  const sortBy = searchParams.get('sortBy') || 'newest';
+  const minPrice = searchParams.get('minPrice') || '';
+  const maxPrice = searchParams.get('maxPrice') || '';
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
     if (debouncedSearch) {
-      params.set("search", debouncedSearch);
+      params.set('search', debouncedSearch);
     } else {
-      params.delete("search");
+      params.delete('search');
     }
     router.replace(`${pathname}?${params.toString()}`);
   }, [debouncedSearch, pathname, router, searchParams]);
@@ -40,15 +40,19 @@ export function MarketplaceFilters() {
   };
 
   const clearFilters = () => {
-    setSearch("");
+    setSearch('');
     router.replace(pathname);
   };
 
   return (
     <div className="flex flex-col gap-4 mb-8">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t("todaysPicks.title")}</h2>
-        <Button variant="ghost" onClick={clearFilters} className="text-purple-400 hover:text-purple-300">
+        <h2 className="text-2xl font-bold">{t('todaysPicks.title')}</h2>
+        <Button
+          variant="ghost"
+          onClick={clearFilters}
+          className="text-purple-400 hover:text-purple-300"
+        >
           Clear Filters
         </Button>
       </div>
@@ -78,10 +82,12 @@ export function MarketplaceFilters() {
             placeholder="Min Price"
             min="0"
             value={minPrice}
-            onChange={(e) => updateFilter("minPrice", e.target.value)}
+            onChange={(e) => updateFilter('minPrice', e.target.value)}
             className="bg-[#1E1A45] border border-purple-900/30 rounded-full px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 w-24"
           />
-          <span aria-hidden="true" className="text-gray-400">-</span>
+          <span aria-hidden="true" className="text-gray-400">
+            -
+          </span>
           <label htmlFor="max-price" className="sr-only">
             Maximum price
           </label>
@@ -91,7 +97,7 @@ export function MarketplaceFilters() {
             placeholder="Max Price"
             min="0"
             value={maxPrice}
-            onChange={(e) => updateFilter("maxPrice", e.target.value)}
+            onChange={(e) => updateFilter('maxPrice', e.target.value)}
             className="bg-[#1E1A45] border border-purple-900/30 rounded-full px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 w-24"
           />
         </div>
@@ -103,7 +109,7 @@ export function MarketplaceFilters() {
           <select
             id="sort-by"
             value={sortBy}
-            onChange={(e) => updateFilter("sortBy", e.target.value)}
+            onChange={(e) => updateFilter('sortBy', e.target.value)}
             className="bg-[#1E1A45] border border-purple-900/30 rounded-full px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
           >
             <option value="newest">Newest First</option>

@@ -1,15 +1,15 @@
-import { getTelemetryConfig } from "./config";
-import { TelemetryAdapter } from "./adapters/base";
-import { noopAdapter } from "./adapters/noop";
-import { posthogAdapter } from "./adapters/posthog";
-import { enrichTelemetryPayload } from "./context/enricher";
-import { sanitizePayload } from "./sanitize";
-import { DEFAULT_RELIABILITY_CONFIG } from "./reliability/config";
-import { TelemetryQueue } from "./reliability/queue";
-import { TelemetryDispatcher } from "./reliability/dispatcher";
-import { shouldSampleEvent } from "./reliability/sampling";
-import { TelemetryDebouncer } from "./reliability/debounce";
-import { v4 as uuidv4 } from "uuid";
+import { getTelemetryConfig } from './config';
+import { TelemetryAdapter } from './adapters/base';
+import { noopAdapter } from './adapters/noop';
+import { posthogAdapter } from './adapters/posthog';
+import { enrichTelemetryPayload } from './context/enricher';
+import { sanitizePayload } from './sanitize';
+import { DEFAULT_RELIABILITY_CONFIG } from './reliability/config';
+import { TelemetryQueue } from './reliability/queue';
+import { TelemetryDispatcher } from './reliability/dispatcher';
+import { shouldSampleEvent } from './reliability/sampling';
+import { TelemetryDebouncer } from './reliability/debounce';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface TelemetryClient {
   init(): Promise<void>;
@@ -32,9 +32,7 @@ class TelemetryCore implements TelemetryClient {
     // Pick the adapter from the build-time config. Previously the client
     // always kept the noop adapter, so telemetry could never actually
     // reach PostHog even when explicitly enabled.
-    this.adapter = config.enabled && config.provider === "posthog"
-      ? posthogAdapter
-      : noopAdapter;
+    this.adapter = config.enabled && config.provider === 'posthog' ? posthogAdapter : noopAdapter;
     this.reliabilityConfig = DEFAULT_RELIABILITY_CONFIG;
     this.queue = new TelemetryQueue(this.reliabilityConfig);
     this.dispatcher = new TelemetryDispatcher(this.queue, this.reliabilityConfig);
@@ -53,7 +51,7 @@ class TelemetryCore implements TelemetryClient {
     } catch (e) {
       if (config.debug) {
         // eslint-disable-next-line no-console
-        console.debug("[Telemetry][Client] Adapter init failed:", e);
+        console.debug('[Telemetry][Client] Adapter init failed:', e);
       }
       this.adapter = noopAdapter;
       this.dispatcher.setAdapterReady(false);
@@ -65,13 +63,16 @@ class TelemetryCore implements TelemetryClient {
     // Reliability disabled: fallback to direct best-effort dispatch
     if (!this.reliabilityConfig.enabled) {
       try {
-        const sanitized = sanitizePayload(payload || {}, { category: this.getCategoryForEvent(eventName), debug: !!getTelemetryConfig().debug });
+        const sanitized = sanitizePayload(payload || {}, {
+          category: this.getCategoryForEvent(eventName),
+          debug: !!getTelemetryConfig().debug,
+        });
         const enriched = enrichTelemetryPayload(sanitized);
         this.adapter.track(eventName, enriched);
       } catch (e) {
         if (getTelemetryConfig().debug) {
           // eslint-disable-next-line no-console
-          console.debug("[Telemetry][Client] track error:", e);
+          console.debug('[Telemetry][Client] track error:', e);
         }
       }
       return;
@@ -101,7 +102,10 @@ class TelemetryCore implements TelemetryClient {
   }
 
   private dispatchOrEnqueue(eventName: string, payload?: Record<string, unknown>) {
-    const sanitized = sanitizePayload(payload || {}, { category: this.getCategoryForEvent(eventName), debug: !!this.reliabilityConfig.debug });
+    const sanitized = sanitizePayload(payload || {}, {
+      category: this.getCategoryForEvent(eventName),
+      debug: !!this.reliabilityConfig.debug,
+    });
     const enriched = enrichTelemetryPayload(sanitized);
     try {
       this.adapter.track(eventName, enriched);
@@ -133,7 +137,7 @@ class TelemetryCore implements TelemetryClient {
     // Simple mapping: eventName prefix before '_' is category
     const prefix = eventName.split('_')[0];
     // Fallback to empty string if not found
-    return prefix || "";
+    return prefix || '';
   }
 
   identify(userId: string, traits?: Record<string, unknown>) {
@@ -142,7 +146,7 @@ class TelemetryCore implements TelemetryClient {
     } catch (e) {
       if (getTelemetryConfig().debug) {
         // eslint-disable-next-line no-console
-        console.debug("[Telemetry][Client] identify error:", e);
+        console.debug('[Telemetry][Client] identify error:', e);
       }
     }
   }
@@ -153,7 +157,7 @@ class TelemetryCore implements TelemetryClient {
     } catch (e) {
       if (getTelemetryConfig().debug) {
         // eslint-disable-next-line no-console
-        console.debug("[Telemetry][Client] reset error:", e);
+        console.debug('[Telemetry][Client] reset error:', e);
       }
     }
   }

@@ -19,7 +19,7 @@ export default function ExperimentProviderWrapper({ children }: { children: Reac
     const assigned = ExperimentAssignmentEngine.getAssignmentsForSurface(
       'all_surfaces',
       assignmentSeed,
-      EXPERIMENT_REGISTRY
+      EXPERIMENT_REGISTRY,
     );
     saveAssignments(assigned);
     return assigned;

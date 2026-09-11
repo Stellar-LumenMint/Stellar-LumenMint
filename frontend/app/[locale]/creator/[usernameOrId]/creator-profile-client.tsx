@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useCallback, useMemo, useState } from "react";
-import { useQuery } from "@apollo/client";
-import { useParams } from "next/navigation";
-import { CircuitBackground } from "@/components/circuit-background";
-import { EmptyState } from "@/components/ui/empty-state";
-import { CreatorProfileHeader } from "@/components/creator/creator-profile-header";
-import { CreatorProfileSkeleton } from "@/components/creator/creator-profile-skeleton";
-import { CreatorProfileTabs } from "@/components/creator/creator-profile-tabs";
-import { useTranslation } from "@/hooks/useTranslation";
-import { GET_PUBLIC_CREATOR_QUERY } from "@/lib/graphql/queries/creator.queries";
+import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from '@apollo/client';
+import { useParams } from 'next/navigation';
+import { CircuitBackground } from '@/components/circuit-background';
+import { EmptyState } from '@/components/ui/empty-state';
+import { CreatorProfileHeader } from '@/components/creator/creator-profile-header';
+import { CreatorProfileSkeleton } from '@/components/creator/creator-profile-skeleton';
+import { CreatorProfileTabs } from '@/components/creator/creator-profile-tabs';
+import { useTranslation } from '@/hooks/useTranslation';
+import { GET_PUBLIC_CREATOR_QUERY } from '@/lib/graphql/queries/creator.queries';
 
-type CreatorNftSort = "NEWEST" | "PRICE";
+type CreatorNftSort = 'NEWEST' | 'PRICE';
 
 type PublicCreatorData = {
   publicCreator: {
@@ -60,7 +60,7 @@ type PublicCreatorData = {
     activity?: {
       edges: Array<{
         node: {
-          type: "MINT" | "SALE" | "LISTING";
+          type: 'MINT' | 'SALE' | 'LISTING';
           occurredAt: string;
           nftId?: string | null;
           price?: string | null;
@@ -79,7 +79,7 @@ export function CreatorProfileClient() {
   const identifier = decodeURIComponent(params.usernameOrId);
   const locale = params.locale;
 
-  const [nftSort, setNftSort] = useState<CreatorNftSort>("NEWEST");
+  const [nftSort, setNftSort] = useState<CreatorNftSort>('NEWEST');
   const [nftAfter, setNftAfter] = useState<string | undefined>();
   const [collectionAfter, setCollectionAfter] = useState<string | undefined>();
   const [activityAfter, setActivityAfter] = useState<string | undefined>();
@@ -94,7 +94,7 @@ export function CreatorProfileClient() {
         collectionAfter,
         activityAfter,
       },
-      fetchPolicy: "cache-and-network",
+      fetchPolicy: 'cache-and-network',
     },
   );
 
@@ -192,8 +192,8 @@ export function CreatorProfileClient() {
     if (error || !creator) {
       return (
         <EmptyState
-          title={t("creatorProfile.notFound")}
-          description={t("common.error")}
+          title={t('creatorProfile.notFound')}
+          description={t('common.error')}
           className="py-20"
         />
       );
@@ -201,11 +201,7 @@ export function CreatorProfileClient() {
 
     return (
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-        <CreatorProfileHeader
-          creator={creator}
-          profileSlug={identifier}
-          locale={locale}
-        />
+        <CreatorProfileHeader creator={creator} profileSlug={identifier} locale={locale} />
         <CreatorProfileTabs
           creator={creator}
           nftSort={nftSort}

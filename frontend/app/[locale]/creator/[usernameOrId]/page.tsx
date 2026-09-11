@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
-import { CreatorProfileClient } from "./creator-profile-client";
-import { getCreatorDisplayName } from "@/lib/utils/creator-profile";
+import type { Metadata } from 'next';
+import { CreatorProfileClient } from './creator-profile-client';
+import { getCreatorDisplayName } from '@/lib/utils/creator-profile';
 
-const GRAPHQL_URL =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3001/graphql";
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3001/graphql';
 
 type PageProps = {
   params: {
@@ -14,8 +13,8 @@ type PageProps = {
 
 async function fetchCreatorMeta(identifier: string) {
   const response = await fetch(GRAPHQL_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query: `
         query PublicCreatorMeta($identifier: String!) {
@@ -56,14 +55,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!creator) {
     return {
-      title: "Creator | Stellar-LumenMint",
-      description: "Explore creator profiles on Stellar-LumenMint.",
+      title: 'Creator | Stellar-LumenMint',
+      description: 'Explore creator profiles on Stellar-LumenMint.',
     };
   }
 
   const name = getCreatorDisplayName(creator.username, creator.id);
   const description =
-    creator.bio?.slice(0, 160) || `View ${name}'s NFTs, collections, and activity on Stellar-LumenMint.`;
+    creator.bio?.slice(0, 160) ||
+    `View ${name}'s NFTs, collections, and activity on Stellar-LumenMint.`;
 
   return {
     title: `${name} | Stellar-LumenMint`,
@@ -74,7 +74,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       images: creator.bannerUrl || creator.avatarUrl || undefined,
     },
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title: `${name} | Stellar-LumenMint`,
       description,
       images: creator.bannerUrl || creator.avatarUrl || undefined,

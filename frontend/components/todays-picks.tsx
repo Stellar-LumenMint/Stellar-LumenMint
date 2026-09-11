@@ -1,10 +1,14 @@
-"use client";
+'use client';
 
 import { OptimizedImage } from './image';
-import { Button } from "@/components/ui/button";
-import { emitCtaClicked, CTA_IDS, CTA_PLACEMENTS } from "@/lib/telemetry/navigation-instrumentation";
-import { Clock, Heart } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { Button } from '@/components/ui/button';
+import {
+  emitCtaClicked,
+  CTA_IDS,
+  CTA_PLACEMENTS,
+} from '@/lib/telemetry/navigation-instrumentation';
+import { Clock, Heart } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useState, useMemo } from 'react';
 import { PurchaseModal } from './marketplace/PurchaseModal';
 import { MarketplaceFilters } from './marketplace/MarketplaceFilters';
@@ -29,11 +33,11 @@ export function TodaysPicks() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const [selectedNFT, setSelectedNFT] = useState<NFTItem | null>(null);
-  
-  const search = searchParams.get("search") || "";
-  const minPrice = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined;
-  const maxPrice = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined;
-  const sortBy = searchParams.get("sortBy") || "newest";
+
+  const search = searchParams.get('search') || '';
+  const minPrice = searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined;
+  const maxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined;
+  const sortBy = searchParams.get('sortBy') || 'newest';
 
   const { data, loading, error, fetchMore } = useListingsQuery({
     variables: {
@@ -44,24 +48,32 @@ export function TodaysPicks() {
         minPrice,
         maxPrice,
         sortBy,
-      }
+      },
     },
-    fetchPolicy: "cache-and-network"
+    fetchPolicy: 'cache-and-network',
   });
 
-  const listings = data?.listings?.edges.map(e => e.node) || [];
+  const listings = data?.listings?.edges.map((e) => e.node) || [];
   const pageInfo = data?.listings?.pageInfo;
 
   const nftItems: NFTItem[] = useMemo(() => {
     return listings.map((listing: any, i) => ({
       id: listing.id,
-      name: listing.nft?.name || "Unknown NFT",
-      creator: listing.seller?.username || "Unknown",
+      name: listing.nft?.name || 'Unknown NFT',
+      creator: listing.seller?.username || 'Unknown',
       price: listing.price,
       currency: listing.currency,
       likes: Math.floor(Math.random() * 50) + 10, // Mock likes for now
       isLive: true,
-      bgColor: ["bg-pink-500", "bg-yellow-100", "bg-yellow-300", "bg-green-400", "bg-purple-500", "bg-orange-400", "bg-cyan-400"][i % 7],
+      bgColor: [
+        'bg-pink-500',
+        'bg-yellow-100',
+        'bg-yellow-300',
+        'bg-green-400',
+        'bg-purple-500',
+        'bg-orange-400',
+        'bg-cyan-400',
+      ][i % 7],
       image: listing.nft?.image,
     }));
   }, [listings]);
@@ -73,7 +85,10 @@ export function TodaysPicks() {
       {loading && !data ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-[#1E1A45] rounded-2xl h-[360px] animate-pulse border border-purple-900/30" />
+            <div
+              key={i}
+              className="bg-[#1E1A45] rounded-2xl h-[360px] animate-pulse border border-purple-900/30"
+            />
           ))}
         </div>
       ) : nftItems.length === 0 ? (
@@ -92,27 +107,23 @@ export function TodaysPicks() {
                 <div className="relative">
                   <div className="absolute top-3 left-3 z-10 bg-black/70 rounded-full px-3 py-1 text-xs font-medium">
                     {item.isFeatured ? (
-                      <span className="text-yellow-400">
-                        {t("todaysPicks.comingSoon")}
-                      </span>
+                      <span className="text-yellow-400">{t('todaysPicks.comingSoon')}</span>
                     ) : (
-                      <span>{t("todaysPicks.onSale")}</span>
+                      <span>{t('todaysPicks.onSale')}</span>
                     )}
                   </div>
                   <div className="absolute top-3 right-3 z-10 bg-black/70 rounded-full px-3 py-1 text-xs font-medium">
                     <Heart className="h-3 w-3 text-red-400 inline mr-1" />
                     <span>{item.likes}</span>
                   </div>
-                  <div
-                    className={`h-[240px] relative overflow-hidden ${item.bgColor}`}
-                  >
+                  <div className={`h-[240px] relative overflow-hidden ${item.bgColor}`}>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <OptimizedImage
-                        src={item.image || "/stellar-lumenmint-mark.svg"}
+                        src={item.image || '/stellar-lumenmint-mark.svg'}
                         alt={item.name}
                         width={120}
                         height={120}
-                        className={item.image ? "w-full h-full object-cover" : "opacity-80"}
+                        className={item.image ? 'w-full h-full object-cover' : 'opacity-80'}
                         fallbackSrc="/images/fallbacks/nft-fallback.svg"
                       />
                     </div>
@@ -141,14 +152,14 @@ export function TodaysPicks() {
                       className="text-purple-400 hover:bg-transparent hover:text-purple-300 rounded-full px-4 py-1 text-xs"
                       onClick={() => setSelectedNFT(item)}
                     >
-                      {t("todaysPicks.buyNow") || "Buy Now"}
+                      {t('todaysPicks.buyNow') || 'Buy Now'}
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       className="text-purple-400 hover:bg-transparent hover:text-purple-300 rounded-full px-4 py-1 text-xs"
                     >
-                      {t("todaysPicks.viewHistory")}
+                      {t('todaysPicks.viewHistory')}
                     </Button>
                   </div>
                 </div>
@@ -164,12 +175,12 @@ export function TodaysPicks() {
                 onClick={() => {
                   fetchMore({
                     variables: {
-                      pagination: { first: 8, after: pageInfo.endCursor }
-                    }
+                      pagination: { first: 8, after: pageInfo.endCursor },
+                    },
                   });
                 }}
               >
-                {t("todaysPicks.loadMore") || "Load More"}
+                {t('todaysPicks.loadMore') || 'Load More'}
               </Button>
             </div>
           )}
@@ -180,9 +191,9 @@ export function TodaysPicks() {
         <PurchaseModal
           isOpen={!!selectedNFT}
           onClose={() => setSelectedNFT(null)}
-          listingId={selectedNFT.id} 
+          listingId={selectedNFT.id}
           nftName={selectedNFT.name}
-          nftImage={selectedNFT.image || "/stellar-lumenmint-mark.svg"} 
+          nftImage={selectedNFT.image || '/stellar-lumenmint-mark.svg'}
           price={selectedNFT.price}
           currency={selectedNFT.currency}
         />

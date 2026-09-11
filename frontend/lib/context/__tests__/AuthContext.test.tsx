@@ -81,9 +81,9 @@ describe('AuthContext', () => {
       const { result } = renderAuthContext();
 
       await act(async () => {
-        await expect(
-          result.current.loginWithEmail('user@test.com', 'wrong'),
-        ).rejects.toThrow('Invalid credentials');
+        await expect(result.current.loginWithEmail('user@test.com', 'wrong')).rejects.toThrow(
+          'Invalid credentials',
+        );
       });
     });
   });
@@ -128,9 +128,7 @@ describe('AuthContext', () => {
       const { result } = renderAuthContext();
 
       await act(async () => {
-        await expect(
-          result.current.loginWithWallet('GBX...'),
-        ).rejects.toThrow('Network error');
+        await expect(result.current.loginWithWallet('GBX...')).rejects.toThrow('Network error');
       });
     });
   });
@@ -143,12 +141,7 @@ describe('AuthContext', () => {
       const { result } = renderAuthContext();
 
       await act(async () => {
-        await result.current.verifyWalletLogin(
-          'GBX...',
-          'nonce-123',
-          'sig-abc',
-          'freighter',
-        );
+        await result.current.verifyWalletLogin('GBX...', 'nonce-123', 'sig-abc', 'freighter');
       });
 
       expect(mockVerifyWalletSignature).toHaveBeenCalledWith(
@@ -226,9 +219,7 @@ describe('AuthContext', () => {
       const { result } = renderAuthContext();
 
       await act(async () => {
-        await expect(
-          result.current.linkWallet('GBY...'),
-        ).rejects.toThrow('Already linked');
+        await expect(result.current.linkWallet('GBY...')).rejects.toThrow('Already linked');
       });
     });
   });
@@ -239,7 +230,13 @@ describe('AuthContext', () => {
     it('calls linkWallet on store and refreshes wallet list', async () => {
       mockLinkWallet.mockResolvedValueOnce({ success: true });
       mockListWallets.mockResolvedValueOnce([
-        { id: 'w1', userId: 'u1', walletAddress: 'GBY...', walletProvider: 'albedo', isPrimary: true },
+        {
+          id: 'w1',
+          userId: 'u1',
+          walletAddress: 'GBY...',
+          walletProvider: 'albedo',
+          isPrimary: true,
+        },
       ]);
       const { result } = renderAuthContext();
 
@@ -261,9 +258,9 @@ describe('AuthContext', () => {
       const { result } = renderAuthContext();
 
       await act(async () => {
-        await expect(
-          result.current.verifyWalletLink('GBY...', 'nonce', 'sig'),
-        ).rejects.toThrow('Link failed');
+        await expect(result.current.verifyWalletLink('GBY...', 'nonce', 'sig')).rejects.toThrow(
+          'Link failed',
+        );
       });
 
       // Wallets should remain empty
@@ -292,9 +289,9 @@ describe('AuthContext', () => {
       const { result } = renderAuthContext();
 
       await act(async () => {
-        await expect(
-          result.current.unlinkWallet('GBY...'),
-        ).rejects.toThrow('Cannot unlink primary');
+        await expect(result.current.unlinkWallet('GBY...')).rejects.toThrow(
+          'Cannot unlink primary',
+        );
       });
     });
   });
@@ -320,7 +317,7 @@ describe('AuthContext', () => {
     it('throws when used without AuthProvider', () => {
       // Suppress console.error for this expected error
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       expect(() => {
         renderHook(() => useAuthContext());
       }).toThrow('useAuthContext must be used within AuthProvider');

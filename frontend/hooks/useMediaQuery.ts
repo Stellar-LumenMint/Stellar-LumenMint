@@ -1,16 +1,16 @@
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore } from 'react';
 
 function subscribeToMediaQuery(query: string, callback: () => void): () => void {
-  if (typeof window === "undefined" || !window.matchMedia) {
+  if (typeof window === 'undefined' || !window.matchMedia) {
     return () => {};
   }
   const mql = window.matchMedia(query);
-  mql.addEventListener("change", callback);
-  return () => mql.removeEventListener("change", callback);
+  mql.addEventListener('change', callback);
+  return () => mql.removeEventListener('change', callback);
 }
 
 function getSnapshot(query: string): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) {
+  if (typeof window === 'undefined' || !window.matchMedia) {
     return false;
   }
   return window.matchMedia(query).matches;

@@ -1,6 +1,6 @@
-require("@testing-library/jest-dom");
+require('@testing-library/jest-dom');
 
-if (typeof window !== "undefined" && !window.matchMedia) {
+if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = function (query) {
     return {
       matches: false,

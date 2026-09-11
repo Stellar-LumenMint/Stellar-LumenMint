@@ -1,10 +1,9 @@
-import React from 'react'
-import Skeleton from 'react-loading-skeleton'
+import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
 const ExploreCategoriesSkeleton = () => {
   return (
-
     <section className="py-20 overflow-hidden relative">
       {/* Background elements can remain unchanged */}
       <div className="absolute inset-0 overflow-hidden">
@@ -68,6 +67,6 @@ const ExploreCategoriesSkeleton = () => {
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent"></div>
     </section>
   );
-}
+};
 
-export default ExploreCategoriesSkeleton
+export default ExploreCategoriesSkeleton;

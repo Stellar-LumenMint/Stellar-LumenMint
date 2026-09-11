@@ -1,12 +1,6 @@
-import { fetchWithAuth } from "@/lib/api/fetchWithAuth";
-import { API_CONFIG } from "@/lib/config";
-import type {
-  Auction,
-  Bid,
-  CreateListingDto,
-  Listing,
-  OwnedNft,
-} from "@/types/marketplace";
+import { fetchWithAuth } from '@/lib/api/fetchWithAuth';
+import { API_CONFIG } from '@/lib/config';
+import type { Auction, Bid, CreateListingDto, Listing, OwnedNft } from '@/types/marketplace';
 
 /**
  * Typed client for the marketplace endpoints (listings, auctions, owned NFTs).
@@ -21,15 +15,15 @@ import type {
  * "List NFTs for Sale" and "Sales" pages.
  */
 
-const jsonHeaders = { "Content-Type": "application/json" };
+const jsonHeaders = { 'Content-Type': 'application/json' };
 
 /** Unwraps a single object that may be nested under `data` / `data.data`. */
 function unwrapData<T>(payload: unknown): T {
   const typed = payload as { data?: { data?: T } | T };
-  if (typed?.data && typeof typed.data === "object" && "data" in typed.data) {
+  if (typed?.data && typeof typed.data === 'object' && 'data' in typed.data) {
     return (typed.data as { data: T }).data;
   }
-  if (typed && typeof typed === "object" && "data" in typed) {
+  if (typed && typeof typed === 'object' && 'data' in typed) {
     return typed.data as T;
   }
   return payload as T;
@@ -43,10 +37,10 @@ function unwrapArray<T>(payload: unknown): T[] {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload as T[];
   const obj = payload as Record<string, unknown>;
-  for (const key of ["data", "nfts", "listings", "auctions", "bids", "items"]) {
+  for (const key of ['data', 'nfts', 'listings', 'auctions', 'bids', 'items']) {
     if (Array.isArray(obj[key])) return obj[key] as T[];
   }
-  if (obj.data && typeof obj.data === "object") {
+  if (obj.data && typeof obj.data === 'object') {
     return unwrapArray<T>(obj.data);
   }
   return [];
@@ -63,11 +57,7 @@ export function toNftKey(contractId: string, tokenId: string): string {
 }
 
 /** Loads the NFTs an authenticated creator owns and can list for sale. */
-export async function getOwnedNfts(
-  ownerId: string,
-  page = 1,
-  limit = 20,
-): Promise<OwnedNft[]> {
+export async function getOwnedNfts(ownerId: string, page = 1, limit = 20): Promise<OwnedNft[]> {
   const url = `${API_CONFIG.baseUrl}/nfts?ownerId=${encodeURIComponent(
     ownerId,
   )}&page=${page}&limit=${limit}`;
@@ -89,9 +79,7 @@ export async function getListingByNft(
 
 /** Loads all active listings. */
 export async function getActiveListings(): Promise<Listing[]> {
-  return unwrapArray<Listing>(
-    await getJson(`${API_CONFIG.baseUrl}/listings/active`),
-  );
+  return unwrapArray<Listing>(await getJson(`${API_CONFIG.baseUrl}/listings/active`));
 }
 
 /** Loads every listing (any status). */
@@ -100,11 +88,9 @@ export async function getAllListings(): Promise<Listing[]> {
 }
 
 /** Creates a fixed-price listing (JWT required). */
-export async function createListing(
-  payload: CreateListingDto,
-): Promise<Listing> {
+export async function createListing(payload: CreateListingDto): Promise<Listing> {
   const data = await getJson(`${API_CONFIG.baseUrl}/listings`, {
-    method: "POST",
+    method: 'POST',
     headers: jsonHeaders,
     body: JSON.stringify(payload),
   });
@@ -113,17 +99,14 @@ export async function createListing(
 
 /** Cancels an active listing by id (JWT required). */
 export async function cancelListing(listingId: string): Promise<void> {
-  await fetchWithAuth(
-    `${API_CONFIG.baseUrl}/listings/${encodeURIComponent(listingId)}`,
-    { method: "DELETE" },
-  );
+  await fetchWithAuth(`${API_CONFIG.baseUrl}/listings/${encodeURIComponent(listingId)}`, {
+    method: 'DELETE',
+  });
 }
 
 /** Loads active auctions. */
 export async function getActiveAuctions(): Promise<Auction[]> {
-  return unwrapArray<Auction>(
-    await getJson(`${API_CONFIG.baseUrl}/auctions/active`),
-  );
+  return unwrapArray<Auction>(await getJson(`${API_CONFIG.baseUrl}/auctions/active`));
 }
 
 /** Loads every auction (any status). */
@@ -134,8 +117,6 @@ export async function getAllAuctions(): Promise<Auction[]> {
 /** Loads the bids for a given auction. */
 export async function getAuctionBids(auctionId: string): Promise<Bid[]> {
   return unwrapArray<Bid>(
-    await getJson(
-      `${API_CONFIG.baseUrl}/auctions/${encodeURIComponent(auctionId)}/bids`,
-    ),
+    await getJson(`${API_CONFIG.baseUrl}/auctions/${encodeURIComponent(auctionId)}/bids`),
   );
 }

@@ -1,6 +1,6 @@
-export type StellarNetwork = "testnet" | "mainnet";
+export type StellarNetwork = 'testnet' | 'mainnet';
 
-export type WalletProvider = "freighter" | "albedo" | "walletconnect" | "lobstr";
+export type WalletProvider = 'freighter' | 'albedo' | 'walletconnect' | 'lobstr';
 
 export interface StellarWalletState {
   address: string | null;

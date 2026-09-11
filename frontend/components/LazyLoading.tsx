@@ -1,9 +1,9 @@
-'use client'
+'use client';
 import { useEffect, useState, useRef, ReactNode } from 'react';
 
 type LazyLoaderProps = {
-    children: ReactNode
-}
+  children: ReactNode;
+};
 
 const LazyLoader = ({ children }: LazyLoaderProps) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -17,11 +17,11 @@ const LazyLoader = ({ children }: LazyLoaderProps) => {
           observer.disconnect();
         }
       },
-      { rootMargin: '400px' }
+      { rootMargin: '400px' },
     );
 
     if (ref.current) observer.observe(ref.current);
-    
+
     return () => observer.disconnect();
   }, []);
 

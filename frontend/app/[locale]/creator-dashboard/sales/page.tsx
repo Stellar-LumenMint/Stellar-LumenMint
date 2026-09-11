@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { Activity, DollarSign, ShoppingBag, Tag } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
-import { useCreatorSales } from "@/hooks/useCreatorSales";
-import { formatAmount, formatDate } from "@/components/marketplace/format";
-import type { MarketplaceActivity, SalesSummary } from "@/types/marketplace";
+import { Activity, DollarSign, ShoppingBag, Tag } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+import { useCreatorSales } from '@/hooks/useCreatorSales';
+import { formatAmount, formatDate } from '@/components/marketplace/format';
+import type { MarketplaceActivity, SalesSummary } from '@/types/marketplace';
 
 /** A single summary tile (active listings, items sold, gross volume). */
 function SummaryTile({
@@ -38,10 +38,7 @@ function SummaryTile({
 /** Renders the three derived summary tiles from the sales summary model. */
 function SummaryTiles({ summary }: { summary: SalesSummary }) {
   return (
-    <div
-      data-testid="sales-summary"
-      className="grid grid-cols-1 gap-4 sm:grid-cols-3"
-    >
+    <div data-testid="sales-summary" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <SummaryTile
         icon={<Tag className="size-5" />}
         label="Active listings"
@@ -67,7 +64,7 @@ function ActivityRow({ item }: { item: MarketplaceActivity }) {
     <li className="flex items-center justify-between gap-4 border-b border-white/5 py-3 last:border-0">
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-lumen-text">
-          {item.kind === "AUCTION" ? "Auction" : "Listing"} · {item.nftKey}
+          {item.kind === 'AUCTION' ? 'Auction' : 'Listing'} · {item.nftKey}
         </p>
         <p className="text-xs text-lumen-subtext">
           {item.status} · {formatDate(item.timestamp)}
@@ -106,9 +103,7 @@ export default function SalesPage() {
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
       <header className="mb-6">
         <h1 className="text-3xl font-bold text-lumen-text">Sales &amp; Earnings</h1>
-        <p className="text-lumen-subtext">
-          Track your listings, sales, and auction activity.
-        </p>
+        <p className="text-lumen-subtext">Track your listings, sales, and auction activity.</p>
       </header>
 
       {error && (
@@ -130,9 +125,7 @@ export default function SalesPage() {
           {summary && <SummaryTiles summary={summary} />}
 
           <section>
-            <h2 className="mb-3 text-lg font-semibold text-lumen-text">
-              Recent activity
-            </h2>
+            <h2 className="mb-3 text-lg font-semibold text-lumen-text">Recent activity</h2>
             {activity.length === 0 ? (
               <EmptyState
                 icon={<Activity className="size-10 text-lumen-subtext" />}

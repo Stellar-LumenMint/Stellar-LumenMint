@@ -1,22 +1,30 @@
-import { act } from "@testing-library/react";
-import { usePreferencesStore, migratePreferences } from "./preferences-store";
+import { act } from '@testing-library/react';
+import { usePreferencesStore, migratePreferences } from './preferences-store';
 
-describe("Preferences Store", () => {
+describe('Preferences Store', () => {
   beforeEach(() => {
     // Reset the store state before each test
     act(() => {
       usePreferencesStore.setState({
-        theme: { mode: "dark", primaryColor: "#8B5CF6", fontFamily: "Inter" },
+        theme: { mode: 'dark', primaryColor: '#8B5CF6', fontFamily: 'Inter' },
         notifications: {
-          email: true, push: true, newListings: true,
-          priceUpdates: true, bidActivity: true, auctions: true,
+          email: true,
+          push: true,
+          newListings: true,
+          priceUpdates: true,
+          bidActivity: true,
+          auctions: true,
         },
         display: {
-          gridView: "grid", itemsPerPage: 12,
-          showPrice: true, showCreator: true, showLikes: true, currency: "STRK",
+          gridView: 'grid',
+          itemsPerPage: 12,
+          showPrice: true,
+          showCreator: true,
+          showLikes: true,
+          currency: 'STRK',
         },
-        language: "en",
-        timezone: "UTC",
+        language: 'en',
+        timezone: 'UTC',
         recentSearches: [],
         favoriteCollections: [],
         watchlist: [],
@@ -28,38 +36,38 @@ describe("Preferences Store", () => {
   // ===========================================================================
   // Theme
   // ===========================================================================
-  describe("theme", () => {
-    it("has dark mode as default", () => {
+  describe('theme', () => {
+    it('has dark mode as default', () => {
       const { theme } = usePreferencesStore.getState();
-      expect(theme.mode).toBe("dark");
+      expect(theme.mode).toBe('dark');
     });
 
-    it("updates theme mode", () => {
+    it('updates theme mode', () => {
       act(() => {
-        usePreferencesStore.getState().setTheme({ mode: "light" as const });
+        usePreferencesStore.getState().setTheme({ mode: 'light' as const });
       });
-      expect(usePreferencesStore.getState().theme.mode).toBe("light");
+      expect(usePreferencesStore.getState().theme.mode).toBe('light');
     });
 
-    it("preserves other theme properties on partial updates", () => {
+    it('preserves other theme properties on partial updates', () => {
       act(() => {
-        usePreferencesStore.getState().setTheme({ primaryColor: "#FF0000" });
+        usePreferencesStore.getState().setTheme({ primaryColor: '#FF0000' });
       });
       const { theme } = usePreferencesStore.getState();
-      expect(theme.primaryColor).toBe("#FF0000");
-      expect(theme.mode).toBe("dark"); // unchanged
+      expect(theme.primaryColor).toBe('#FF0000');
+      expect(theme.mode).toBe('dark'); // unchanged
     });
   });
 
   // ===========================================================================
   // Notifications
   // ===========================================================================
-  describe("notifications", () => {
-    it("enables email notifications by default", () => {
+  describe('notifications', () => {
+    it('enables email notifications by default', () => {
       expect(usePreferencesStore.getState().notifications.email).toBe(true);
     });
 
-    it("updates notification preferences", () => {
+    it('updates notification preferences', () => {
       act(() => {
         usePreferencesStore.getState().setNotifications({ email: false });
       });
@@ -72,14 +80,14 @@ describe("Preferences Store", () => {
   // ===========================================================================
   // Display
   // ===========================================================================
-  describe("display", () => {
-    it("defaults to grid view with 12 items", () => {
+  describe('display', () => {
+    it('defaults to grid view with 12 items', () => {
       const { display } = usePreferencesStore.getState();
-      expect(display.gridView).toBe("grid");
+      expect(display.gridView).toBe('grid');
       expect(display.itemsPerPage).toBe(12);
     });
 
-    it("updates display settings", () => {
+    it('updates display settings', () => {
       act(() => {
         usePreferencesStore.getState().setDisplay({ itemsPerPage: 24, showPrice: false });
       });
@@ -92,41 +100,41 @@ describe("Preferences Store", () => {
   // ===========================================================================
   // Language
   // ===========================================================================
-  describe("language", () => {
-    it("defaults to English", () => {
-      expect(usePreferencesStore.getState().language).toBe("en");
+  describe('language', () => {
+    it('defaults to English', () => {
+      expect(usePreferencesStore.getState().language).toBe('en');
     });
 
-    it("updates language", () => {
+    it('updates language', () => {
       act(() => {
-        usePreferencesStore.getState().setLanguage("fr");
+        usePreferencesStore.getState().setLanguage('fr');
       });
-      expect(usePreferencesStore.getState().language).toBe("fr");
+      expect(usePreferencesStore.getState().language).toBe('fr');
     });
   });
 
   // ===========================================================================
   // Recent searches
   // ===========================================================================
-  describe("recent searches", () => {
-    it("adds a search term", () => {
+  describe('recent searches', () => {
+    it('adds a search term', () => {
       act(() => {
-        usePreferencesStore.getState().addRecentSearch("dragons");
+        usePreferencesStore.getState().addRecentSearch('dragons');
       });
-      expect(usePreferencesStore.getState().recentSearches).toEqual(["dragons"]);
+      expect(usePreferencesStore.getState().recentSearches).toEqual(['dragons']);
     });
 
-    it("deduplicates repeated searches and pushes to front", () => {
+    it('deduplicates repeated searches and pushes to front', () => {
       act(() => {
         const store = usePreferencesStore.getState();
-        store.addRecentSearch("dragons");
-        store.addRecentSearch("wizards");
-        store.addRecentSearch("dragons");
+        store.addRecentSearch('dragons');
+        store.addRecentSearch('wizards');
+        store.addRecentSearch('dragons');
       });
-      expect(usePreferencesStore.getState().recentSearches).toEqual(["dragons", "wizards"]);
+      expect(usePreferencesStore.getState().recentSearches).toEqual(['dragons', 'wizards']);
     });
 
-    it("caps searches at 10", () => {
+    it('caps searches at 10', () => {
       act(() => {
         const store = usePreferencesStore.getState();
         for (let i = 0; i < 15; i++) {
@@ -134,14 +142,14 @@ describe("Preferences Store", () => {
         }
       });
       expect(usePreferencesStore.getState().recentSearches).toHaveLength(10);
-      expect(usePreferencesStore.getState().recentSearches[0]).toBe("search-14");
+      expect(usePreferencesStore.getState().recentSearches[0]).toBe('search-14');
     });
 
-    it("clears all recent searches", () => {
+    it('clears all recent searches', () => {
       act(() => {
         const store = usePreferencesStore.getState();
-        store.addRecentSearch("dragons");
-        store.addRecentSearch("wizards");
+        store.addRecentSearch('dragons');
+        store.addRecentSearch('wizards');
         store.clearRecentSearches();
       });
       expect(usePreferencesStore.getState().recentSearches).toEqual([]);
@@ -151,103 +159,102 @@ describe("Preferences Store", () => {
   // ===========================================================================
   // Favorites
   // ===========================================================================
-  describe("favorites", () => {
-    it("adds a collection to favorites", () => {
+  describe('favorites', () => {
+    it('adds a collection to favorites', () => {
       act(() => {
-        usePreferencesStore.getState().addToFavorites("col-1");
+        usePreferencesStore.getState().addToFavorites('col-1');
       });
-      expect(usePreferencesStore.getState().favoriteCollections).toContain("col-1");
+      expect(usePreferencesStore.getState().favoriteCollections).toContain('col-1');
     });
 
-    it("does not duplicate favorites", () => {
+    it('does not duplicate favorites', () => {
       act(() => {
         const store = usePreferencesStore.getState();
-        store.addToFavorites("col-1");
-        store.addToFavorites("col-1");
+        store.addToFavorites('col-1');
+        store.addToFavorites('col-1');
       });
-      expect(usePreferencesStore.getState().favoriteCollections).toEqual(["col-1"]);
+      expect(usePreferencesStore.getState().favoriteCollections).toEqual(['col-1']);
     });
 
-    it("removes a collection from favorites", () => {
+    it('removes a collection from favorites', () => {
       act(() => {
         const store = usePreferencesStore.getState();
-        store.addToFavorites("col-1");
-        store.addToFavorites("col-2");
-        store.removeFromFavorites("col-1");
+        store.addToFavorites('col-1');
+        store.addToFavorites('col-2');
+        store.removeFromFavorites('col-1');
       });
-      expect(usePreferencesStore.getState().favoriteCollections).toEqual(["col-2"]);
+      expect(usePreferencesStore.getState().favoriteCollections).toEqual(['col-2']);
     });
   });
 
   // ===========================================================================
   // Watchlist
   // ===========================================================================
-  describe("watchlist", () => {
-    it("adds an NFT to watchlist", () => {
+  describe('watchlist', () => {
+    it('adds an NFT to watchlist', () => {
       act(() => {
-        usePreferencesStore.getState().addToWatchlist("nft-1");
+        usePreferencesStore.getState().addToWatchlist('nft-1');
       });
-      expect(usePreferencesStore.getState().watchlist).toContain("nft-1");
+      expect(usePreferencesStore.getState().watchlist).toContain('nft-1');
     });
 
-    it("removes an NFT from watchlist", () => {
+    it('removes an NFT from watchlist', () => {
       act(() => {
         const store = usePreferencesStore.getState();
-        store.addToWatchlist("nft-1");
-        store.removeFromWatchlist("nft-1");
+        store.addToWatchlist('nft-1');
+        store.removeFromWatchlist('nft-1');
       });
       expect(usePreferencesStore.getState().watchlist).toEqual([]);
     });
 
-    it("does not duplicate watchlist entries", () => {
+    it('does not duplicate watchlist entries', () => {
       act(() => {
         const store = usePreferencesStore.getState();
-        store.addToWatchlist("nft-1");
-        store.addToWatchlist("nft-1");
+        store.addToWatchlist('nft-1');
+        store.addToWatchlist('nft-1');
       });
-      expect(usePreferencesStore.getState().watchlist).toEqual(["nft-1"]);
+      expect(usePreferencesStore.getState().watchlist).toEqual(['nft-1']);
     });
   });
 
   // ===========================================================================
   // Persistence migration
   // ===========================================================================
-  describe("persistence migration", () => {
-    it("merges legacy persisted state with defaults instead of wiping it", () => {
+  describe('persistence migration', () => {
+    it('merges legacy persisted state with defaults instead of wiping it', () => {
       const legacyState = {
-        theme: { mode: "light" },
+        theme: { mode: 'light' },
         display: { itemsPerPage: 24 },
-        language: "fr",
-        timezone: "Europe/Paris",
+        language: 'fr',
+        timezone: 'Europe/Paris',
         // Corrupted: must not crash migration or be trusted as-is
-        recentSearches: "not-an-array",
+        recentSearches: 'not-an-array',
         favoriteCollections: null,
       };
       const migrated = migratePreferences(legacyState, 1);
       // Legacy values are kept...
-      expect(migrated.theme.mode).toBe("light");
+      expect(migrated.theme.mode).toBe('light');
       expect(migrated.display.itemsPerPage).toBe(24);
-      expect(migrated.language).toBe("fr");
-      expect(migrated.timezone).toBe("Europe/Paris");
+      expect(migrated.language).toBe('fr');
+      expect(migrated.timezone).toBe('Europe/Paris');
       // ...malformed fields fall back to defaults...
       expect(migrated.recentSearches).toEqual([]);
       expect(migrated.favoriteCollections).toEqual([]);
       // ...and missing fields are filled from defaults.
       expect(migrated.notifications.push).toBe(true);
-      expect(migrated.theme.primaryColor).toBe("#8B5CF6");
-      expect(migrated.display.gridView).toBe("grid");
+      expect(migrated.theme.primaryColor).toBe('#8B5CF6');
+      expect(migrated.display.gridView).toBe('grid');
       expect(migrated.watchlist).toEqual([]);
     });
 
-    it("returns pure defaults for a completely empty payload", () => {
+    it('returns pure defaults for a completely empty payload', () => {
       const migrated = migratePreferences(undefined, 0);
-      const { theme, notifications, display } =
-        usePreferencesStore.getInitialState();
+      const { theme, notifications, display } = usePreferencesStore.getInitialState();
       expect(migrated).toMatchObject({
         theme,
         notifications,
         display,
-        language: "en",
+        language: 'en',
         timezone: expect.any(String),
         recentSearches: [],
         favoriteCollections: [],
@@ -259,17 +266,17 @@ describe("Preferences Store", () => {
   // ===========================================================================
   // Reset
   // ===========================================================================
-  describe("reset", () => {
-    it("resets all preferences to defaults", () => {
+  describe('reset', () => {
+    it('resets all preferences to defaults', () => {
       act(() => {
         const store = usePreferencesStore.getState();
-        store.setLanguage("fr");
-        store.addToFavorites("col-1");
-        store.addRecentSearch("dragons");
+        store.setLanguage('fr');
+        store.addToFavorites('col-1');
+        store.addRecentSearch('dragons');
         store.resetPreferences();
       });
       const state = usePreferencesStore.getState();
-      expect(state.language).toBe("en");
+      expect(state.language).toBe('en');
       expect(state.favoriteCollections).toEqual([]);
       expect(state.recentSearches).toEqual([]);
       expect(state.isHydrated).toBe(true); // preserved

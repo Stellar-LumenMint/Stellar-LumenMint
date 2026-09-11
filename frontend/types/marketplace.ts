@@ -8,10 +8,10 @@
  */
 
 /** Lifecycle status of a listing, mirroring the backend `ListingStatus` enum. */
-export type ListingStatus = "ACTIVE" | "SOLD" | "CANCELLED" | "EXPIRED";
+export type ListingStatus = 'ACTIVE' | 'SOLD' | 'CANCELLED' | 'EXPIRED';
 
 /** Lifecycle status of an auction, mirroring the backend `AuctionStatus` enum. */
-export type AuctionStatus = "ACTIVE" | "COMPLETED" | "CANCELLED" | "SETTLED";
+export type AuctionStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'SETTLED';
 
 /** A fixed-price listing as returned by `GET /listings`. */
 export interface Listing {
@@ -84,7 +84,7 @@ export interface OwnedNft {
  * Produced by the shared mapper and rendered as a status badge on the
  * "List NFTs for Sale" page.
  */
-export type NftMarketState = "NOT_LISTED" | "ACTIVE" | "SOLD" | "EXPIRED";
+export type NftMarketState = 'NOT_LISTED' | 'ACTIVE' | 'SOLD' | 'EXPIRED';
 
 /** An owned NFT enriched with its resolved marketplace state. */
 export interface MarketplaceNft extends OwnedNft {
@@ -96,7 +96,7 @@ export interface MarketplaceNft extends OwnedNft {
 }
 
 /** The kind of marketplace event surfaced in the Sales activity feed. */
-export type MarketplaceActivityKind = "LISTING" | "AUCTION";
+export type MarketplaceActivityKind = 'LISTING' | 'AUCTION';
 
 /**
  * A normalized marketplace event combining listings and auctions into a single

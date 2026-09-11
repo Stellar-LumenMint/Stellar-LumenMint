@@ -5,7 +5,18 @@
  * - Recursively sanitizes nested objects and arrays.
  */
 const SENSITIVE_KEYS = [
-  'email', 'password', 'token', 'ssn', 'creditCard', 'phone', 'address', 'name', 'dob', 'birthdate', 'userInput', 'formValue',
+  'email',
+  'password',
+  'token',
+  'ssn',
+  'creditCard',
+  'phone',
+  'address',
+  'name',
+  'dob',
+  'birthdate',
+  'userInput',
+  'formValue',
 ];
 
 export function sanitizeTelemetryPayload<T>(payload: T): T {
@@ -25,4 +36,3 @@ export function sanitizeTelemetryPayload<T>(payload: T): T {
   }
   return sanitize(payload);
 }
-

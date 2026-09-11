@@ -7,7 +7,9 @@ jest.mock('next/link', () => ({
   default: ({ children, href }: any) => <a href={href}>{children}</a>,
 }));
 jest.mock('../components/image', () => ({ OptimizedImage: (p: any) => <img {...p} /> }));
-jest.mock('@/hooks/useTranslation', () => ({ useTranslation: () => ({ t: (k: string) => k, locale: 'en' }) }));
+jest.mock('@/hooks/useTranslation', () => ({
+  useTranslation: () => ({ t: (k: string) => k, locale: 'en' }),
+}));
 
 import Footer from '../components/Footer';
 

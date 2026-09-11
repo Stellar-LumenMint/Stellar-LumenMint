@@ -15,7 +15,9 @@ describe('ExperimentAssignmentEngine', () => {
   it('assigns at least two unique variants for different seeds (100% rollout)', () => {
     const exp = { ...experiment, rollout_percentage: 100 };
     const seeds = ['userA', 'userB', 'userC', 'userD', 'userE', 'userF', 'userG', 'userH'];
-    const assigned = seeds.map(seed => ExperimentAssignmentEngine.assignVariant(exp, seed).variant_id);
+    const assigned = seeds.map(
+      (seed) => ExperimentAssignmentEngine.assignVariant(exp, seed).variant_id,
+    );
     const unique = new Set(assigned);
     expect(unique.size).toBeGreaterThan(1);
   });

@@ -52,17 +52,17 @@ export default function OfflinePage() {
             <WifiOff className="w-16 h-16 mx-auto text-red-400" />
           )}
         </div>
-        
+
         <h1 className="text-2xl font-bold mb-4">
-          {isOnline ? 'Connection Restored!' : 'You\'re Offline'}
+          {isOnline ? 'Connection Restored!' : "You're Offline"}
         </h1>
-        
+
         <p className="text-gray-300 mb-6">
           {isOnline
             ? 'Great! Your internet connection has been restored.'
-            : 'It looks like you\'re not connected to the internet. Check your connection and try again.'}
+            : "It looks like you're not connected to the internet. Check your connection and try again."}
         </p>
-        
+
         <div className="space-y-4">
           <button
             onClick={handleRetry}
@@ -76,7 +76,7 @@ export default function OfflinePage() {
             )}
             {isRetrying ? 'Retrying...' : 'Try Again'}
           </button>
-          
+
           <div className="text-sm text-gray-400">
             <p>While offline, you can still:</p>
             <ul className="mt-2 space-y-1">

@@ -1,12 +1,12 @@
-'use client'
+'use client';
 
-import { useReportWebVitals } from 'next/web-vitals'
-import { telemetry } from '@/lib/telemetry'
+import { useReportWebVitals } from 'next/web-vitals';
+import { telemetry } from '@/lib/telemetry';
 
 // Web-vitals events are reported through the same sampling, debounce, and
 // reliability pipeline as every other telemetry event, so they respect the
 // user's opt-out and debug flags instead of firing raw console.log lines.
-const WEB_VITAL_EVENT_PREFIX = 'web_vital'
+const WEB_VITAL_EVENT_PREFIX = 'web_vital';
 
 export function WebVitals() {
   useReportWebVitals((metric) => {
@@ -18,9 +18,9 @@ export function WebVitals() {
       metric.name === 'INP' ||
       metric.name === 'CLS' ||
       metric.name === 'FCP' ||
-      Math.random() < 0.1
+      Math.random() < 0.1;
 
-    if (!shouldReport) return
+    if (!shouldReport) return;
 
     telemetry.track(`${WEB_VITAL_EVENT_PREFIX}_${metric.name.toLowerCase()}`, {
       value: metric.value,
@@ -28,8 +28,8 @@ export function WebVitals() {
       delta: metric.delta,
       navigation_type: metric.navigationType,
       id: metric.id,
-    })
-  })
+    });
+  });
 
-  return null
+  return null;
 }

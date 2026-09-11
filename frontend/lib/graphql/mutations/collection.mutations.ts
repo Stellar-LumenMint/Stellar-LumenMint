@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const LIKE_COLLECTION_MUTATION = gql`
   mutation LikeCollection($input: LikeCollectionInput!) {

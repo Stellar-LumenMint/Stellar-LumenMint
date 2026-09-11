@@ -89,7 +89,18 @@ export function BidModal({
       setError(message);
       showError(message);
     }
-  }, [bidAmount, minBid, currency, connected, auctionId, placeBid, onBidSuccess, onClose, showSuccess, showError]);
+  }, [
+    bidAmount,
+    minBid,
+    currency,
+    connected,
+    auctionId,
+    placeBid,
+    onBidSuccess,
+    onClose,
+    showSuccess,
+    showError,
+  ]);
 
   if (!isOpen) return null;
 
@@ -102,7 +113,11 @@ export function BidModal({
       aria-busy={loading}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Modal */}
       <div className="relative z-10 w-full max-w-md mx-4 bg-[#1E1A45] rounded-2xl border border-purple-900/30 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -126,12 +141,17 @@ export function BidModal({
           {/* Current Price */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-purple-500/10 border border-purple-900/30">
             <span className="text-sm text-gray-400">Current Price</span>
-            <span className="font-bold text-white">{currentPrice} {currency}</span>
+            <span className="font-bold text-white">
+              {currentPrice} {currency}
+            </span>
           </div>
 
           {/* Minimum Bid */}
           <div className="text-sm text-gray-400">
-            Minimum bid: <span className="font-medium text-white">{minBid.toFixed(2)} {currency}</span>
+            Minimum bid:{' '}
+            <span className="font-medium text-white">
+              {minBid.toFixed(2)} {currency}
+            </span>
           </div>
 
           {/* Input */}

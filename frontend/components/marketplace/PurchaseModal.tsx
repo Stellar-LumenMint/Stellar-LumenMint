@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { useBuyNFTMutation } from "@/hooks/graphql/useMutations";
-import { Button } from "@/components/ui/button";
-import { OptimizedImage } from "@/components/image";
-import { Loader2 } from "lucide-react";
-import { useWalletStore } from "@/lib/stores/walletStore";
-import { useToast } from "@/lib/stores";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from 'react';
+import { useBuyNFTMutation } from '@/hooks/graphql/useMutations';
+import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/image';
+import { Loader2 } from 'lucide-react';
+import { useWalletStore } from '@/lib/stores/walletStore';
+import { useToast } from '@/lib/stores';
+import { useRouter } from 'next/navigation';
 
 type PurchaseModalProps = {
   isOpen: boolean;
@@ -48,18 +48,18 @@ export function PurchaseModal({
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === 'Escape') onClose();
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
 
   const handlePurchase = async () => {
     if (!isConnected) {
-      showError("Please connect your wallet to proceed with purchase.");
+      showError('Please connect your wallet to proceed with purchase.');
       return;
     }
-    
+
     try {
       const { data } = await buyNFT({ variables: { listingId } });
       if (data?.buyNFT?.success) {
@@ -70,8 +70,8 @@ export function PurchaseModal({
         }, 2000);
       }
     } catch (err: any) {
-      console.error("Purchase failed", err);
-      showError(err.message || "An error occurred during purchase.");
+      console.error('Purchase failed', err);
+      showError(err.message || 'An error occurred during purchase.');
     }
   };
 
@@ -86,13 +86,15 @@ export function PurchaseModal({
     >
       <div className="bg-[#1E1A45] rounded-2xl p-6 w-full max-w-md border border-purple-900/30">
         <h2 className="text-2xl font-bold mb-4">Complete Purchase</h2>
-        
+
         {success ? (
           <div className="text-center py-8 space-y-4">
             <div className="text-green-400 text-xl font-semibold">Purchase Successful!</div>
             <p className="text-gray-300">You now own {nftName}</p>
             <p className="text-sm text-gray-500">Redirecting to your collection...</p>
-            <Button onClick={onClose} className="w-full mt-4">Close</Button>
+            <Button onClick={onClose} className="w-full mt-4">
+              Close
+            </Button>
           </div>
         ) : (
           <>
@@ -117,7 +119,9 @@ export function PurchaseModal({
             <div className="space-y-3 mb-6 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-400">NFT Price</span>
-                <span>{price} {currency}</span>
+                <span>
+                  {price} {currency}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Platform Fee</span>
@@ -125,22 +129,21 @@ export function PurchaseModal({
               </div>
               <div className="flex justify-between pt-3 border-t border-purple-900/30 font-semibold">
                 <span>Total</span>
-                <span className="text-purple-400">{price} {currency}</span>
+                <span className="text-purple-400">
+                  {price} {currency}
+                </span>
               </div>
             </div>
 
             {error && (
-              <div
-                role="alert"
-                className="text-red-400 text-sm mb-4 p-3 bg-red-400/10 rounded-lg"
-              >
-                {error.message || "Transaction failed. Please try again."}
+              <div role="alert" className="text-red-400 text-sm mb-4 p-3 bg-red-400/10 rounded-lg">
+                {error.message || 'Transaction failed. Please try again.'}
               </div>
             )}
 
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={onClose}
                 ref={closeButtonRef}
                 className="flex-1 bg-transparent border-purple-900/50 hover:bg-purple-900/20"
@@ -149,22 +152,24 @@ export function PurchaseModal({
                 Cancel
               </Button>
               {!isConnected ? (
-                <Button 
+                <Button
                   onClick={onClose} // Just close to let user trigger normal connect flow, or implement connect hook here
                   className="flex-1 bg-purple-600 hover:bg-purple-700"
                 >
                   Connect Wallet First
                 </Button>
               ) : (
-                <Button 
+                <Button
                   onClick={handlePurchase}
                   className="flex-1 bg-purple-600 hover:bg-purple-700"
                   disabled={loading}
                 >
                   {loading ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing</>
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing
+                    </>
                   ) : (
-                    "Confirm Purchase"
+                    'Confirm Purchase'
                   )}
                 </Button>
               )}

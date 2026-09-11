@@ -1,27 +1,25 @@
-import type { Collection, CollectionStore, NFT } from "@/lib/stores/types";
-import type { StateCreator } from "zustand";
-import { create } from "zustand";
-import { devtools } from "zustand/middleware";
-import { immer } from "zustand/middleware/immer";
+import type { Collection, CollectionStore, NFT } from '@/lib/stores/types';
+import type { StateCreator } from 'zustand';
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
 
 const logMiddleware =
-  <T extends object>(
-    config: StateCreator<T, [], [], T>
-  ): StateCreator<T, [], [], T> =>
+  <T extends object>(config: StateCreator<T, [], [], T>): StateCreator<T, [], [], T> =>
   (set, get, api) =>
     config(
       (partial, replace) => {
         if (
-          typeof process !== "undefined" &&
-          typeof (process as any).env !== "undefined" &&
-          (process as any).env.NODE_ENV === "development"
+          typeof process !== 'undefined' &&
+          typeof (process as any).env !== 'undefined' &&
+          (process as any).env.NODE_ENV === 'development'
         ) {
-          console.log("[Store action]", partial);
+          console.log('[Store action]', partial);
         }
         set(partial, replace as false | undefined);
       },
       get,
-      api
+      api,
     );
 
 const initialState = {
@@ -50,8 +48,7 @@ export const useNFTStore = create<CollectionStore>()(
     immer(
       logMiddleware<CollectionStore>((set, get) => ({
         ...initialState,
-        setCollections: (collections: Collection[]) =>
-          set((state) => ({ ...state, collections })),
+        setCollections: (collections: Collection[]) => set((state) => ({ ...state, collections })),
         addCollection: (collection: Collection) =>
           set((state) => ({
             ...state,
@@ -61,11 +58,9 @@ export const useNFTStore = create<CollectionStore>()(
         updateCollection: (id: string | number, updates: Partial<Collection>) =>
           set((state) => ({
             ...state,
-            collections: state.collections.map((c) =>
-              c.id === id ? { ...c, ...updates } : c
-            ),
+            collections: state.collections.map((c) => (c.id === id ? { ...c, ...updates } : c)),
             userCollections: state.userCollections.map((c) =>
-              c.id === id ? { ...c, ...updates } : c
+              c.id === id ? { ...c, ...updates } : c,
             ),
             currentCollection:
               state.currentCollection?.id === id
@@ -77,10 +72,7 @@ export const useNFTStore = create<CollectionStore>()(
             ...state,
             collections: state.collections.filter((c) => c.id !== id),
             userCollections: state.userCollections.filter((c) => c.id !== id),
-            currentCollection:
-              state.currentCollection?.id === id
-                ? null
-                : state.currentCollection,
+            currentCollection: state.currentCollection?.id === id ? null : state.currentCollection,
           })),
         setCurrentCollection: (collection: Collection | null) =>
           set((state) => ({ ...state, currentCollection: collection })),
@@ -96,12 +88,8 @@ export const useNFTStore = create<CollectionStore>()(
         updateNFT: (id: string, updates: Partial<NFT>) =>
           set((state) => ({
             ...state,
-            nfts: state.nfts.map((n) =>
-              n.id === id ? { ...n, ...updates } : n
-            ),
-            userNFTs: state.userNFTs.map((n) =>
-              n.id === id ? { ...n, ...updates } : n
-            ),
+            nfts: state.nfts.map((n) => (n.id === id ? { ...n, ...updates } : n)),
+            userNFTs: state.userNFTs.map((n) => (n.id === id ? { ...n, ...updates } : n)),
           })),
         removeNFT: (id: string) =>
           set((state) => ({
@@ -109,15 +97,13 @@ export const useNFTStore = create<CollectionStore>()(
             nfts: state.nfts.filter((n) => n.id !== id),
             userNFTs: state.userNFTs.filter((n) => n.id !== id),
           })),
-        setUserNFTs: (nfts: NFT[]) =>
-          set((state) => ({ ...state, userNFTs: nfts })),
+        setUserNFTs: (nfts: NFT[]) => set((state) => ({ ...state, userNFTs: nfts })),
         setLoading: (key, loading) =>
           set((state) => ({
             ...state,
             loading: { ...state.loading, [key]: loading },
           })),
-        setError: (error: string | null) =>
-          set((state) => ({ ...state, error })),
+        setError: (error: string | null) => set((state) => ({ ...state, error })),
         clearError: () => set((state) => ({ ...state, error: null })),
         setPagination: (type, pagination) =>
           set((state) => ({
@@ -130,7 +116,7 @@ export const useNFTStore = create<CollectionStore>()(
         createNFT: async (nftData) => {
           const tempNFT: NFT = {
             ...nftData,
-            id: "temp-" + Date.now(),
+            id: 'temp-' + Date.now(),
             createdAt: new Date().toISOString(),
             isListed: false,
             likes: 0,
@@ -148,24 +134,24 @@ export const useNFTStore = create<CollectionStore>()(
           }
         },
         fetchCollections: async () => {
-          throw new Error("Not implemented");
+          throw new Error('Not implemented');
         },
         fetchUserCollections: async () => {
-          throw new Error("Not implemented");
+          throw new Error('Not implemented');
         },
         fetchNFTs: async (collectionId?: string) => {
-          throw new Error("Not implemented");
+          throw new Error('Not implemented');
         },
         fetchUserNFTs: async () => {
-          throw new Error("Not implemented");
+          throw new Error('Not implemented');
         },
         createCollection: async (collection) => {
-          throw new Error("Not implemented");
+          throw new Error('Not implemented');
         },
-      }))
+      })),
     ),
-    { name: "nft-store" }
-  )
+    { name: 'nft-store' },
+  ),
 );
 
 export const useNFTs = () =>

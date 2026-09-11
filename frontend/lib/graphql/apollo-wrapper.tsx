@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { ApolloProvider } from "@apollo/client";
-import { ReactNode, useMemo } from "react";
-import { getApolloClient } from "./client";
+import { ApolloProvider } from '@apollo/client';
+import { ReactNode, useMemo } from 'react';
+import { getApolloClient } from './client';
 
 type ApolloWrapperProps = {
   children: ReactNode;

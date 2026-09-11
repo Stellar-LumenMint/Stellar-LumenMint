@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 export interface EmptyStateProps {
   /** Icon or illustration to display */
@@ -37,8 +37,8 @@ export function EmptyState({
       role="status"
       aria-label={title}
       className={cn(
-        "flex flex-col items-center justify-center gap-4 py-16 px-6 text-center",
-        className
+        'flex flex-col items-center justify-center gap-4 py-16 px-6 text-center',
+        className,
       )}
     >
       {icon && (
@@ -49,9 +49,7 @@ export function EmptyState({
 
       <h3 className="text-lg font-semibold text-white">{title}</h3>
 
-      {description && (
-        <p className="text-sm text-gray-400 max-w-sm">{description}</p>
-      )}
+      {description && <p className="text-sm text-gray-400 max-w-sm">{description}</p>}
 
       {(actionLabel || secondaryActionLabel) && (
         <div className="flex flex-wrap gap-3 mt-2 justify-center">

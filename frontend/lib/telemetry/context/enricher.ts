@@ -1,9 +1,9 @@
 // Enrichment middleware for telemetry events
-import { TelemetrySharedContext, EnrichedTelemetryEvent } from "./types";
-import { resolveRoute, resolveLocale } from "./resolvers";
-import { resolveSessionId } from "./session";
-import { resolveDeviceType } from "./device";
-import { resolveAppSurface } from "./surface";
+import { TelemetrySharedContext, EnrichedTelemetryEvent } from './types';
+import { resolveRoute, resolveLocale } from './resolvers';
+import { resolveSessionId } from './session';
+import { resolveDeviceType } from './device';
+import { resolveAppSurface } from './surface';
 
 function getTimestamp(): string {
   return new Date().toISOString();
@@ -12,13 +12,13 @@ function getTimestamp(): string {
 export function enrichTelemetryPayload<T extends Record<string, unknown>>(
   payload: T,
   overrides?: Partial<TelemetrySharedContext>,
-  isSSR?: boolean
+  isSSR?: boolean,
 ): EnrichedTelemetryEvent<T> {
-  let route = "unknown";
-  let locale = "en";
-  let session_id = "unknown";
-  let device_type = "unknown";
-  let app_surface = "unknown";
+  let route = 'unknown';
+  let locale = 'en';
+  let session_id = 'unknown';
+  let device_type = 'unknown';
+  let app_surface = 'unknown';
   let referrer_route: string | undefined = undefined;
   let anonymous_id: string | undefined = undefined;
   let user_id: string | undefined = undefined;
@@ -37,8 +37,8 @@ export function enrichTelemetryPayload<T extends Record<string, unknown>>(
     route,
     locale,
     session_id,
-    device_type: device_type as TelemetrySharedContext["device_type"],
-    app_surface: app_surface as TelemetrySharedContext["app_surface"],
+    device_type: device_type as TelemetrySharedContext['device_type'],
+    app_surface: app_surface as TelemetrySharedContext['app_surface'],
     anonymous_id,
     user_id,
     referrer_route,

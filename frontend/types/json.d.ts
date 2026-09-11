@@ -1,24 +1,24 @@
-declare module "*.json" {
+declare module '*.json' {
   const value: any;
   export default value;
 }
 
-declare module "@/locales/en/common.json" {
+declare module '@/locales/en/common.json' {
   const value: any;
   export default value;
 }
 
-declare module "@/locales/fr/common.json" {
+declare module '@/locales/fr/common.json' {
   const value: any;
   export default value;
 }
 
-declare module "@/locales/es/common.json" {
+declare module '@/locales/es/common.json' {
   const value: any;
   export default value;
 }
 
-declare module "@/locales/de/common.json" {
+declare module '@/locales/de/common.json' {
   const value: any;
   export default value;
 }

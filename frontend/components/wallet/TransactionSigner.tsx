@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { X, AlertCircle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
-import { useStellarTransaction } from "./hooks/useStellarTransaction";
-import { useWalletStore } from "@/lib/stores/walletStore";
-import { getExplorerUrl } from "@/lib/stellar/network";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { X, AlertCircle, CheckCircle2, Loader2, ExternalLink } from 'lucide-react';
+import { useStellarTransaction } from './hooks/useStellarTransaction';
+import { useWalletStore } from '@/lib/stores/walletStore';
+import { getExplorerUrl } from '@/lib/stellar/network';
+import { Button } from '@/components/ui/button';
 
-export type TransactionType = "mint" | "list" | "bid" | "buy" | "cancel";
+export type TransactionType = 'mint' | 'list' | 'bid' | 'buy' | 'cancel';
 
 interface TransactionSignerProps {
   open: boolean;
@@ -19,11 +19,11 @@ interface TransactionSignerProps {
 }
 
 const TYPE_LABELS: Record<TransactionType, string> = {
-  mint: "Mint NFT",
-  list: "List NFT for Sale",
-  bid: "Place Bid",
-  buy: "Purchase NFT",
-  cancel: "Cancel Listing",
+  mint: 'Mint NFT',
+  list: 'List NFT for Sale',
+  bid: 'Place Bid',
+  buy: 'Purchase NFT',
+  cancel: 'Cancel Listing',
 };
 
 export function TransactionSigner({
@@ -35,8 +35,10 @@ export function TransactionSigner({
   description,
 }: TransactionSignerProps) {
   const { provider, network, address } = useWalletStore();
-  const { signing, submitting, txHash, error, signAndSubmit, clearState } =
-    useStellarTransaction(provider, network);
+  const { signing, submitting, txHash, error, signAndSubmit, clearState } = useStellarTransaction(
+    provider,
+    network,
+  );
 
   const [done, setDone] = useState(false);
 
@@ -61,7 +63,12 @@ export function TransactionSigner({
   const isLoading = signing || submitting;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="tx-signer-title">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tx-signer-title"
+    >
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={!isLoading ? handleClose : undefined}
@@ -71,7 +78,9 @@ export function TransactionSigner({
       <div className="relative w-full max-w-sm rounded-2xl border border-purple-500/20 bg-gray-950/95 backdrop-blur-md shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-purple-500/10">
-          <h2 id="tx-signer-title" className="text-lg font-semibold text-white">{TYPE_LABELS[type]}</h2>
+          <h2 id="tx-signer-title" className="text-lg font-semibold text-white">
+            {TYPE_LABELS[type]}
+          </h2>
           {!isLoading && (
             <Button
               variant="ghost"
@@ -89,15 +98,13 @@ export function TransactionSigner({
         <div className="px-6 py-5 space-y-4">
           {!done && !error && (
             <>
-              {description && (
-                <p className="text-sm text-gray-400">{description}</p>
-              )}
+              {description && <p className="text-sm text-gray-400">{description}</p>}
 
               <div className="rounded-xl border border-purple-500/15 bg-purple-500/5 p-4 space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Wallet</span>
                   <span className="font-mono text-gray-300">
-                    {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "—"}
+                    {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
@@ -106,7 +113,7 @@ export function TransactionSigner({
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Provider</span>
-                  <span className="text-gray-300 capitalize">{provider || "—"}</span>
+                  <span className="text-gray-300 capitalize">{provider || '—'}</span>
                 </div>
               </div>
 
@@ -114,7 +121,7 @@ export function TransactionSigner({
                 <div className="flex items-center justify-center gap-3 py-2" aria-live="polite">
                   <Loader2 className="h-5 w-5 text-purple-400 animate-spin" aria-hidden="true" />
                   <span className="text-sm text-gray-300">
-                    {signing ? "Waiting for wallet signature…" : "Submitting to Stellar…"}
+                    {signing ? 'Waiting for wallet signature…' : 'Submitting to Stellar…'}
                   </span>
                 </div>
               )}
@@ -122,7 +129,10 @@ export function TransactionSigner({
           )}
 
           {error && (
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-red-900/30 border border-red-500/30 text-red-300 text-sm" role="alert">
+            <div
+              className="flex items-start gap-3 p-3 rounded-lg bg-red-900/30 border border-red-500/30 text-red-300 text-sm"
+              role="alert"
+            >
               <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
               <span>{error}</span>
             </div>
@@ -161,7 +171,7 @@ export function TransactionSigner({
               onClick={handleSign}
               disabled={isLoading || !transactionXdr || !provider}
               loading={isLoading}
-              loadingText={signing ? "Signing…" : "Submitting…"}
+              loadingText={signing ? 'Signing…' : 'Submitting…'}
               className="flex-1 rounded-xl min-h-0 h-12 text-sm"
             >
               Confirm &amp; Sign

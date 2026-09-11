@@ -42,14 +42,18 @@ export class TelemetryDispatcher {
             await this.dispatchToAdapter(event);
             if (this.config.debug) {
               // eslint-disable-next-line no-console
-              console.log(`[telemetry][dispatch_success] eventName=${event.eventName} attempts=${event.attempts}`);
+              console.log(
+                `[telemetry][dispatch_success] eventName=${event.eventName} attempts=${event.attempts}`,
+              );
             }
           } catch (err) {
             event.attempts++;
             if (shouldDropEvent(event, this.config)) {
               if (this.config.debug) {
                 // eslint-disable-next-line no-console
-                console.log(`[telemetry][event_dropped_max_attempts] eventName=${event.eventName} attempts=${event.attempts}`);
+                console.log(
+                  `[telemetry][event_dropped_max_attempts] eventName=${event.eventName} attempts=${event.attempts}`,
+                );
               }
               continue;
             }
@@ -57,7 +61,9 @@ export class TelemetryDispatcher {
             this.queue.enqueue(event);
             if (this.config.debug) {
               // eslint-disable-next-line no-console
-              console.log(`[telemetry][retry_scheduled] eventName=${event.eventName} attempts=${event.attempts} nextRetryAt=${event.nextRetryAt}`);
+              console.log(
+                `[telemetry][retry_scheduled] eventName=${event.eventName} attempts=${event.attempts} nextRetryAt=${event.nextRetryAt}`,
+              );
             }
           }
         }

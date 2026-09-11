@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { useAuthContext } from "@/lib/context/AuthContext";
-import { useEffect, useRef, useState } from "react";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import { useRouter } from 'next/navigation';
+import { useAuthContext } from '@/lib/context/AuthContext';
+import { useEffect, useRef, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ interface ProtectedRouteProps {
  */
 export default function ProtectedRoute({
   children,
-  redirectTo = "/auth/login",
+  redirectTo = '/auth/login',
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
@@ -38,7 +38,11 @@ export default function ProtectedRoute({
 
   if (isLoading || redirecting) {
     return (
-      <div className="flex min-h-screen flex-col gap-4 p-6" role="status" aria-label="Checking authentication">
+      <div
+        className="flex min-h-screen flex-col gap-4 p-6"
+        role="status"
+        aria-label="Checking authentication"
+      >
         <Skeleton height={32} width={220} />
         <Skeleton height={16} width="100%" />
         <Skeleton height={16} width="85%" />

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import Lottie from "lottie-react";
-import animationData from "@/public/animations/Page Not Found 404 c3.json";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import React from 'react';
+import Lottie from 'lottie-react';
+import animationData from '@/public/animations/Page Not Found 404 c3.json';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 const LottiePlayer = () => {
   const prefersReducedMotion = usePrefersReducedMotion();

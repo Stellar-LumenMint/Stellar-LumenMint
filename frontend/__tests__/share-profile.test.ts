@@ -1,6 +1,6 @@
-import { shareCreatorProfile } from "@/lib/utils/share-profile";
+import { shareCreatorProfile } from '@/lib/utils/share-profile';
 
-describe("shareCreatorProfile", () => {
+describe('shareCreatorProfile', () => {
   const originalShare = navigator.share;
   const originalClipboard = navigator.clipboard;
 
@@ -20,34 +20,34 @@ describe("shareCreatorProfile", () => {
     });
   });
 
-  it("falls back to clipboard when native share is unavailable", async () => {
+  it('falls back to clipboard when native share is unavailable', async () => {
     const result = await shareCreatorProfile({
-      url: "https://stellar-lumenmint.test/en/creator/artist",
-      title: "Artist",
+      url: 'https://stellar-lumenmint.test/en/creator/artist',
+      title: 'Artist',
     });
 
-    expect(result.method).toBe("clipboard");
+    expect(result.method).toBe('clipboard');
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "https://stellar-lumenmint.test/en/creator/artist",
+      'https://stellar-lumenmint.test/en/creator/artist',
     );
   });
 
-  it("uses native share when available", async () => {
+  it('uses native share when available', async () => {
     Object.assign(navigator, {
       share: jest.fn().mockResolvedValue(undefined),
     });
 
     const result = await shareCreatorProfile({
-      url: "https://stellar-lumenmint.test/en/creator/artist",
-      title: "Artist",
-      text: "Check this creator",
+      url: 'https://stellar-lumenmint.test/en/creator/artist',
+      title: 'Artist',
+      text: 'Check this creator',
     });
 
-    expect(result.method).toBe("native");
+    expect(result.method).toBe('native');
     expect(navigator.share).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "https://stellar-lumenmint.test/en/creator/artist",
-        title: "Artist",
+        url: 'https://stellar-lumenmint.test/en/creator/artist',
+        title: 'Artist',
       }),
     );
   });

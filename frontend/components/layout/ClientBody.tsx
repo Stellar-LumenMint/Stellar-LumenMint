@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from "react";
-import { useTheme } from "../../lib/stores/preferences-store";
-import { useSidebar } from "../../lib/stores/app-store";
-import { cn } from "../../lib/utils";
+import React, { useEffect, useRef } from 'react';
+import { useTheme } from '../../lib/stores/preferences-store';
+import { useSidebar } from '../../lib/stores/app-store';
+import { cn } from '../../lib/utils';
 
 export interface ClientBodyProps {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ export interface ClientBodyProps {
   showSidebar?: boolean;
   sidebar?: React.ReactNode;
   className?: string;
-  "aria-label"?: string;
+  'aria-label'?: string;
 }
 
 export const ClientBody: React.FC<ClientBodyProps> = ({
@@ -22,7 +22,7 @@ export const ClientBody: React.FC<ClientBodyProps> = ({
   showSidebar = false,
   sidebar,
   className,
-  "aria-label": ariaLabel = "Main content",
+  'aria-label': ariaLabel = 'Main content',
 }) => {
   const { theme, setTheme } = useTheme();
   const { sidebarOpen, toggleSidebar, closeSidebar } = useSidebar();
@@ -30,8 +30,8 @@ export const ClientBody: React.FC<ClientBodyProps> = ({
 
   // Theme switching (Tailwind dark mode)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      document.documentElement.classList.toggle("dark", theme.mode === "dark");
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.toggle('dark', theme.mode === 'dark');
     }
   }, [theme.mode]);
 
@@ -39,7 +39,7 @@ export const ClientBody: React.FC<ClientBodyProps> = ({
   useEffect(() => {
     if (sidebarOpen && showSidebar && sidebar) {
       // Focus the sidebar when opened
-      const sidebarEl = document.getElementById("clientbody-sidebar");
+      const sidebarEl = document.getElementById('clientbody-sidebar');
       sidebarEl?.focus();
     } else {
       // Focus main content when sidebar closes
@@ -50,21 +50,21 @@ export const ClientBody: React.FC<ClientBodyProps> = ({
   // Scroll lock when sidebar is open (mobile)
   useEffect(() => {
     if (sidebarOpen && showSidebar) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [sidebarOpen, showSidebar]);
 
   return (
     <div
       className={cn(
-        "min-h-[100svh] flex flex-col bg-background text-foreground transition-colors duration-300",
-        theme.mode === "dark" ? "dark" : "",
-        className
+        'min-h-[100svh] flex flex-col bg-background text-foreground transition-colors duration-300',
+        theme.mode === 'dark' ? 'dark' : '',
+        className,
       )}
       aria-label={ariaLabel}
     >
@@ -78,10 +78,10 @@ export const ClientBody: React.FC<ClientBodyProps> = ({
           tabIndex={-1}
           aria-label="Sidebar"
           className={cn(
-            "fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border shadow-lg transition-transform duration-300 ease-in-out",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full",
-            "focus:outline-none",
-            "md:static md:translate-x-0 md:shadow-none md:border-none"
+            'fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border shadow-lg transition-transform duration-300 ease-in-out',
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+            'focus:outline-none',
+            'md:static md:translate-x-0 md:shadow-none md:border-none',
           )}
           role="complementary"
         >
@@ -102,9 +102,9 @@ export const ClientBody: React.FC<ClientBodyProps> = ({
         ref={mainRef}
         tabIndex={-1}
         className={cn(
-          "flex-1 flex flex-col focus:outline-none transition-all duration-300",
-          showSidebar && sidebar ? "md:ml-64" : "",
-          loading ? "pointer-events-none opacity-60" : ""
+          'flex-1 flex flex-col focus:outline-none transition-all duration-300',
+          showSidebar && sidebar ? 'md:ml-64' : '',
+          loading ? 'pointer-events-none opacity-60' : '',
         )}
         aria-busy={loading}
         aria-live="polite"

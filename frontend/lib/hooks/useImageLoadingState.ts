@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-type State = "loading" | "error" | "success";
+type State = 'loading' | 'error' | 'success';
 
 interface Options {
   fallbackSrc?: string;
@@ -13,22 +13,22 @@ interface Options {
 
 export function useImageLoadingState(src?: string, options?: Options) {
   const { maxRetries = 2, retryDelay = 3000, onError } = options || {};
-  const [state, setState] = useState<State>(() => (src ? "loading" : "error"));
+  const [state, setState] = useState<State>(() => (src ? 'loading' : 'error'));
   const [error, setError] = useState<Error | null>(null);
   const retries = useRef(0);
   const timer = useRef<number | null>(null);
 
   useEffect(() => {
     if (!src) {
-      setState("error");
-      setError(new Error("No src provided"));
+      setState('error');
+      setError(new Error('No src provided'));
       return;
     }
 
     // Reset when src changes
     retries.current = 0;
     setError(null);
-    setState("loading");
+    setState('loading');
 
     return () => {
       if (timer.current) window.clearTimeout(timer.current);
@@ -36,18 +36,18 @@ export function useImageLoadingState(src?: string, options?: Options) {
   }, [src]);
 
   useEffect(() => {
-    if (state !== "error" || !src) return;
+    if (state !== 'error' || !src) return;
 
     if (retries.current < maxRetries) {
       const delay = retryDelay * Math.pow(2, retries.current);
       // auto retry
       timer.current = window.setTimeout(() => {
         retries.current += 1;
-        setState("loading");
+        setState('loading');
         setError(null);
       }, delay);
     } else {
-      onError?.(error || new Error("Image failed"));
+      onError?.(error || new Error('Image failed'));
     }
     return () => {
       if (timer.current) window.clearTimeout(timer.current);
@@ -55,10 +55,10 @@ export function useImageLoadingState(src?: string, options?: Options) {
   }, [state, maxRetries, retryDelay, onError, src, error]);
 
   const setErrorState = (err?: Error) => {
-    const e = err || new Error("Image load error");
-    console.error("Image load error:", e.message);
+    const e = err || new Error('Image load error');
+    console.error('Image load error:', e.message);
     setError(e);
-    setState("error");
+    setState('error');
   };
 
   const retry = () => {
@@ -66,11 +66,11 @@ export function useImageLoadingState(src?: string, options?: Options) {
     if (retries.current >= maxRetries) return;
     retries.current += 1;
     setError(null);
-    setState("loading");
+    setState('loading');
   };
 
   const setSuccess = () => {
-    setState("success");
+    setState('success');
     setError(null);
   };
 

@@ -1,6 +1,5 @@
-import { gql } from "@apollo/client";
-import { AUCTION_FIELDS_FRAGMENT } from "../fragments";
-
+import { gql } from '@apollo/client';
+import { AUCTION_FIELDS_FRAGMENT } from '../fragments';
 
 export const GET_AUCTION_BY_ID_QUERY = gql`
   query GetAuctionById($id: ID!) {
@@ -86,7 +85,7 @@ export const GET_AUCTION_BY_ID_QUERY = gql`
 /**
  * Mutation to place a bid on an auction
  * Requires authentication
- * 
+ *
  * Note: The backend must implement:
  * 1. CreateBidInput type
  * 2. placeBid mutation in AuctionResolver

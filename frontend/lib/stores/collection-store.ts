@@ -1,11 +1,11 @@
-import { create } from "zustand";
-import { devtools } from "zustand/middleware";
-import { immer } from "zustand/middleware/immer";
-import { CollectionStore, Collection, NFT } from "./types";
-import { API_CONFIG } from "../config";
-import { getCookie } from "../CSRFTOKEN";
-import { fetchWithAuth } from "@/lib/api/fetchWithAuth";
-import { AppApiError, normalizeApiError } from "@/utils/fetchUtils";
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
+import { CollectionStore, Collection, NFT } from './types';
+import { API_CONFIG } from '../config';
+import { getCookie } from '../CSRFTOKEN';
+import { fetchWithAuth } from '@/lib/api/fetchWithAuth';
+import { AppApiError, normalizeApiError } from '@/utils/fetchUtils';
 
 const initialState = {
   collections: [],
@@ -65,9 +65,7 @@ export const useCollectionStore = create<any>()(
             };
           }
 
-          const userIndex = state.userCollections.findIndex(
-            (c: any) => c.id === id,
-          );
+          const userIndex = state.userCollections.findIndex((c: any) => c.id === id);
           if (userIndex !== -1) {
             state.userCollections[userIndex] = {
               ...state.userCollections[userIndex],
@@ -86,9 +84,7 @@ export const useCollectionStore = create<any>()(
       removeCollection: (id: string | number) =>
         set((state: any) => {
           state.collections = state.collections.filter((c: any) => c.id !== id);
-          state.userCollections = state.userCollections.filter(
-            (c: any) => c.id !== id,
-          );
+          state.userCollections = state.userCollections.filter((c: any) => c.id !== id);
           if (state.currentCollection?.id === id) {
             state.currentCollection = null;
           }
@@ -172,15 +168,15 @@ export const useCollectionStore = create<any>()(
         const { setLoading, setError, setCollections, setPagination } = get();
 
         try {
-          setLoading("collections", true);
+          setLoading('collections', true);
           setError(null);
 
           const { page, limit } = get().pagination.collections;
           const response = await fetchWithAuth(
             `${API_CONFIG.baseUrl}/collections?page=${page}&limit=${limit}`,
             {
-              method: "GET",
-              credentials: "include",
+              method: 'GET',
+              credentials: 'include',
             },
           );
 
@@ -190,7 +186,7 @@ export const useCollectionStore = create<any>()(
             setCollections(data);
           } else if (data.collections) {
             setCollections(data.collections);
-            setPagination("collections", {
+            setPagination('collections', {
               total: data.total || data.collections.length,
               hasMore: data.hasMore || false,
             });
@@ -198,9 +194,9 @@ export const useCollectionStore = create<any>()(
         } catch (error) {
           const normalized = await normalizeApiError(error);
           setError(normalized);
-          console.error("Error fetching collections:", normalized);
+          console.error('Error fetching collections:', normalized);
         } finally {
-          setLoading("collections", false);
+          setLoading('collections', false);
         }
       },
 
@@ -208,32 +204,27 @@ export const useCollectionStore = create<any>()(
         const { setLoading, setError, setUserCollections } = get();
 
         try {
-          setLoading("userCollections", true);
+          setLoading('userCollections', true);
           setError(null);
 
           const csrfToken = await getCookie();
-          const response = await fetchWithAuth(
-            `${API_CONFIG.baseUrl}/collections/user`,
-            {
-              method: "GET",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-Token": csrfToken,
-              },
+          const response = await fetchWithAuth(`${API_CONFIG.baseUrl}/collections/user`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken,
             },
-          );
+          });
 
           const data = await response.json();
-          setUserCollections(
-            Array.isArray(data) ? data : data.collections || [],
-          );
+          setUserCollections(Array.isArray(data) ? data : data.collections || []);
         } catch (error) {
           const normalized = await normalizeApiError(error);
           setError(normalized);
-          console.error("Error fetching user collections:", normalized);
+          console.error('Error fetching user collections:', normalized);
         } finally {
-          setLoading("userCollections", false);
+          setLoading('userCollections', false);
         }
       },
 
@@ -241,7 +232,7 @@ export const useCollectionStore = create<any>()(
         const { setLoading, setError, setNFTs, setPagination } = get();
 
         try {
-          setLoading("nfts", true);
+          setLoading('nfts', true);
           setError(null);
 
           const { page, limit } = get().pagination.nfts;
@@ -252,8 +243,8 @@ export const useCollectionStore = create<any>()(
           }
 
           const response = await fetchWithAuth(url, {
-            method: "GET",
-            credentials: "include",
+            method: 'GET',
+            credentials: 'include',
           });
 
           const data = await response.json();
@@ -262,7 +253,7 @@ export const useCollectionStore = create<any>()(
             setNFTs(data);
           } else if (data.nfts) {
             setNFTs(data.nfts);
-            setPagination("nfts", {
+            setPagination('nfts', {
               total: data.total || data.nfts.length,
               hasMore: data.hasMore || false,
             });
@@ -270,9 +261,9 @@ export const useCollectionStore = create<any>()(
         } catch (error) {
           const normalized = await normalizeApiError(error);
           setError(normalized);
-          console.error("Error fetching NFTs:", normalized);
+          console.error('Error fetching NFTs:', normalized);
         } finally {
-          setLoading("nfts", false);
+          setLoading('nfts', false);
         }
       },
 
@@ -280,30 +271,27 @@ export const useCollectionStore = create<any>()(
         const { setLoading, setError, setUserNFTs } = get();
 
         try {
-          setLoading("userNFTs", true);
+          setLoading('userNFTs', true);
           setError(null);
 
           const csrfToken = await getCookie();
-          const response = await fetchWithAuth(
-            `${API_CONFIG.baseUrl}/nfts/user`,
-            {
-              method: "GET",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-Token": csrfToken,
-              },
+          const response = await fetchWithAuth(`${API_CONFIG.baseUrl}/nfts/user`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken,
             },
-          );
+          });
 
           const data = await response.json();
           setUserNFTs(Array.isArray(data) ? data : data.nfts || []);
         } catch (error) {
           const normalized = await normalizeApiError(error);
           setError(normalized);
-          console.error("Error fetching user NFTs:", normalized);
+          console.error('Error fetching user NFTs:', normalized);
         } finally {
-          setLoading("userNFTs", false);
+          setLoading('userNFTs', false);
         }
       },
 
@@ -311,25 +299,22 @@ export const useCollectionStore = create<any>()(
         const { setLoading, setError, addCollection } = get();
 
         try {
-          setLoading("creating", true);
+          setLoading('creating', true);
           setError(null);
 
           const csrfToken = await getCookie();
-          const response = await fetchWithAuth(
-            `${API_CONFIG.baseUrl}/collections`,
-            {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-Token": csrfToken,
-              },
-              body: JSON.stringify({
-                ...collectionData,
-                createdAt: new Date().toISOString(),
-              }),
+          const response = await fetchWithAuth(`${API_CONFIG.baseUrl}/collections`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken,
             },
-          );
+            body: JSON.stringify({
+              ...collectionData,
+              createdAt: new Date().toISOString(),
+            }),
+          });
 
           const newCollection = await response.json();
           addCollection(newCollection);
@@ -339,7 +324,7 @@ export const useCollectionStore = create<any>()(
           setError(normalized);
           throw normalized;
         } finally {
-          setLoading("creating", false);
+          setLoading('creating', false);
         }
       },
 
@@ -347,16 +332,16 @@ export const useCollectionStore = create<any>()(
         const { setLoading, setError, addNFT } = get();
 
         try {
-          setLoading("creating", true);
+          setLoading('creating', true);
           setError(null);
 
           const csrfToken = await getCookie();
           const response = await fetchWithAuth(`${API_CONFIG.baseUrl}/nfts`, {
-            method: "POST",
-            credentials: "include",
+            method: 'POST',
+            credentials: 'include',
             headers: {
-              "Content-Type": "application/json",
-              "X-CSRF-Token": csrfToken,
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken,
             },
             body: JSON.stringify({
               ...nftData,
@@ -372,12 +357,12 @@ export const useCollectionStore = create<any>()(
           setError(normalized);
           throw normalized;
         } finally {
-          setLoading("creating", false);
+          setLoading('creating', false);
         }
       },
     })),
     {
-      name: "collection-store",
+      name: 'collection-store',
     },
   ),
 );

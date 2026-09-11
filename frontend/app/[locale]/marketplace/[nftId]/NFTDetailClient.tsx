@@ -1,42 +1,35 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useTranslations } from "next-intl";
-import { 
-  ArrowLeft, 
-  Copy, 
-  Check, 
-  User,
-  Wallet,
-  Award
-} from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
+import { ArrowLeft, Copy, Check, User, Wallet, Award } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 
-import { CircuitBackground } from "@/components/circuit-background";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useNFTByIdQuery, useNFTTransferHistoryQuery } from "@/hooks/graphql/useNFTQueries";
-import TransferHistory from "@/components/nft/TransferHistory";
+import { CircuitBackground } from '@/components/circuit-background';
+import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useNFTByIdQuery, useNFTTransferHistoryQuery } from '@/hooks/graphql/useNFTQueries';
+import TransferHistory from '@/components/nft/TransferHistory';
 
 // Helper function to format address
 function formatAddress(address: string | null | undefined): string {
-  if (!address) return "Unknown";
-  if (address === "0x0000000000000000000000000000000000000000") return "Zero Address";
+  if (!address) return 'Unknown';
+  if (address === '0x0000000000000000000000000000000000000000') return 'Zero Address';
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 // Helper function to format date
 function formatDate(date: string | Date | null | undefined): string {
-  if (!date) return "N/A";
+  if (!date) return 'N/A';
   const d = new Date(date);
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -64,14 +57,8 @@ function NftDetailSkeleton() {
 }
 
 // Client NFT Detail Page Component
-export default function NFTDetailClient({
-  nftId,
-  initialNft,
-}: {
-  nftId: string;
-  initialNft: any;
-}) {
-  const t = useTranslations("common");
+export default function NFTDetailClient({ nftId, initialNft }: { nftId: string; initialNft: any }) {
+  const t = useTranslations('common');
 
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,7 +103,8 @@ export default function NFTDetailClient({
   }, [transferHistoryPage, nftId, refetchHistory]);
 
   const nft = nftData?.nft || initialNft;
-  const transferEvents = historyData?.nftTransferHistory?.edges?.map((edge: any) => edge.node) || [];
+  const transferEvents =
+    historyData?.nftTransferHistory?.edges?.map((edge: any) => edge.node) || [];
   const totalTransfers = historyData?.nftTransferHistory?.totalCount || 0;
   const hasNextPage = historyData?.nftTransferHistory?.pageInfo?.hasNextPage || false;
 
@@ -127,7 +115,7 @@ export default function NFTDetailClient({
       if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
       copyResetTimer.current = setTimeout(() => setCopiedAddress(null), 2000);
     } catch (error) {
-      console.error("Failed to copy address:", error);
+      console.error('Failed to copy address:', error);
     }
   }, []);
 
@@ -138,10 +126,10 @@ export default function NFTDetailClient({
   }, [hasNextPage]);
 
   const handleViewTransaction = useCallback((transactionHash: string) => {
-    const horizonUrl = process.env.NEXT_PUBLIC_HORIZON_URL || "https://horizon-testnet.stellar.org";
-    const isTestnet = horizonUrl.includes("testnet");
-    const baseUrl = isTestnet ? "https://testnet.stellar.org" : "https://stellar.org";
-    window.open(`${baseUrl}/tx/${transactionHash}`, "_blank", "noopener,noreferrer");
+    const horizonUrl = process.env.NEXT_PUBLIC_HORIZON_URL || 'https://horizon-testnet.stellar.org';
+    const isTestnet = horizonUrl.includes('testnet');
+    const baseUrl = isTestnet ? 'https://testnet.stellar.org' : 'https://stellar.org';
+    window.open(`${baseUrl}/tx/${transactionHash}`, '_blank', 'noopener,noreferrer');
   }, []);
 
   // Loading state
@@ -165,7 +153,9 @@ export default function NFTDetailClient({
           <EmptyState
             icon={<div className="text-4xl">🔍</div>}
             title="NFT Not Found"
-            description={nftError?.message || "The NFT you're looking for doesn't exist or has been removed."}
+            description={
+              nftError?.message || "The NFT you're looking for doesn't exist or has been removed."
+            }
             actionLabel="Go Back"
             onAction={() => window.history.back()}
           />
@@ -175,10 +165,9 @@ export default function NFTDetailClient({
   }
 
   const isCreator = nft.creator?.id === nft.ownerId;
-  const creatorAddress = nft.creator?.walletAddress || nft.creator?.id || "Unknown";
-  const creatorProfileSlug =
-    nft.creator?.username || nft.creator?.id || creatorAddress;
-  const ownerAddress = nft.owner?.walletAddress || nft.owner?.id || "Unknown";
+  const creatorAddress = nft.creator?.walletAddress || nft.creator?.id || 'Unknown';
+  const creatorProfileSlug = nft.creator?.username || nft.creator?.id || creatorAddress;
+  const ownerAddress = nft.owner?.walletAddress || nft.owner?.id || 'Unknown';
 
   return (
     <main className="min-h-screen relative text-white overflow-hidden">
@@ -220,7 +209,7 @@ export default function NFTDetailClient({
               <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-900/30 border border-gray-800/50">
                 <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
                   <span className="text-sm font-bold text-purple-400">
-                    {nft.collection.symbol?.slice(0, 3) || "C"}
+                    {nft.collection.symbol?.slice(0, 3) || 'C'}
                   </span>
                 </div>
                 <div>
@@ -237,7 +226,9 @@ export default function NFTDetailClient({
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">{nft.name}</h1>
               <div className="flex items-center gap-3 text-sm text-gray-400">
-                <span>Token ID: <span className="font-mono text-gray-300">{nft.tokenId}</span></span>
+                <span>
+                  Token ID: <span className="font-mono text-gray-300">{nft.tokenId}</span>
+                </span>
                 <button
                   onClick={() => handleCopyAddress(nft.tokenId)}
                   className="text-gray-500 hover:text-gray-300 transition-colors"
@@ -253,9 +244,7 @@ export default function NFTDetailClient({
             </div>
 
             {/* Description */}
-            {nft.description && (
-              <p className="text-gray-300 leading-relaxed">{nft.description}</p>
-            )}
+            {nft.description && <p className="text-gray-300 leading-relaxed">{nft.description}</p>}
 
             {/* Attributes Grid */}
             {nft.attributes && nft.attributes.length > 0 && (
@@ -308,9 +297,7 @@ export default function NFTDetailClient({
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Minted {formatDate(nft.mintedAt)}
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Minted {formatDate(nft.mintedAt)}</p>
                 </CardContent>
               </Card>
 
@@ -338,9 +325,7 @@ export default function NFTDetailClient({
                     </button>
                   </div>
                   {nft.lastPrice && (
-                    <p className="text-xs text-emerald-400 mt-1">
-                      Last Sale: {nft.lastPrice} XLM
-                    </p>
+                    <p className="text-xs text-emerald-400 mt-1">Last Sale: {nft.lastPrice} XLM</p>
                   )}
                 </CardContent>
               </Card>

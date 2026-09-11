@@ -1,5 +1,5 @@
-import { gql } from "@apollo/client";
-import { COLLECTION_FIELDS_FRAGMENT } from "../fragments";
+import { gql } from '@apollo/client';
+import { COLLECTION_FIELDS_FRAGMENT } from '../fragments';
 
 export const GET_COLLECTIONS_QUERY = gql`
   query GetCollections($pagination: PaginationInput, $filter: CollectionFilterInput) {

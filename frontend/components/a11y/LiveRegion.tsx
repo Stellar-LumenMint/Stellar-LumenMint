@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
-export type LiveRegionPoliteness = "polite" | "assertive";
+export type LiveRegionPoliteness = 'polite' | 'assertive';
 
 export interface LiveRegionProps {
   /** ARIA politeness setting */
@@ -25,12 +25,12 @@ export interface LiveRegionProps {
  * ```
  */
 export function LiveRegion({
-  politeness = "polite",
+  politeness = 'polite',
   message,
   clearAfter = 1000,
   className,
 }: LiveRegionProps) {
-  const [announcement, setAnnouncement] = useState(message ?? "");
+  const [announcement, setAnnouncement] = useState(message ?? '');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function LiveRegion({
       timerRef.current = setTimeout(() => {
         // Set a non-breaking space to "clear" without causing re-announcement issues.
         // Setting to empty string can cause the region to be skipped.
-        setAnnouncement("\u00A0");
+        setAnnouncement('\u00A0');
       }, clearAfter);
     }
 
@@ -56,7 +56,7 @@ export function LiveRegion({
       role="status"
       aria-live={politeness}
       aria-atomic="true"
-      className={`sr-only ${className ?? ""}`}
+      className={`sr-only ${className ?? ''}`}
     >
       {announcement}
     </div>
@@ -76,26 +76,17 @@ export function LiveRegion({
  *   </>
  * );
  */
-export function useAnnounce(politeness: LiveRegionPoliteness = "polite") {
+export function useAnnounce(politeness: LiveRegionPoliteness = 'polite') {
   const [message, setMessage] = useState<string | undefined>(undefined);
   const [announceKey, setAnnounceKey] = useState(0);
 
-  const announce = useCallback(
-    (msg: string) => {
-      setMessage(msg);
-      setAnnounceKey((k) => k + 1);
-    },
-    [],
-  );
+  const announce = useCallback((msg: string) => {
+    setMessage(msg);
+    setAnnounceKey((k) => k + 1);
+  }, []);
 
   const LiveRegionElement = useCallback(
-    () => (
-      <LiveRegion
-        key={announceKey}
-        politeness={politeness}
-        message={message}
-      />
-    ),
+    () => <LiveRegion key={announceKey} politeness={politeness} message={message} />,
     [politeness, announceKey, message],
   );
 

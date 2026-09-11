@@ -86,17 +86,17 @@ export const useAppStore = create<AppStore>()(
     })),
     {
       name: 'app-store',
-    }
-  )
+    },
+  ),
 );
 
 // Initialize online status detection
 if (typeof window !== 'undefined') {
   const { setOnline } = useAppStore.getState();
-  
+
   // Set initial online status
   setOnline(navigator.onLine);
-  
+
   // Listen for online/offline events
   window.addEventListener('online', () => setOnline(true));
   window.addEventListener('offline', () => setOnline(false));
@@ -110,7 +110,7 @@ export const useOnlineStatus = () => {
 
 export const useSidebar = () => {
   const { sidebarOpen, setSidebarOpen } = useAppStore();
-  
+
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const openSidebar = () => setSidebarOpen(true);
   const closeSidebar = () => setSidebarOpen(false);
@@ -125,7 +125,7 @@ export const useSidebar = () => {
 
 export const useModals = () => {
   const { modalStack, pushModal, popModal, clearModals } = useAppStore();
-  
+
   const currentModal = modalStack[modalStack.length - 1] || null;
   const hasModals = modalStack.length > 0;
 
@@ -159,11 +159,12 @@ export const useToast = () => {
 };
 
 export const useSearch = () => {
-  const { searchQuery, searchFilters, setSearchQuery, setSearchFilters, resetSearchFilters } = useAppStore();
+  const { searchQuery, searchFilters, setSearchQuery, setSearchFilters, resetSearchFilters } =
+    useAppStore();
 
   const updateFilter = <K extends keyof typeof searchFilters>(
     key: K,
-    value: typeof searchFilters[K]
+    value: (typeof searchFilters)[K],
   ) => {
     setSearchFilters({ [key]: value });
   };
@@ -217,4 +218,4 @@ export const useAppState = () => {
     setSearchFilters,
     resetSearchFilters,
   };
-}; 
+};

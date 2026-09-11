@@ -1,27 +1,26 @@
-"use client";
+'use client';
 
-import React from "react";
-import { LucideIcon } from "lucide-react";
+import React from 'react';
+import { LucideIcon } from 'lucide-react';
 
-interface StyledButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface StyledButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   className?: string;
   icon?: LucideIcon;
-  iconPosition?: "left" | "right";
+  iconPosition?: 'left' | 'right';
 }
 
 export const StyledButton = ({
   children,
   className,
   icon: Icon,
-  iconPosition = "left",
+  iconPosition = 'left',
   disabled,
-  "aria-label": ariaLabel,
+  'aria-label': ariaLabel,
   ...props
 }: StyledButtonProps) => {
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div className={`relative ${className ?? ''}`}>
       <button
         disabled={disabled}
         aria-disabled={disabled}
@@ -30,7 +29,10 @@ export const StyledButton = ({
         {...props}
       >
         {/* After element simulation */}
-        <div className="absolute z-0 w-[calc(100%+0.3em)] h-[calc(100%+0.3em)] -top-[0.15em] -left-[0.15em] rounded-full bg-gradient-to-tr from-[rgba(5,5,5,0.5)] via-transparent to-transparent blur-[0.0125em] opacity-25 mix-blend-multiply" aria-hidden="true" />
+        <div
+          className="absolute z-0 w-[calc(100%+0.3em)] h-[calc(100%+0.3em)] -top-[0.15em] -left-[0.15em] rounded-full bg-gradient-to-tr from-[rgba(5,5,5,0.5)] via-transparent to-transparent blur-[0.0125em] opacity-25 mix-blend-multiply"
+          aria-hidden="true"
+        />
 
         {/* Button outer */}
         <div className="relative z-1 rounded-full transition-shadow duration-300 shadow-[0_0.05em_0.05em_-0.01em_rgba(5,5,5,1),0_0.01em_0.01em_-0.01em_rgba(5,5,5,0.5),0.15em_0.3em_0.1em_-0.01em_rgba(5,5,5,0.25)] group-hover:shadow-none">
@@ -42,11 +44,11 @@ export const StyledButton = ({
             group-active:scale-[0.975]"
           >
             <span className="relative z-[4] font-inter text-transparent bg-gradient-to-br from-[rgba(25,25,25,1)] to-[rgba(75,75,75,1)] bg-clip-text tracking-tight font-medium transition-transform duration-250 flex items-center gap-2 select-none group-hover:scale-[0.975]">
-              {iconPosition === "left" && Icon && (
+              {iconPosition === 'left' && Icon && (
                 <Icon className="w-4 h-4 text-black" aria-hidden="true" />
               )}
               {children}
-              {iconPosition === "right" && Icon && (
+              {iconPosition === 'right' && Icon && (
                 <Icon className="w-4 h-4 text-black" aria-hidden="true" />
               )}
             </span>

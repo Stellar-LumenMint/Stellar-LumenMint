@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import { AlertCircle, RefreshCw, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { AppApiError } from "@/utils/fetchUtils";
+import React from 'react';
+import { AlertCircle, RefreshCw, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AppApiError } from '@/utils/fetchUtils';
 
 interface ApiErrorFallbackProps {
   error: AppApiError;
@@ -11,11 +11,7 @@ interface ApiErrorFallbackProps {
   onClear?: () => void;
 }
 
-export function ApiErrorFallback({
-  error,
-  onRetry,
-  onClear,
-}: ApiErrorFallbackProps) {
+export function ApiErrorFallback({ error, onRetry, onClear }: ApiErrorFallbackProps) {
   const [isRetrying, setIsRetrying] = React.useState(false);
 
   const handleRetry = async () => {
@@ -41,14 +37,13 @@ export function ApiErrorFallback({
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {error.message ||
-              "An unexpected network error occurred while updating the dashboard view."}
+              'An unexpected network error occurred while updating the dashboard view.'}
           </p>
 
           {((error as any).statusCode || (error as any).status) && (
             <div className="pt-1 text-xs font-mono text-muted-foreground/70">
-              Error Code: HTTP{" "}
-              {(error as any).statusCode || (error as any).status}{" "}
-              {(error as any).code ? `(${(error as any).code})` : ""}
+              Error Code: HTTP {(error as any).statusCode || (error as any).status}{' '}
+              {(error as any).code ? `(${(error as any).code})` : ''}
             </div>
           )}
         </div>
@@ -73,10 +68,8 @@ export function ApiErrorFallback({
             size="sm"
             className="gap-2 border-destructive/20 hover:bg-destructive/10 text-foreground"
           >
-            <RefreshCw
-              className={`h-4 w-4 ${isRetrying ? "animate-spin" : ""}`}
-            />
-            {isRetrying ? "Retrying connection..." : "Retry Request"}
+            <RefreshCw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+            {isRetrying ? 'Retrying connection...' : 'Retry Request'}
           </Button>
         </div>
       )}

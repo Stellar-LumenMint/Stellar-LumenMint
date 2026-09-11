@@ -1,20 +1,30 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Wallet, ChevronDown, LogOut, Copy, ExternalLink, CheckCircle2 } from "lucide-react";
-import { useWalletStore } from "@/lib/stores/walletStore";
-import { defaultNetwork } from "@/lib/stellar/client";
-import { useStellarWallet } from "./hooks/useStellarWallet";
-import { WalletModal } from "./WalletModal";
-import { WalletNetworkStatus } from "./WalletNetworkStatus";
-import { useTranslation } from "@/hooks/useTranslation";
-import { getExplorerUrl } from "@/lib/stellar/network";
-import { useToast } from "@/lib/stores";
-import { Button } from "@/components/ui/button";
-import { emitCtaClicked, CTA_IDS, CTA_PLACEMENTS } from "@/lib/telemetry/navigation-instrumentation";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSeparator } from "@/components/ui/dropdown";
-import { telemetry } from "@/lib/telemetry";
-import { EVENT_NAMES } from "@/lib/telemetry/events";
+import { useState } from 'react';
+import { Wallet, ChevronDown, LogOut, Copy, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { useWalletStore } from '@/lib/stores/walletStore';
+import { defaultNetwork } from '@/lib/stellar/client';
+import { useStellarWallet } from './hooks/useStellarWallet';
+import { WalletModal } from './WalletModal';
+import { WalletNetworkStatus } from './WalletNetworkStatus';
+import { useTranslation } from '@/hooks/useTranslation';
+import { getExplorerUrl } from '@/lib/stellar/network';
+import { useToast } from '@/lib/stores';
+import { Button } from '@/components/ui/button';
+import {
+  emitCtaClicked,
+  CTA_IDS,
+  CTA_PLACEMENTS,
+} from '@/lib/telemetry/navigation-instrumentation';
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  DropdownSeparator,
+} from '@/components/ui/dropdown';
+import { telemetry } from '@/lib/telemetry';
+import { EVENT_NAMES } from '@/lib/telemetry/events';
 
 interface WalletConnectorProps {
   forceVisible?: boolean;
@@ -34,19 +44,17 @@ export function WalletConnector({ forceVisible = false, fullWidth = false }: Wal
     try {
       await navigator.clipboard.writeText(address);
       setCopied(true);
-      showSuccess(t("connectWallet.copySuccess") || "Wallet address copied");
+      showSuccess(t('connectWallet.copySuccess') || 'Wallet address copied');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      showError(t("connectWallet.copyError") || "Failed to copy wallet address");
+      showError(t('connectWallet.copyError') || 'Failed to copy wallet address');
     }
   };
 
-  const truncatedAddress = address
-    ? `${address.slice(0, 4)}...${address.slice(-4)}`
-    : "";
+  const truncatedAddress = address ? `${address.slice(0, 4)}...${address.slice(-4)}` : '';
 
   if (!connected) {
-    const wrapperClass = forceVisible ? "flex w-full justify-center" : "hidden xl:flex";
+    const wrapperClass = forceVisible ? 'flex w-full justify-center' : 'hidden xl:flex';
 
     return (
       <>
@@ -54,22 +62,27 @@ export function WalletConnector({ forceVisible = false, fullWidth = false }: Wal
           <Button
             variant="wallet"
             size="pill"
-            onClick={e => {
-              emitCtaClicked({
-                cta_id: CTA_IDS.CONNECT_WALLET_HEADER,
-                placement: forceVisible ? CTA_PLACEMENTS.NAVBAR_MOBILE_DRAWER : CTA_PLACEMENTS.NAVBAR_DESKTOP_RIGHT,
-                destination_route: "none",
-                interaction_type: "button",
-                ui_variant: "wallet",
-              }, e.nativeEvent);
+            onClick={(e) => {
+              emitCtaClicked(
+                {
+                  cta_id: CTA_IDS.CONNECT_WALLET_HEADER,
+                  placement: forceVisible
+                    ? CTA_PLACEMENTS.NAVBAR_MOBILE_DRAWER
+                    : CTA_PLACEMENTS.NAVBAR_DESKTOP_RIGHT,
+                  destination_route: 'none',
+                  interaction_type: 'button',
+                  ui_variant: 'wallet',
+                },
+                e.nativeEvent,
+              );
               setModalOpen(true);
             }}
             loading={connecting}
-            loadingText={t("connectWallet.connecting") || "Connecting..."}
+            loadingText={t('connectWallet.connecting') || 'Connecting...'}
             className="rounded-full"
           >
             <Wallet className="h-4 w-4" />
-            {t("connectWallet.connect")}
+            {t('connectWallet.connect')}
           </Button>
         </div>
         <WalletModal open={modalOpen} onClose={() => setModalOpen(false)} />
@@ -78,14 +91,16 @@ export function WalletConnector({ forceVisible = false, fullWidth = false }: Wal
   }
 
   return (
-    <Dropdown className={fullWidth ? "w-full" : undefined}>
+    <Dropdown className={fullWidth ? 'w-full' : undefined}>
       <DropdownTrigger
-        className={`flex items-center gap-2 rounded-full pl-3 pr-4 py-2 bg-[#4e3bff]/20 border border-[#4e3bff]/40 text-white hover:bg-[#4e3bff]/30 transition-colors text-sm ${fullWidth ? "w-full justify-between" : ""}`}
+        className={`flex items-center gap-2 rounded-full pl-3 pr-4 py-2 bg-[#4e3bff]/20 border border-[#4e3bff]/40 text-white hover:bg-[#4e3bff]/30 transition-colors text-sm ${fullWidth ? 'w-full justify-between' : ''}`}
         aria-label={`Wallet menu for ${truncatedAddress}`}
       >
         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" aria-hidden="true" />
         <span className="font-mono font-medium hidden sm:inline">{truncatedAddress}</span>
-        <span className="font-mono font-medium sm:hidden">{address ? `${address.slice(0, 4)}...` : ""}</span>
+        <span className="font-mono font-medium sm:hidden">
+          {address ? `${address.slice(0, 4)}...` : ''}
+        </span>
         <ChevronDown className="h-3.5 w-3.5 text-purple-300" aria-hidden="true" />
       </DropdownTrigger>
 
@@ -104,7 +119,7 @@ export function WalletConnector({ forceVisible = false, fullWidth = false }: Wal
           ) : (
             <Copy className="h-4 w-4 text-purple-400" aria-hidden="true" />
           )}
-          {copied ? "Copied!" : t("connectWallet.copyAddress") || "Copy Address"}
+          {copied ? 'Copied!' : t('connectWallet.copyAddress') || 'Copy Address'}
         </DropdownItem>
 
         <a
@@ -115,7 +130,7 @@ export function WalletConnector({ forceVisible = false, fullWidth = false }: Wal
           className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-200 hover:bg-purple-500/10 transition-colors focus-visible:outline-none focus-visible:bg-purple-500/10"
         >
           <ExternalLink className="h-4 w-4 text-purple-400" aria-hidden="true" />
-          {t("connectWallet.viewExplorer") || "View on Explorer"}
+          {t('connectWallet.viewExplorer') || 'View on Explorer'}
         </a>
 
         <DropdownSeparator />
@@ -124,15 +139,15 @@ export function WalletConnector({ forceVisible = false, fullWidth = false }: Wal
           onClick={() => {
             // Emit wallet_disconnect_clicked event with privacy-safe payload
             telemetry.track(EVENT_NAMES.walletDisconnectClicked, {
-              provider: provider || "unknown",
-              surface: "wallet_dropdown",
+              provider: provider || 'unknown',
+              surface: 'wallet_dropdown',
             });
             disconnect();
           }}
           className="text-red-400 hover:bg-red-500/10"
         >
           <LogOut className="h-4 w-4" aria-hidden="true" />
-          {t("connectWallet.disconnect")}
+          {t('connectWallet.disconnect')}
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>

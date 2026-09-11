@@ -1,22 +1,16 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Link2,
-  Link2Off,
-  Wallet,
-} from "lucide-react";
-import { connectFreighter } from "@/lib/stellar/wallet/freighter";
-import { useAuthStore } from "@/lib/stores/auth-store";
-import { useAuthContext } from "@/lib/context/AuthContext";
+import { useEffect, useState } from 'react';
+import { AlertCircle, CheckCircle2, Link2, Link2Off, Wallet } from 'lucide-react';
+import { connectFreighter } from '@/lib/stellar/wallet/freighter';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useAuthContext } from '@/lib/context/AuthContext';
 import {
   LinkedWallet,
   fetchLinkedWallets,
   linkWalletWithChallenge,
   unlinkWallet,
-} from "@/lib/services/profile";
+} from '@/lib/services/profile';
 
 export default function SettingsPage() {
   // Sync state cleanly with the global user stores from main branch
@@ -33,7 +27,7 @@ export default function SettingsPage() {
   const [linking, setLinking] = useState(false);
   const [unlinkingAddress, setUnlinkingAddress] = useState<string | null>(null);
   const [message, setMessage] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     text: string;
   } | null>(null);
 
@@ -58,11 +52,8 @@ export default function SettingsPage() {
       } catch (error) {
         if (active) {
           setMessage({
-            type: "error",
-            text:
-              error instanceof Error
-                ? error.message
-                : "Failed to load linked wallets.",
+            type: 'error',
+            text: error instanceof Error ? error.message : 'Failed to load linked wallets.',
           });
         }
       } finally {
@@ -84,20 +75,20 @@ export default function SettingsPage() {
       const walletAddress = await connectFreighter();
 
       // Execute the direct cryptographic challenge workflow required upstream
-      if (typeof context.linkWallet === "function") {
-        await context.linkWallet(walletAddress, "freighter");
+      if (typeof context.linkWallet === 'function') {
+        await context.linkWallet(walletAddress, 'freighter');
       } else {
-        await linkWalletWithChallenge(walletAddress, "freighter");
+        await linkWalletWithChallenge(walletAddress, 'freighter');
       }
 
       // Re-fetch datasets smoothly to preserve component tracking loop logic
       const freshWallets = await fetchLinkedWallets();
       setWallets(freshWallets);
-      setMessage({ type: "success", text: "Wallet linked successfully!" });
+      setMessage({ type: 'success', text: 'Wallet linked successfully!' });
     } catch (error: any) {
       setMessage({
-        type: "error",
-        text: error?.message || "Failed to link wallet.",
+        type: 'error',
+        text: error?.message || 'Failed to link wallet.',
       });
     } finally {
       setLinking(false);
@@ -109,7 +100,7 @@ export default function SettingsPage() {
     setUnlinkingAddress(walletAddress);
 
     try {
-      if (typeof context.unlinkWallet === "function") {
+      if (typeof context.unlinkWallet === 'function') {
         await context.unlinkWallet(walletAddress);
       } else {
         await unlinkWallet(walletAddress);
@@ -117,11 +108,11 @@ export default function SettingsPage() {
 
       const freshWallets = await fetchLinkedWallets();
       setWallets(freshWallets);
-      setMessage({ type: "success", text: "Wallet unlinked successfully!" });
+      setMessage({ type: 'success', text: 'Wallet unlinked successfully!' });
     } catch (error: any) {
       setMessage({
-        type: "error",
-        text: error?.message || "Failed to unlink wallet.",
+        type: 'error',
+        text: error?.message || 'Failed to unlink wallet.',
       });
     } finally {
       setUnlinkingAddress(null);
@@ -137,9 +128,7 @@ export default function SettingsPage() {
       <section className="mt-6 rounded-xl border border-border bg-card p-6">
         <div className="mb-5 flex items-center gap-2">
           <Wallet className="h-5 w-5 text-purple-400" />
-          <h2 className="text-xl font-semibold text-card-foreground">
-            Linked Stellar Wallets
-          </h2>
+          <h2 className="text-xl font-semibold text-card-foreground">Linked Stellar Wallets</h2>
         </div>
 
         {loading || context.isLoading ? (
@@ -147,9 +136,7 @@ export default function SettingsPage() {
             Loading connected profiles...
           </p>
         ) : wallets.length === 0 ? (
-          <p className="mb-4 text-sm text-muted-foreground">
-            No cryptographic keys linked.
-          </p>
+          <p className="mb-4 text-sm text-muted-foreground">No cryptographic keys linked.</p>
         ) : (
           <ul className="mb-5 space-y-3">
             {wallets.map((wallet) => (
@@ -172,7 +159,7 @@ export default function SettingsPage() {
                     {wallet.walletProvider}
                     {wallet.createdAt
                       ? ` · Linked ${new Date(wallet.createdAt).toLocaleDateString()}`
-                      : " · Recently"}
+                      : ' · Recently'}
                   </p>
                 </div>
 
@@ -180,14 +167,10 @@ export default function SettingsPage() {
                   type="button"
                   className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
                   onClick={() => handleUnlink(wallet.walletAddress)}
-                  disabled={
-                    linking || unlinkingAddress === wallet.walletAddress
-                  }
+                  disabled={linking || unlinkingAddress === wallet.walletAddress}
                 >
                   <Link2Off className="h-4 w-4" />
-                  {unlinkingAddress === wallet.walletAddress
-                    ? "Unlinking..."
-                    : "Unlink"}
+                  {unlinkingAddress === wallet.walletAddress ? 'Unlinking...' : 'Unlink'}
                 </button>
               </li>
             ))}
@@ -201,30 +184,22 @@ export default function SettingsPage() {
           disabled={linking}
         >
           <Link2 className="h-4 w-4" />
-          {linking ? "Linking..." : "Link Freighter Wallet"}
+          {linking ? 'Linking...' : 'Link Freighter Wallet'}
         </button>
       </section>
     </div>
   );
 }
 
-function StatusMessage({
-  type,
-  text,
-}: {
-  type: "success" | "error";
-  text: string;
-}) {
-  const Icon = type === "success" ? CheckCircle2 : AlertCircle;
+function StatusMessage({ type, text }: { type: 'success' | 'error'; text: string }) {
+  const Icon = type === 'success' ? CheckCircle2 : AlertCircle;
   const classes =
-    type === "success"
-      ? "border-green-500/30 bg-green-900/30 text-green-300"
-      : "border-red-500/30 bg-red-900/30 text-red-300";
+    type === 'success'
+      ? 'border-green-500/30 bg-green-900/30 text-green-300'
+      : 'border-red-500/30 bg-red-900/30 text-red-300';
 
   return (
-    <div
-      className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${classes}`}
-    >
+    <div className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${classes}`}>
       <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
       <span>{text}</span>
     </div>

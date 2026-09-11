@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useTheme } from "@/lib/stores/preferences-store";
+import React from 'react';
+import { useTheme } from '@/lib/stores/preferences-store';
 
 interface ThemeLogoProps {
   width?: number;
@@ -17,14 +17,14 @@ interface ThemeLogoProps {
 export const ThemeLogo: React.FC<ThemeLogoProps> = ({
   width = 180,
   height = 36,
-  className = "",
+  className = '',
 }) => {
   const { theme } = useTheme();
-  const isDark = theme.mode !== "light";
+  const isDark = theme.mode !== 'light';
 
-  const wordmarkLight = isDark ? "#FFFFFF" : "#0D1117";
-  const accentColor   = "#00D4FF";
-  const ringOpacity   = isDark ? "0.35" : "0.5";
+  const wordmarkLight = isDark ? '#FFFFFF' : '#0D1117';
+  const accentColor = '#00D4FF';
+  const ringOpacity = isDark ? '0.35' : '0.5';
 
   return (
     <div className={`relative flex-shrink-0 ${className}`}>
@@ -39,9 +39,16 @@ export const ThemeLogo: React.FC<ThemeLogoProps> = ({
         fill="none"
       >
         {/* ── Mark: orbital ring + 6-point hex star ── */}
-        <circle cx="18" cy="18" r="16" stroke={accentColor} strokeWidth="1.1" opacity={ringOpacity}/>
-        <circle cx="18" cy="18" r="10" fill={isDark ? "#0D1117" : "#F4F7FC"}/>
-        <circle cx="18" cy="18" r="10" stroke={accentColor} strokeWidth="1.4" opacity="0.6"/>
+        <circle
+          cx="18"
+          cy="18"
+          r="16"
+          stroke={accentColor}
+          strokeWidth="1.1"
+          opacity={ringOpacity}
+        />
+        <circle cx="18" cy="18" r="10" fill={isDark ? '#0D1117' : '#F4F7FC'} />
+        <circle cx="18" cy="18" r="10" stroke={accentColor} strokeWidth="1.4" opacity="0.6" />
         <polygon
           points="18,8 20.5,14 27,14 22,18.5 24,25 18,21.5 12,25 14,18.5 9,14 15.5,14"
           fill={accentColor}

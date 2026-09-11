@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { useTranslation } from "@/hooks/useTranslation";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import Image from 'next/image';
+import { useTranslation } from '@/hooks/useTranslation';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Button } from '@/components/ui/button';
 
 type CollectionEdge = {
   node: {
@@ -33,12 +33,7 @@ export function CreatorCollectionGrid({
   const { t } = useTranslation();
 
   if (!edges.length) {
-    return (
-      <EmptyState
-        title={t("creatorProfile.emptyCollections")}
-        className="py-12"
-      />
-    );
+    return <EmptyState title={t('creatorProfile.emptyCollections')} className="py-12" />;
   }
 
   return (
@@ -62,9 +57,7 @@ export function CreatorCollectionGrid({
             <div className="space-y-1 p-4">
               <p className="truncate text-base font-medium text-white">{node.name}</p>
               <div className="flex items-center gap-3 text-xs text-gray-400">
-                {node.totalSupply != null ? (
-                  <span>{node.totalSupply} items</span>
-                ) : null}
+                {node.totalSupply != null ? <span>{node.totalSupply} items</span> : null}
                 {node.floorPrice ? (
                   <span>{Number(node.floorPrice).toFixed(2)} XLM floor</span>
                 ) : null}
@@ -83,7 +76,7 @@ export function CreatorCollectionGrid({
             disabled={loadingMore}
             className="border-gray-700 bg-transparent text-gray-200"
           >
-            {loadingMore ? t("common.loading") : t("common.next")}
+            {loadingMore ? t('common.loading') : t('common.next')}
           </Button>
         </div>
       ) : null}

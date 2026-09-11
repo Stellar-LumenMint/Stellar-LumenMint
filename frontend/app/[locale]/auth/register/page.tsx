@@ -1,43 +1,55 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { API_CONFIG } from "@/lib/config";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { CircuitBackground } from "@/components/circuit-background";
-import { useTranslation } from "@/hooks/useTranslation";
-import { useStellarWallet } from "@/components/wallet/hooks/useStellarWallet";
-import { WalletModal } from "@/components/wallet/WalletModal";
-import { WalletNetworkStatus } from "@/components/wallet/WalletNetworkStatus";
-import { defaultNetwork } from "@/lib/stellar/client";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, RegisterFormData } from "@/lib/validation/auth";
-import { mapServerError } from "@/lib/errors/serverErrorMapper";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { API_CONFIG } from '@/lib/config';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { CircuitBackground } from '@/components/circuit-background';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useStellarWallet } from '@/components/wallet/hooks/useStellarWallet';
+import { WalletModal } from '@/components/wallet/WalletModal';
+import { WalletNetworkStatus } from '@/components/wallet/WalletNetworkStatus';
+import { defaultNetwork } from '@/lib/stellar/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerSchema, RegisterFormData } from '@/lib/validation/auth';
+import { mapServerError } from '@/lib/errors/serverErrorMapper';
 import {
-  Wallet, Mail, Lock, User, Eye, EyeOff,
-  CheckCircle2, ChevronRight, AlertCircle,
-} from "lucide-react";
+  Wallet,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  ChevronRight,
+  AlertCircle,
+} from 'lucide-react';
 
-type RegisterMode = "wallet" | "email";
+type RegisterMode = 'wallet' | 'email';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
 
   const {
-    connected, address, provider, connecting,
-    error: walletError, disconnect, clearError: clearWalletError,
+    connected,
+    address,
+    provider,
+    connecting,
+    error: walletError,
+    disconnect,
+    clearError: clearWalletError,
   } = useStellarWallet();
 
-  const [mode, setMode] = useState<RegisterMode>("wallet");
+  const [mode, setMode] = useState<RegisterMode>('wallet');
   const [walletModalOpen, setWalletModalOpen] = useState(false);
-  const [walletUsername, setWalletUsername] = useState("");
+  const [walletUsername, setWalletUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [walletLoading, setWalletLoading] = useState(false);
-  const [walletError2, setWalletError2] = useState("");
-  const [success, setSuccess] = useState("");
+  const [walletError2, setWalletError2] = useState('');
+  const [success, setSuccess] = useState('');
 
   const {
     register,
@@ -47,7 +59,7 @@ export default function RegisterPage() {
   } = useForm<RegisterFormData>({ resolver: zodResolver(registerSchema) });
 
   const clearAllErrors = () => {
-    setWalletError2("");
+    setWalletError2('');
     clearWalletError();
   };
 
@@ -59,14 +71,16 @@ export default function RegisterPage() {
   /* ── Wallet registration ── */
   const handleWalletRegister = async () => {
     if (!address) {
-      setWalletError2("Please connect your Stellar wallet first");
+      setWalletError2('Please connect your Stellar wallet first');
       return;
     }
     clearAllErrors();
     setWalletLoading(true);
     try {
-      const csrfRes = await fetch(`${API_CONFIG.baseUrl}/auth/csrf-token`, { credentials: "include" });
-      if (!csrfRes.ok) throw new Error("Failed to fetch CSRF token");
+      const csrfRes = await fetch(`${API_CONFIG.baseUrl}/auth/csrf-token`, {
+        credentials: 'include',
+      });
+      if (!csrfRes.ok) throw new Error('Failed to fetch CSRF token');
       const { csrfToken } = await csrfRes.json();
 
       const body: Record<string, string> = { walletAddress: address };
@@ -75,21 +89,23 @@ export default function RegisterPage() {
       body.network = defaultNetwork;
 
       const response = await fetch(`${API_CONFIG.baseUrl}/users`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.message || "Registration failed");
+        throw new Error(errData.message || 'Registration failed');
       }
 
-      setSuccess(t("register.success") || "Account created! Redirecting to login…");
+      setSuccess(t('register.success') || 'Account created! Redirecting to login…');
       setTimeout(() => router.push(`/${locale}/auth/login`), 2500);
     } catch (err) {
-      setWalletError2(err instanceof Error ? err.message : "Registration failed. Please try again.");
+      setWalletError2(
+        err instanceof Error ? err.message : 'Registration failed. Please try again.',
+      );
     } finally {
       setWalletLoading(false);
     }
@@ -99,8 +115,10 @@ export default function RegisterPage() {
   const onEmailSubmit = async (data: RegisterFormData) => {
     clearAllErrors();
     try {
-      const csrfRes = await fetch(`${API_CONFIG.baseUrl}/auth/csrf-token`, { credentials: "include" });
-      if (!csrfRes.ok) throw new Error("Failed to fetch CSRF token");
+      const csrfRes = await fetch(`${API_CONFIG.baseUrl}/auth/csrf-token`, {
+        credentials: 'include',
+      });
+      if (!csrfRes.ok) throw new Error('Failed to fetch CSRF token');
       const { csrfToken } = await csrfRes.json();
 
       const body: Record<string, string> = { email: data.email, password: data.password };
@@ -111,9 +129,9 @@ export default function RegisterPage() {
       }
 
       const response = await fetch(`${API_CONFIG.baseUrl}/auth/register`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify(body),
       });
 
@@ -125,15 +143,15 @@ export default function RegisterPage() {
             setError(field as keyof RegisterFormData, { message: msg });
           }
         } else {
-          setError("root", { message: formError });
+          setError('root', { message: formError });
         }
         return;
       }
 
-      setSuccess(t("register.success") || "Account created! Redirecting to login…");
+      setSuccess(t('register.success') || 'Account created! Redirecting to login…');
       setTimeout(() => router.push(`/${locale}/auth/login`), 2500);
     } catch (err) {
-      setError("root", { message: err instanceof Error ? err.message : "Registration failed." });
+      setError('root', { message: err instanceof Error ? err.message : 'Registration failed.' });
     }
   };
 
@@ -145,9 +163,8 @@ export default function RegisterPage() {
       <div className="relative z-10 pb-16 px-4">
         <div className="max-w-md mx-auto">
           <div className="border border-purple-500/20 rounded-xl p-8 bg-glass backdrop-blur-md shadow-lg">
-
             <h2 className="text-3xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
-              {t("register.title") || "Create Account"}
+              {t('register.title') || 'Create Account'}
             </h2>
 
             {success && (
@@ -159,27 +176,31 @@ export default function RegisterPage() {
 
             <div className="flex rounded-lg bg-gray-800/50 p-1 mb-6 gap-1">
               <button
-                onClick={() => switchMode("wallet")}
+                onClick={() => switchMode('wallet')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-                  mode === "wallet" ? "bg-gradient-to-r from-[#4e3bff] to-[#9747ff] text-white shadow" : "text-gray-400 hover:text-white"
+                  mode === 'wallet'
+                    ? 'bg-gradient-to-r from-[#4e3bff] to-[#9747ff] text-white shadow'
+                    : 'text-gray-400 hover:text-white'
                 }`}
               >
                 <Wallet className="h-4 w-4" />
-                {t("register.walletTab") || "Wallet"}
+                {t('register.walletTab') || 'Wallet'}
               </button>
               <button
-                onClick={() => switchMode("email")}
+                onClick={() => switchMode('email')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-                  mode === "email" ? "bg-gradient-to-r from-[#4e3bff] to-[#9747ff] text-white shadow" : "text-gray-400 hover:text-white"
+                  mode === 'email'
+                    ? 'bg-gradient-to-r from-[#4e3bff] to-[#9747ff] text-white shadow'
+                    : 'text-gray-400 hover:text-white'
                 }`}
               >
                 <Mail className="h-4 w-4" />
-                {t("register.emailTab") || "Email"}
+                {t('register.emailTab') || 'Email'}
               </button>
             </div>
 
             {/* WALLET MODE */}
-            {mode === "wallet" && (
+            {mode === 'wallet' && (
               <div className="space-y-5">
                 {displayWalletError && (
                   <div className="flex items-start gap-2 p-3 bg-red-900/50 text-red-300 rounded-lg border border-red-500/30 text-sm">
@@ -189,7 +210,7 @@ export default function RegisterPage() {
                 )}
                 <div className="mb-5">
                   <label className="block text-sm font-medium mb-2 text-gray-300">
-                    {t("register.userName") || "Username"}{" "}
+                    {t('register.userName') || 'Username'}{' '}
                     <span className="text-gray-500 font-normal">(optional)</span>
                   </label>
                   <div className="relative">
@@ -198,7 +219,7 @@ export default function RegisterPage() {
                       type="text"
                       value={walletUsername}
                       onChange={(e) => setWalletUsername(e.target.value)}
-                      placeholder={t("register.inputPlaceholderTwo") || "Choose a username"}
+                      placeholder={t('register.inputPlaceholderTwo') || 'Choose a username'}
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg pl-9 pr-4 py-3 text-sm"
                       maxLength={50}
                     />
@@ -206,7 +227,7 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">
-                    {t("register.walletAddress") || "Stellar Wallet Address"}
+                    {t('register.walletAddress') || 'Stellar Wallet Address'}
                   </label>
                   {connected && address ? (
                     <div className="flex items-center justify-between w-full bg-gray-800/50 border border-green-500/30 rounded-lg px-4 py-3">
@@ -218,16 +239,24 @@ export default function RegisterPage() {
                       </div>
                       <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                         <WalletNetworkStatus network={defaultNetwork} />
-                        <button type="button" onClick={disconnect} className="text-xs text-red-400 hover:text-red-300 transition-colors">
+                        <button
+                          type="button"
+                          onClick={disconnect}
+                          className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                        >
                           Change
                         </button>
                       </div>
                     </div>
                   ) : (
                     <Input
-                      type="text" value="" readOnly
+                      type="text"
+                      value=""
+                      readOnly
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg px-4 py-3 text-sm"
-                      placeholder={t("register.inputPlaceholderOne") || "Connect wallet to populate"}
+                      placeholder={
+                        t('register.inputPlaceholderOne') || 'Connect wallet to populate'
+                      }
                     />
                   )}
                 </div>
@@ -238,19 +267,23 @@ export default function RegisterPage() {
                   className="w-full py-3 px-4 rounded-lg font-medium transition bg-gradient-to-r from-[#4e3bff] to-[#9747ff] hover:opacity-90 flex items-center justify-center gap-2"
                 >
                   <Wallet className="h-4 w-4" />
-                  {walletLoading ? t("register.creatingAccount") || "Creating account…"
-                    : connecting ? t("register.connecting") || "Connecting…"
-                    : connected ? t("register.completeRegistration") || "Complete Registration"
-                    : t("register.connectWallet") || "Connect Wallet"}
+                  {walletLoading
+                    ? t('register.creatingAccount') || 'Creating account…'
+                    : connecting
+                      ? t('register.connecting') || 'Connecting…'
+                      : connected
+                        ? t('register.completeRegistration') || 'Complete Registration'
+                        : t('register.connectWallet') || 'Connect Wallet'}
                 </Button>
                 <p className="text-xs text-gray-500 text-center">
-                  {t("register.stellarSecure") || "Your Stellar public key is used as your account identifier. Your private key never leaves your wallet."}
+                  {t('register.stellarSecure') ||
+                    'Your Stellar public key is used as your account identifier. Your private key never leaves your wallet.'}
                 </p>
               </div>
             )}
 
             {/* EMAIL MODE */}
-            {mode === "email" && (
+            {mode === 'email' && (
               <form onSubmit={handleSubmit(onEmailSubmit)} className="space-y-4" noValidate>
                 {errors.root && (
                   <div className="flex items-start gap-2 p-3 bg-red-900/50 text-red-300 rounded-lg border border-red-500/30 text-sm">
@@ -261,24 +294,24 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">
-                    {t("register.userName") || "Username"}{" "}
+                    {t('register.userName') || 'Username'}{' '}
                     <span className="text-gray-500 font-normal">(optional)</span>
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
                       type="text"
-                      placeholder={t("register.inputPlaceholderTwo") || "Choose a username"}
+                      placeholder={t('register.inputPlaceholderTwo') || 'Choose a username'}
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg pl-9 pr-4 py-3 text-sm"
                       maxLength={50}
-                      {...register("username")}
+                      {...register('username')}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">
-                    {t("register.email") || "Email"}
+                    {t('register.email') || 'Email'}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -286,23 +319,25 @@ export default function RegisterPage() {
                       type="email"
                       placeholder="you@example.com"
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg pl-9 pr-4 py-3 text-sm"
-                      {...register("email")}
+                      {...register('email')}
                     />
                   </div>
-                  {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>}
+                  {errors.email && (
+                    <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">
-                    {t("register.password") || "Password"}
+                    {t('register.password') || 'Password'}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Min. 8 characters"
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg pl-9 pr-10 py-3 text-sm"
-                      {...register("password")}
+                      {...register('password')}
                     />
                     <button
                       type="button"
@@ -312,23 +347,27 @@ export default function RegisterPage() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password.message}</p>}
+                  {errors.password && (
+                    <p className="mt-1 text-xs text-red-400">{errors.password.message}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">
-                    {t("register.confirmPassword") || "Confirm Password"}
+                    {t('register.confirmPassword') || 'Confirm Password'}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Repeat password"
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg pl-9 pr-4 py-3 text-sm"
-                      {...register("confirmPassword")}
+                      {...register('confirmPassword')}
                     />
                   </div>
-                  {errors.confirmPassword && <p className="mt-1 text-xs text-red-400">{errors.confirmPassword.message}</p>}
+                  {errors.confirmPassword && (
+                    <p className="mt-1 text-xs text-red-400">{errors.confirmPassword.message}</p>
+                  )}
                 </div>
 
                 {connected && address && (
@@ -356,16 +395,16 @@ export default function RegisterPage() {
                   className="w-full py-3 px-4 rounded-lg font-medium transition bg-gradient-to-r from-[#4e3bff] to-[#9747ff] hover:opacity-90"
                 >
                   {isSubmitting
-                    ? t("register.creatingAccount") || "Creating account…"
-                    : t("register.completeRegistration") || "Complete Registration"}
+                    ? t('register.creatingAccount') || 'Creating account…'
+                    : t('register.completeRegistration') || 'Complete Registration'}
                 </Button>
               </form>
             )}
 
             <div className="mt-6 text-center text-sm text-gray-400">
-              {t("register.alreadyHave") || "Already have an account?"}{" "}
+              {t('register.alreadyHave') || 'Already have an account?'}{' '}
               <a href={`/${locale}/auth/login`} className="text-purple-400 hover:text-purple-300">
-                {t("register.signIn") || "Sign in"}
+                {t('register.signIn') || 'Sign in'}
               </a>
             </div>
           </div>

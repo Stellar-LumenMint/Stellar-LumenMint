@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useId } from "react";
+import React, { useId } from 'react';
 
 export function Vault() {
   // Decorative component: the SVG and its animation layers carry no
@@ -200,13 +200,7 @@ export function Vault() {
 
           {/* Gradients definitions with unique IDs */}
           <defs>
-            <linearGradient
-              id={metalGradientId}
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
+            <linearGradient id={metalGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#808080" />
               <stop offset="30%" stopColor="#a0a0a0" />
               <stop offset="50%" stopColor="#d0d0d0" />
@@ -214,61 +208,31 @@ export function Vault() {
               <stop offset="100%" stopColor="#707070" />
             </linearGradient>
 
-            <linearGradient
-              id={ringGradientId}
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
+            <linearGradient id={ringGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#a0a0a0" />
               <stop offset="50%" stopColor="#e0e0e0" />
               <stop offset="100%" stopColor="#909090" />
             </linearGradient>
 
-            <linearGradient
-              id={handleGradientId}
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
+            <linearGradient id={handleGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#505050" />
               <stop offset="50%" stopColor="#808080" />
               <stop offset="100%" stopColor="#404040" />
             </linearGradient>
 
-            <linearGradient
-              id={lockGradientId}
-              x1="0%"
-              y1="0%"
-              x2="0%"
-              y2="100%"
-            >
+            <linearGradient id={lockGradientId} x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#808080" />
               <stop offset="50%" stopColor="#b0b0b0" />
               <stop offset="100%" stopColor="#606060" />
             </linearGradient>
 
-            <linearGradient
-              id={shadowGradientId}
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
+            <linearGradient id={shadowGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="rgba(0,0,0,0.5)" />
               <stop offset="50%" stopColor="rgba(0,0,0,0)" />
               <stop offset="100%" stopColor="rgba(0,0,0,0.5)" />
             </linearGradient>
 
-            <linearGradient
-              id={sheenGradientId}
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
+            <linearGradient id={sheenGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="rgba(255,255,255,0)" />
               <stop offset="30%" stopColor="rgba(255,255,255,0.1)" />
               <stop offset="50%" stopColor="rgba(255,255,255,0.3)" />

@@ -1,5 +1,5 @@
-import { gql } from "@apollo/client";
-import { NFT_FIELDS_FRAGMENT, TRANSFER_EVENT_FIELDS_FRAGMENT } from "../fragments";
+import { gql } from '@apollo/client';
+import { NFT_FIELDS_FRAGMENT, TRANSFER_EVENT_FIELDS_FRAGMENT } from '../fragments';
 
 export const GATEWAY_HEALTH_QUERY = gql`
   query GatewayHealth {
@@ -69,16 +69,8 @@ export const GET_NFT_BY_ID_QUERY = gql`
  * Used for the provenance/ownership history section on NFT detail page
  */
 export const GET_NFT_TRANSFER_HISTORY_QUERY = gql`
-  query GetNftTransferHistory(
-    $nftId: ID!
-    $page: Int
-    $limit: Int
-  ) {
-    nftTransferHistory(
-      nftId: $nftId
-      page: $page
-      limit: $limit
-    ) {
+  query GetNftTransferHistory($nftId: ID!, $page: Int, $limit: Int) {
+    nftTransferHistory(nftId: $nftId, page: $page, limit: $limit) {
       edges {
         node {
           ...TransferEventFields
@@ -101,16 +93,8 @@ export const GET_NFT_TRANSFER_HISTORY_QUERY = gql`
  * Alternative for infinite scroll implementation
  */
 export const GET_NFT_TRANSFER_HISTORY_CURSOR_QUERY = gql`
-  query GetNftTransferHistoryCursor(
-    $nftId: ID!
-    $first: Int
-    $after: String
-  ) {
-    nftTransferHistoryCursor(
-      nftId: $nftId
-      first: $first
-      after: $after
-    ) {
+  query GetNftTransferHistoryCursor($nftId: ID!, $first: Int, $after: String) {
+    nftTransferHistoryCursor(nftId: $nftId, first: $first, after: $after) {
       edges {
         node {
           ...TransferEventFields

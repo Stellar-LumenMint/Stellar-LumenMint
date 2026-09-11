@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 import Image from 'next/image';
@@ -16,7 +16,10 @@ export function NFTGrid({ nfts, loading = false, emptyMessage = 'No NFTs found' 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="bg-[#1E1A45] rounded-xl overflow-hidden border border-purple-900/30 animate-pulse">
+          <div
+            key={index}
+            className="bg-[#1E1A45] rounded-xl overflow-hidden border border-purple-900/30 animate-pulse"
+          >
             <div className="h-48 bg-purple-900/20" />
             <div className="p-4 space-y-3">
               <div className="h-5 bg-purple-900/20 rounded w-3/4" />

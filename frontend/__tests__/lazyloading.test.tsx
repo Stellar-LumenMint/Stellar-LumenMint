@@ -20,7 +20,7 @@ describe('LazyLoading component', () => {
     render(
       <LazyLoader>
         <p>Deferred content</p>
-      </LazyLoader>
+      </LazyLoader>,
     );
     // With jsdom the observer never reports visibility, so children stay
     // deferred and only the wrapper div is present.

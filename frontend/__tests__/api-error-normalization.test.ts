@@ -1,80 +1,78 @@
-import { AppApiError } from "@/utils/fetchUtils";
+import { AppApiError } from '@/utils/fetchUtils';
 
 // Internal representation matching your normalization logic for validation testing
 function normalizeApiError(error: unknown): any {
-  if (error && typeof error === "object") {
+  if (error && typeof error === 'object') {
     const err = error as any;
     return {
-      message: err.message || "An unexpected network error occurred.",
+      message: err.message || 'An unexpected network error occurred.',
       status: err.status || err.statusCode || 500,
-      code: err.code || "UNKNOWN_ERROR",
+      code: err.code || 'UNKNOWN_ERROR',
       validationErrors: err.validationErrors || undefined,
     };
   }
   return {
-    message: String(error || "An unexpected network error occurred."),
+    message: String(error || 'An unexpected network error occurred.'),
     status: 500,
-    code: "UNKNOWN_ERROR",
+    code: 'UNKNOWN_ERROR',
   };
 }
 
-describe("API Error Normalization Matrix", () => {
-  it("should normalize structured backend payload responses with HTTP statuses", () => {
+describe('API Error Normalization Matrix', () => {
+  it('should normalize structured backend payload responses with HTTP statuses', () => {
     const rawBackendError = {
-      message: "Resource not found on cluster network",
+      message: 'Resource not found on cluster network',
       statusCode: 404,
-      code: "ERR_NOT_FOUND",
+      code: 'ERR_NOT_FOUND',
     };
 
     const normalized = normalizeApiError(rawBackendError);
 
     expect(normalized).toEqual({
-      message: "Resource not found on cluster network",
+      message: 'Resource not found on cluster network',
       status: 404,
-      code: "ERR_NOT_FOUND",
+      code: 'ERR_NOT_FOUND',
       validationErrors: undefined,
     });
   });
 
-  it("should handle structural layout property variations (status vs statusCode)", () => {
+  it('should handle structural layout property variations (status vs statusCode)', () => {
     const alternativePayload = {
-      message: "Unauthorized asset transmission",
+      message: 'Unauthorized asset transmission',
       status: 401,
-      code: "AUTH_FAILED",
+      code: 'AUTH_FAILED',
     };
 
     const normalized = normalizeApiError(alternativePayload);
 
     expect(normalized.status).toBe(401);
-    expect(normalized.code).toBe("AUTH_FAILED");
+    expect(normalized.code).toBe('AUTH_FAILED');
   });
 
-  it("should extract validationErrors records cleanly when present", () => {
+  it('should extract validationErrors records cleanly when present', () => {
     const payloadWithFields = {
-      message: "Validation failed",
+      message: 'Validation failed',
       statusCode: 400,
       validationErrors: {
-        email: "Invalid email syntax format",
-        password: "Password field parameter too short",
+        email: 'Invalid email syntax format',
+        password: 'Password field parameter too short',
       },
     };
 
     const normalized = normalizeApiError(payloadWithFields);
 
     expect(normalized.validationErrors).toBeDefined();
-    expect(normalized.validationErrors?.email).toBe(
-      "Invalid email syntax format",
-    );
+    expect(normalized.validationErrors?.email).toBe('Invalid email syntax format');
   });
 
-  it("should safely fall back to runtime default baselines for malformed elements", () => {
-    const extremeEdgeCase = "Internal Server Cluster Error String Allocation";
+  it('should safely fall back to runtime default baselines for malformed elements', () => {
+    const extremeEdgeCase = 'Internal Server Cluster Error String Allocation';
     const normalized = normalizeApiError(extremeEdgeCase);
 
     expect(normalized).toEqual({
-      message: "Internal Server Cluster Error String Allocation",
+      message: 'Internal Server Cluster Error String Allocation',
       status: 500,
-      code: "UNKNOWN_ERROR",
+      code: 'UNKNOWN_ERROR',
     });
   });
 });

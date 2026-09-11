@@ -1,15 +1,29 @@
 // Hook for tracking form field friction and submission
-import { useRef } from "react";
-import { trackFormFieldInteraction, trackFormSubmissionAttempt, trackFormSubmissionSuccess } from "../lib/telemetry/ui/form-tracker";
-import { DeviceType } from "../lib/telemetry/ui/types";
+import { useRef } from 'react';
+import {
+  trackFormFieldInteraction,
+  trackFormSubmissionAttempt,
+  trackFormSubmissionSuccess,
+} from '../lib/telemetry/ui/form-tracker';
+import { DeviceType } from '../lib/telemetry/ui/types';
 
 export function useFormTracking(formName: string, deviceType: DeviceType) {
-  const fieldState = useRef<Record<string, { keystrokes: number; focusTime: number; blurTime: number; validationErrors: number }>>({});
-  const submissionId = useRef<string>("");
+  const fieldState = useRef<
+    Record<
+      string,
+      { keystrokes: number; focusTime: number; blurTime: number; validationErrors: number }
+    >
+  >({});
+  const submissionId = useRef<string>('');
   const attemptCount = useRef<number>(0);
 
   function onFieldFocus(field: string) {
-    fieldState.current[field] = fieldState.current[field] || { keystrokes: 0, focusTime: Date.now(), blurTime: 0, validationErrors: 0 };
+    fieldState.current[field] = fieldState.current[field] || {
+      keystrokes: 0,
+      focusTime: Date.now(),
+      blurTime: 0,
+      validationErrors: 0,
+    };
     fieldState.current[field].focusTime = Date.now();
   }
 
@@ -31,7 +45,12 @@ export function useFormTracking(formName: string, deviceType: DeviceType) {
   }
 
   function onFieldKeystroke(field: string) {
-    fieldState.current[field] = fieldState.current[field] || { keystrokes: 0, focusTime: Date.now(), blurTime: 0, validationErrors: 0 };
+    fieldState.current[field] = fieldState.current[field] || {
+      keystrokes: 0,
+      focusTime: Date.now(),
+      blurTime: 0,
+      validationErrors: 0,
+    };
     fieldState.current[field].keystrokes += 1;
   }
 

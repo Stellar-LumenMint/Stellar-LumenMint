@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ImageWithFallback } from './image';
@@ -17,8 +17,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection }) => {
   const isProcessingRef = useRef(false);
 
   // Use the like hook
-  const { 
-    isLiked: backendIsLiked, 
+  const {
+    isLiked: backendIsLiked,
     likesCount: backendLikesCount,
     isLoading: backendLoading,
     toggleLike,
@@ -34,37 +34,40 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection }) => {
     }
   }, [backendIsLiked, backendLikesCount]);
 
-  const handleLikeClick = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleLikeClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (isProcessingRef.current || backendLoading) return;
+      if (isProcessingRef.current || backendLoading) return;
 
-    const previousLiked = localIsLiked;
-    const previousCount = localLikeCount;
-    setLocalIsLiked(!localIsLiked);
-    setLocalLikeCount(prev => previousLiked ? prev - 1 : prev + 1);
-    isProcessingRef.current = true;
+      const previousLiked = localIsLiked;
+      const previousCount = localLikeCount;
+      setLocalIsLiked(!localIsLiked);
+      setLocalLikeCount((prev) => (previousLiked ? prev - 1 : prev + 1));
+      isProcessingRef.current = true;
 
-    try {
-      const result = await toggleLike();
-      if (!result.success) {
+      try {
+        const result = await toggleLike();
+        if (!result.success) {
+          // Rollback on error
+          setLocalIsLiked(previousLiked);
+          setLocalLikeCount(previousCount);
+          if (result.message) {
+            console.error(result.message);
+          }
+        }
+      } catch (error) {
         // Rollback on error
         setLocalIsLiked(previousLiked);
         setLocalLikeCount(previousCount);
-        if (result.message) {
-          console.error(result.message);
-        }
+        console.error('Like action failed:', error);
+      } finally {
+        isProcessingRef.current = false;
       }
-    } catch (error) {
-      // Rollback on error
-      setLocalIsLiked(previousLiked);
-      setLocalLikeCount(previousCount);
-      console.error('Like action failed:', error);
-    } finally {
-      isProcessingRef.current = false;
-    }
-  }, [localIsLiked, localLikeCount, toggleLike, backendLoading]);
+    },
+    [localIsLiked, localLikeCount, toggleLike, backendLoading],
+  );
 
   const isLoading = backendLoading || isProcessingRef.current;
 
@@ -148,8 +151,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection }) => {
               aria-pressed={localIsLiked}
               aria-label={localIsLiked ? 'Unlike collection' : 'Like collection'}
               className={`p-1 rounded-full transition-all duration-200 z-10 ${
-                isLoading 
-                  ? 'opacity-50 cursor-not-allowed' 
+                isLoading
+                  ? 'opacity-50 cursor-not-allowed'
                   : 'hover:text-white hover:bg-white/10 focus:outline-none focus:ring-1 focus:ring-white/50'
               }`}
             >

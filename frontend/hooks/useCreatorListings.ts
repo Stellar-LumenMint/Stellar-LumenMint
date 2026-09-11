@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@/lib/stores/auth-store";
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/lib/stores/auth-store';
 import {
   cancelListing as cancelListingRequest,
   createListing as createListingRequest,
   getListingByNft,
   getOwnedNfts,
-} from "@/lib/services/marketplace";
-import { toMarketplaceNft } from "@/lib/services/marketplace-mapper";
-import type { CreateListingDto, MarketplaceNft } from "@/types/marketplace";
+} from '@/lib/services/marketplace';
+import { toMarketplaceNft } from '@/lib/services/marketplace-mapper';
+import type { CreateListingDto, MarketplaceNft } from '@/types/marketplace';
 
 interface UseCreatorListingsResult {
   nfts: MarketplaceNft[];
@@ -60,7 +60,7 @@ export function useCreatorListings(): UseCreatorListingsResult {
       );
       setNfts(enriched);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load NFTs.");
+      setError(err instanceof Error ? err.message : 'Failed to load NFTs.');
     } finally {
       setLoading(false);
     }
@@ -73,10 +73,7 @@ export function useCreatorListings(): UseCreatorListingsResult {
   }, [creatorId, load]);
 
   const createListing = useCallback(
-    async (
-      nft: MarketplaceNft,
-      input: { price: number; currency: string; expiresAt?: string },
-    ) => {
+    async (nft: MarketplaceNft, input: { price: number; currency: string; expiresAt?: string }) => {
       const payload: CreateListingDto = {
         nftContractId: nft.contractId,
         nftTokenId: nft.tokenId,
@@ -88,9 +85,7 @@ export function useCreatorListings(): UseCreatorListingsResult {
       // Optimistically reflect the new active listing, then refetch to confirm.
       setNfts((prev) =>
         prev.map((item) =>
-          item.nftKey === nft.nftKey
-            ? { ...item, state: "ACTIVE", listing }
-            : item,
+          item.nftKey === nft.nftKey ? { ...item, state: 'ACTIVE', listing } : item,
         ),
       );
       await load();
@@ -104,9 +99,7 @@ export function useCreatorListings(): UseCreatorListingsResult {
       await cancelListingRequest(nft.listing.id);
       setNfts((prev) =>
         prev.map((item) =>
-          item.nftKey === nft.nftKey
-            ? { ...item, state: "NOT_LISTED", listing: null }
-            : item,
+          item.nftKey === nft.nftKey ? { ...item, state: 'NOT_LISTED', listing: null } : item,
         ),
       );
       await load();

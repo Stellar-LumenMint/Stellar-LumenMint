@@ -1,27 +1,25 @@
 module.exports = {
-  testEnvironment: "jsdom",
+  testEnvironment: 'jsdom',
   // Babel is only used by Jest. Next.js needs its own SWC pipeline, and the
   // presence of a root `babel.config.js` disables SWC entirely — which breaks
   // `next/font` and therefore `next build`. Keep the config in a
   // Jest-specific file and point `babel-jest` at it explicitly.
   transform: {
-    "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { configFile: "./babel.jest.config.js" }],
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { configFile: './babel.jest.config.js' }],
   },
-  transformIgnorePatterns: [
-    "node_modules/(?!(eventemitter3)/)",
-  ],
+  transformIgnorePatterns: ['node_modules/(?!(eventemitter3)/)'],
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/$1",
-    "\\.(css|less|scss|sass)$": "identity-obj-proxy",
-    "^.+\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$":
-      "<rootDir>/__mocks__/fileMock.js",
+    '^@/(.*)$': '<rootDir>/$1',
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '^.+\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
+      '<rootDir>/__mocks__/fileMock.js',
   },
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/", "<rootDir>/e2e/"],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/e2e/'],
   collectCoverageFrom: [
-    "components/**/*.{js,jsx,ts,tsx}",
-    "hooks/**/*.{js,jsx,ts,tsx}",
-    "!**/*.d.ts",
-    "!**/node_modules/**",
+    'components/**/*.{js,jsx,ts,tsx}',
+    'hooks/**/*.{js,jsx,ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
   ],
 };

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { UserCircle } from "lucide-react";
-import Link from "next/link";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useState, useRef, useEffect } from 'react';
+import { UserCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function AccountEntryMenu() {
   const { locale } = useTranslation();
@@ -13,18 +13,18 @@ export function AccountEntryMenu() {
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === 'Escape') setOpen(false);
     };
     const handleClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
-    document.addEventListener("keydown", handleKey);
-    document.addEventListener("mousedown", handleClick);
+    document.addEventListener('keydown', handleKey);
+    document.addEventListener('mousedown', handleClick);
     return () => {
-      document.removeEventListener("keydown", handleKey);
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener('keydown', handleKey);
+      document.removeEventListener('mousedown', handleClick);
     };
   }, [open]);
 

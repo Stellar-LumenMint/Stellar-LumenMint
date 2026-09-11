@@ -1,10 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { fetchWithAuth } from "@/lib/api/fetchWithAuth";
-import {
-  AppApiError,
-  normalizeApiError,
-  parseResponseError,
-} from "@/utils/fetchUtils";
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { fetchWithAuth } from '@/lib/api/fetchWithAuth';
+import { AppApiError, normalizeApiError, parseResponseError } from '@/utils/fetchUtils';
 
 const staticCache = new Map<string, any>();
 const dedupeMap = new Map<string, Promise<any>>();
@@ -93,7 +89,7 @@ export function useOptimizedFetch<T = unknown>(
             return await doFetch();
           } catch (err: any) {
             if (signal.aborted) {
-              throw new Error("Request cancelled");
+              throw new Error('Request cancelled');
             }
 
             const normalized = await normalizeApiError(err);
@@ -104,9 +100,7 @@ export function useOptimizedFetch<T = unknown>(
               throw normalized;
             }
 
-            await new Promise((r) =>
-              setTimeout(r, retryDelay * Math.pow(2, i)),
-            );
+            await new Promise((r) => setTimeout(r, retryDelay * Math.pow(2, i)));
           }
         }
         throw lastError;

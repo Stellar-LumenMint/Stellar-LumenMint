@@ -6,8 +6,8 @@ import type {
   NftMarketState,
   OwnedNft,
   SalesSummary,
-} from "@/types/marketplace";
-import { toNftKey } from "@/lib/services/marketplace";
+} from '@/types/marketplace';
+import { toNftKey } from '@/lib/services/marketplace';
 
 /**
  * Pure normalization layer shared by the "List NFTs for Sale" and "Sales"
@@ -19,21 +19,21 @@ import { toNftKey } from "@/lib/services/marketplace";
  */
 
 /** Default currency used when a record omits one (the marketplace is XLM-first). */
-const DEFAULT_CURRENCY = "XLM";
+const DEFAULT_CURRENCY = 'XLM';
 
 /** Maps a raw listing status onto the UI-facing NFT market state. */
 function listingStatusToState(listing: Listing): NftMarketState {
   switch (listing.status) {
-    case "ACTIVE":
-      return "ACTIVE";
-    case "SOLD":
-      return "SOLD";
-    case "EXPIRED":
-      return "EXPIRED";
+    case 'ACTIVE':
+      return 'ACTIVE';
+    case 'SOLD':
+      return 'SOLD';
+    case 'EXPIRED':
+      return 'EXPIRED';
     // A CANCELLED listing leaves the NFT available again.
-    case "CANCELLED":
+    case 'CANCELLED':
     default:
-      return "NOT_LISTED";
+      return 'NOT_LISTED';
   }
 }
 
@@ -43,15 +43,10 @@ function listingStatusToState(listing: Listing): NftMarketState {
  * @param nft - The owned NFT.
  * @param listing - The listing resolved via `GET /listings/nft/:nftId`, or null.
  */
-export function toMarketplaceNft(
-  nft: OwnedNft,
-  listing: Listing | null,
-): MarketplaceNft {
-  const state: NftMarketState = listing
-    ? listingStatusToState(listing)
-    : "NOT_LISTED";
+export function toMarketplaceNft(nft: OwnedNft, listing: Listing | null): MarketplaceNft {
+  const state: NftMarketState = listing ? listingStatusToState(listing) : 'NOT_LISTED';
   // Only an ACTIVE listing should be treated as the NFT's live listing.
-  const activeListing = listing && listing.status === "ACTIVE" ? listing : null;
+  const activeListing = listing && listing.status === 'ACTIVE' ? listing : null;
   return {
     ...nft,
     nftKey: toNftKey(nft.contractId, nft.tokenId),
@@ -64,7 +59,7 @@ export function toMarketplaceNft(
 export function listingToActivity(listing: Listing): MarketplaceActivity {
   return {
     id: `listing:${listing.id}`,
-    kind: "LISTING",
+    kind: 'LISTING',
     nftKey: toNftKey(listing.nftContractId, listing.nftTokenId),
     status: listing.status,
     amount: Number(listing.price) || 0,
@@ -77,7 +72,7 @@ export function listingToActivity(listing: Listing): MarketplaceActivity {
 export function auctionToActivity(auction: Auction): MarketplaceActivity {
   return {
     id: `auction:${auction.id}`,
-    kind: "AUCTION",
+    kind: 'AUCTION',
     nftKey: toNftKey(auction.nftContractId, auction.nftTokenId),
     status: auction.status,
     // currentPrice reflects the latest/settled bid; fall back to the start price.
@@ -101,10 +96,7 @@ export function buildActivityFeed(
     ...listings.filter((l) => mine(l.sellerId)).map(listingToActivity),
     ...auctions.filter((a) => mine(a.sellerId)).map(auctionToActivity),
   ];
-  return entries.sort(
-    (a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-  );
+  return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
 /**
@@ -123,21 +115,18 @@ export function deriveSalesSummary(
   const myListings = listings.filter((l) => l.sellerId === creatorId);
   const myAuctions = auctions.filter((a) => a.sellerId === creatorId);
 
-  const activeListings = myListings.filter((l) => l.status === "ACTIVE").length;
+  const activeListings = myListings.filter((l) => l.status === 'ACTIVE').length;
 
-  const soldListings = myListings.filter((l) => l.status === "SOLD");
+  const soldListings = myListings.filter((l) => l.status === 'SOLD');
   const settledAuctions = myAuctions.filter(
-    (a) => a.status === "COMPLETED" || a.status === "SETTLED",
+    (a) => a.status === 'COMPLETED' || a.status === 'SETTLED',
   );
 
   const itemsSold = soldListings.length + settledAuctions.length;
 
   const grossVolume =
     soldListings.reduce((sum, l) => sum + (Number(l.price) || 0), 0) +
-    settledAuctions.reduce(
-      (sum, a) => sum + (Number(a.currentPrice ?? a.startPrice) || 0),
-      0,
-    );
+    settledAuctions.reduce((sum, a) => sum + (Number(a.currentPrice ?? a.startPrice) || 0), 0);
 
   return {
     activeListings,

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
   createContext,
@@ -8,8 +8,8 @@ import React, {
   useState,
   useCallback,
   KeyboardEvent,
-} from "react";
-import { cn } from "@/lib/utils";
+} from 'react';
+import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
 // Context
@@ -25,7 +25,7 @@ const DropdownContext = createContext<DropdownContextValue | null>(null);
 
 function useDropdown() {
   const ctx = useContext(DropdownContext);
-  if (!ctx) throw new Error("Dropdown compound components must be used inside <Dropdown>");
+  if (!ctx) throw new Error('Dropdown compound components must be used inside <Dropdown>');
   return ctx;
 }
 
@@ -42,7 +42,12 @@ interface DropdownProps {
 
 let uid = 0;
 
-export function Dropdown({ children, className, open: controlledOpen, onOpenChange }: DropdownProps) {
+export function Dropdown({
+  children,
+  className,
+  open: controlledOpen,
+  onOpenChange,
+}: DropdownProps) {
   const id = useRef(`dropdown-${++uid}`);
   const [internalOpen, setInternalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,7 +60,7 @@ export function Dropdown({ children, className, open: controlledOpen, onOpenChan
       if (!isControlled) setInternalOpen(v);
       onOpenChange?.(v);
     },
-    [isControlled, onOpenChange]
+    [isControlled, onOpenChange],
   );
 
   // Close on outside click
@@ -66,18 +71,18 @@ export function Dropdown({ children, className, open: controlledOpen, onOpenChan
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [open, setOpen]);
 
   // Close on Escape
   useEffect(() => {
     if (!open) return;
     const handler = (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === 'Escape') setOpen(false);
     };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [open, setOpen]);
 
   return (
@@ -89,7 +94,7 @@ export function Dropdown({ children, className, open: controlledOpen, onOpenChan
         menuId: `${id.current}-menu`,
       }}
     >
-      <div ref={containerRef} className={cn("relative", className)}>
+      <div ref={containerRef} className={cn('relative', className)}>
         {children}
       </div>
     </DropdownContext.Provider>
@@ -115,8 +120,8 @@ export function DropdownTrigger({ children, className, ...props }: DropdownTrigg
       aria-controls={menuId}
       onClick={() => setOpen(!open)}
       className={cn(
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        className
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        className,
       )}
       {...props}
     >
@@ -131,10 +136,10 @@ export function DropdownTrigger({ children, className, ...props }: DropdownTrigg
 interface DropdownMenuProps {
   children: React.ReactNode;
   className?: string;
-  align?: "left" | "right";
+  align?: 'left' | 'right';
 }
 
-export function DropdownMenu({ children, className, align = "right" }: DropdownMenuProps) {
+export function DropdownMenu({ children, className, align = 'right' }: DropdownMenuProps) {
   const { open, menuId, triggerId, setOpen } = useDropdown();
   const menuRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
@@ -143,7 +148,9 @@ export function DropdownMenu({ children, className, align = "right" }: DropdownM
   useEffect(() => {
     if (open && menuRef.current) {
       lastFocusedRef.current = document.activeElement as HTMLElement;
-      const firstItem = menuRef.current.querySelector<HTMLElement>('[role="menuitem"]:not([disabled])');
+      const firstItem = menuRef.current.querySelector<HTMLElement>(
+        '[role="menuitem"]:not([disabled])',
+      );
       firstItem?.focus();
     } else if (!open) {
       // Restore focus to trigger when closed
@@ -154,24 +161,24 @@ export function DropdownMenu({ children, className, align = "right" }: DropdownM
   // Arrow-key navigation between menu items
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const items = Array.from(
-      menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? []
+      menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? [],
     );
     if (!items.length) return;
     const idx = items.indexOf(document.activeElement as HTMLElement);
 
-    if (e.key === "ArrowDown") {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       items[(idx + 1) % items.length]?.focus();
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       items[(idx - 1 + items.length) % items.length]?.focus();
-    } else if (e.key === "Home") {
+    } else if (e.key === 'Home') {
       e.preventDefault();
       items[0]?.focus();
-    } else if (e.key === "End") {
+    } else if (e.key === 'End') {
       e.preventDefault();
       items[items.length - 1]?.focus();
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       e.preventDefault();
       setOpen(false);
     }
@@ -187,9 +194,9 @@ export function DropdownMenu({ children, className, align = "right" }: DropdownM
       aria-labelledby={triggerId}
       onKeyDown={handleKeyDown}
       className={cn(
-        "absolute top-full mt-2 z-50 min-w-[10rem] rounded-lg border border-purple-500/20 bg-[#181359]/95 backdrop-blur-md shadow-xl overflow-hidden",
-        align === "right" ? "right-0" : "left-0",
-        className
+        'absolute top-full mt-2 z-50 min-w-[10rem] rounded-lg border border-purple-500/20 bg-[#181359]/95 backdrop-blur-md shadow-xl overflow-hidden',
+        align === 'right' ? 'right-0' : 'left-0',
+        className,
       )}
     >
       {children}
@@ -229,10 +236,10 @@ export function DropdownItem({
       aria-disabled={disabled}
       onClick={handleClick}
       className={cn(
-        "w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors",
-        "hover:bg-purple-500/10 focus-visible:bg-purple-500/10 focus-visible:outline-none",
-        "disabled:opacity-50 disabled:pointer-events-none",
-        className
+        'w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors',
+        'hover:bg-purple-500/10 focus-visible:bg-purple-500/10 focus-visible:outline-none',
+        'disabled:opacity-50 disabled:pointer-events-none',
+        className,
       )}
       {...props}
     >
@@ -245,5 +252,5 @@ export function DropdownItem({
 // Separator
 // ---------------------------------------------------------------------------
 export function DropdownSeparator({ className }: { className?: string }) {
-  return <div role="separator" className={cn("my-1 border-t border-purple-500/20", className)} />;
+  return <div role="separator" className={cn('my-1 border-t border-purple-500/20', className)} />;
 }

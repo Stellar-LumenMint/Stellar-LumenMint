@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 interface AuctionCountdownProps {
-  endTime: string;          // ISO string or timestamp from backend
+  endTime: string; // ISO string or timestamp from backend
   serverTimeOnMount?: string; // Server time reference string (skew correction)
   onAuctionEnd?: () => void;
 }
@@ -82,9 +82,7 @@ export const AuctionCountdown: React.FC<AuctionCountdownProps> = ({
 
   return (
     <div className="flex items-center space-x-1.5" data-testid="auction-countdown">
-      <span className={textClass}>
-        {isEnded ? 'Auction Ended' : formatTime(msRemaining)}
-      </span>
+      <span className={textClass}>{isEnded ? 'Auction Ended' : formatTime(msRemaining)}</span>
     </div>
   );
 };

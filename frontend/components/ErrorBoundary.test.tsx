@@ -1,12 +1,14 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import ErrorBoundary from "./ErrorBoundary";
-import "@testing-library/jest-dom";
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import ErrorBoundary from './ErrorBoundary';
+import '@testing-library/jest-dom';
 
 // =============================================================================
 // Helper: Component that throws
 // =============================================================================
-const ThrowingComponent: React.ComponentType<{ message?: string }> = ({ message = "Test error" }) => {
+const ThrowingComponent: React.ComponentType<{ message?: string }> = ({
+  message = 'Test error',
+}) => {
   throw new Error(message);
 };
 
@@ -26,7 +28,7 @@ afterAll(() => {
 // =============================================================================
 // Tests
 // =============================================================================
-describe("ErrorBoundary", () => {
+describe('ErrorBoundary', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -34,36 +36,36 @@ describe("ErrorBoundary", () => {
   // ===========================================================================
   // Basic rendering
   // ===========================================================================
-  describe("rendering", () => {
-    it("renders children when there is no error", () => {
+  describe('rendering', () => {
+    it('renders children when there is no error', () => {
       render(
         <ErrorBoundary>
           <SafeComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.getByText("All good")).toBeInTheDocument();
+      expect(screen.getByText('All good')).toBeInTheDocument();
     });
 
-    it("renders default fallback UI when a child throws", () => {
+    it('renders default fallback UI when a child throws', () => {
       render(
         <ErrorBoundary>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+      expect(screen.getByText('Something went wrong')).toBeInTheDocument();
       expect(screen.getByText(/Test error/)).toBeInTheDocument();
     });
 
-    it("renders custom fallback when provided", () => {
+    it('renders custom fallback when provided', () => {
       render(
         <ErrorBoundary fallback={<div>Custom fallback</div>}>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.getByText("Custom fallback")).toBeInTheDocument();
+      expect(screen.getByText('Custom fallback')).toBeInTheDocument();
     });
 
-    it("renders FallbackComponent prop when provided", () => {
+    it('renders FallbackComponent prop when provided', () => {
       const FallbackComp = ({ error, resetErrorBoundary }: any) => (
         <div>
           <p>Custom component fallback: {error.message}</p>
@@ -74,7 +76,7 @@ describe("ErrorBoundary", () => {
       render(
         <ErrorBoundary FallbackComponent={FallbackComp}>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
       expect(screen.getByText(/Custom component fallback: Test error/)).toBeInTheDocument();
     });
@@ -83,101 +85,101 @@ describe("ErrorBoundary", () => {
   // ===========================================================================
   // Recovery
   // ===========================================================================
-  describe("recovery", () => {
-    it("retries rendering after clicking Retry button", () => {
+  describe('recovery', () => {
+    it('retries rendering after clicking Retry button', () => {
       let shouldThrow = true;
       const ToggleError = () => {
-        if (shouldThrow) throw new Error("Boom");
+        if (shouldThrow) throw new Error('Boom');
         return <div>Recovered!</div>;
       };
 
       const { rerender } = render(
         <ErrorBoundary>
           <ToggleError />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
-      expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+      expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 
       // Allow recovery
       shouldThrow = false;
 
-      fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+      fireEvent.click(screen.getByRole('button', { name: /retry/i }));
 
       // Need to force re-render to pick up the new state
       rerender(
         <ErrorBoundary key="recovered">
           <ToggleError />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
-      expect(screen.getByText("Recovered!")).toBeInTheDocument();
+      expect(screen.getByText('Recovered!')).toBeInTheDocument();
     });
   });
 
   // ===========================================================================
   // Visibility controls
   // ===========================================================================
-  describe("action button visibility", () => {
-    it("shows retry button by default", () => {
+  describe('action button visibility', () => {
+    it('shows retry button by default', () => {
       render(
         <ErrorBoundary>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
     });
 
-    it("hides retry button when showRetry is false", () => {
+    it('hides retry button when showRetry is false', () => {
       render(
         <ErrorBoundary showRetry={false}>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.queryByRole("button", { name: /retry/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument();
     });
 
-    it("shows Go Home button by default", () => {
+    it('shows Go Home button by default', () => {
       render(
         <ErrorBoundary>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.getByText("Go Home")).toBeInTheDocument();
+      expect(screen.getByText('Go Home')).toBeInTheDocument();
     });
 
-    it("hides Go Home button when showHome is false", () => {
+    it('hides Go Home button when showHome is false', () => {
       render(
         <ErrorBoundary showHome={false}>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.queryByText("Go Home")).not.toBeInTheDocument();
+      expect(screen.queryByText('Go Home')).not.toBeInTheDocument();
     });
 
-    it("shows Report Issue button by default", () => {
+    it('shows Report Issue button by default', () => {
       render(
         <ErrorBoundary>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.getByText("Report Issue")).toBeInTheDocument();
+      expect(screen.getByText('Report Issue')).toBeInTheDocument();
     });
   });
 
   // ===========================================================================
   // error boundary: onError callback
   // ===========================================================================
-  describe("onError callback", () => {
-    it("calls onError when an error is caught", () => {
+  describe('onError callback', () => {
+    it('calls onError when an error is caught', () => {
       const onError = jest.fn();
       render(
         <ErrorBoundary onError={onError} componentName="TestComponent">
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
       expect(onError).toHaveBeenCalledTimes(1);
-      expect(onError.mock.calls[0][0].message).toBe("Test error");
+      expect(onError.mock.calls[0][0].message).toBe('Test error');
       expect(onError.mock.calls[0][1]).toBeDefined();
     });
   });
@@ -185,31 +187,31 @@ describe("ErrorBoundary", () => {
   // ===========================================================================
   // Stack trace display in development
   // ===========================================================================
-  describe("development mode", () => {
+  describe('development mode', () => {
     const originalEnv = process.env.NODE_ENV;
 
     const setNodeEnv = (value: string) => {
-      Object.defineProperty(process.env, "NODE_ENV", {
+      Object.defineProperty(process.env, 'NODE_ENV', {
         value,
         configurable: true,
       });
     };
 
     afterEach(() => {
-      Object.defineProperty(process.env, "NODE_ENV", {
+      Object.defineProperty(process.env, 'NODE_ENV', {
         value: originalEnv,
         configurable: true,
       });
     });
 
-    it("shows error details in development mode", () => {
-      setNodeEnv("development");
+    it('shows error details in development mode', () => {
+      setNodeEnv('development');
       render(
         <ErrorBoundary>
           <ThrowingComponent />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
-      expect(screen.getByText("Error Details")).toBeInTheDocument();
+      expect(screen.getByText('Error Details')).toBeInTheDocument();
     });
   });
 });

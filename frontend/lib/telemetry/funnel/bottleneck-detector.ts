@@ -23,10 +23,7 @@ export class BottleneckDetector {
   static detectAbandonmentSignal(stageState: StageState): AbandonmentSignal | null {
     const timeInStage = Date.now() - stageState.stageEnterTime;
     // Signal 1: Stalled without interaction
-    if (
-      timeInStage > this.STALL_THRESHOLD_MS &&
-      stageState.interactionCount === 0
-    ) {
+    if (timeInStage > this.STALL_THRESHOLD_MS && stageState.interactionCount === 0) {
       return {
         signal: 'stalled_no_interaction',
         timeInStage,
@@ -43,10 +40,7 @@ export class BottleneckDetector {
       };
     }
     // Signal 3: Error loop (error → exit → re-enter → error)
-    if (
-      stageState.recentErrorCodes &&
-      stageState.recentErrorCodes.length >= 2
-    ) {
+    if (stageState.recentErrorCodes && stageState.recentErrorCodes.length >= 2) {
       return {
         signal: 'error_loop',
         errorCodeSequence: stageState.recentErrorCodes,

@@ -1,4 +1,4 @@
-import { API_CONFIG } from "./config";
+import { API_CONFIG } from './config';
 
 // The CSRF token is bound to the session cookie and does not rotate per
 // request, so fetching it once per page is enough. Caching it here means
@@ -22,13 +22,12 @@ export async function getCookie(): Promise<string> {
   if (!inflightFetch) {
     inflightFetch = (async () => {
       try {
-        const csrfRes = await fetch(
-          `${API_CONFIG.baseUrl}/auth/csrf-token`,
-          { credentials: "include" },
-        );
+        const csrfRes = await fetch(`${API_CONFIG.baseUrl}/auth/csrf-token`, {
+          credentials: 'include',
+        });
 
         if (!csrfRes.ok) {
-          throw new Error("Failed to fetch CSRF token");
+          throw new Error('Failed to fetch CSRF token');
         }
 
         const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };

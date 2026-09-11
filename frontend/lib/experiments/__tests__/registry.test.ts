@@ -2,7 +2,7 @@ import { EXPERIMENT_REGISTRY } from '../registry';
 
 describe('EXPERIMENT_REGISTRY', () => {
   it('has unique experiment_ids', () => {
-    const ids = EXPERIMENT_REGISTRY.map(e => e.experiment_id);
+    const ids = EXPERIMENT_REGISTRY.map((e) => e.experiment_id);
     const unique = new Set(ids);
     expect(unique.size).toBe(ids.length);
   });
@@ -23,9 +23,7 @@ describe('EXPERIMENT_REGISTRY', () => {
   });
 
   it('status is a valid enum value', () => {
-    const valid = [
-      'draft', 'running', 'paused', 'completed', 'rolled_out', 'archived',
-    ];
+    const valid = ['draft', 'running', 'paused', 'completed', 'rolled_out', 'archived'];
     for (const exp of EXPERIMENT_REGISTRY) {
       expect(valid).toContain(exp.status);
     }

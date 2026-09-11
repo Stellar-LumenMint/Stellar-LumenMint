@@ -1,9 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { useWalletStore } from "@/lib/stores/walletStore";
-import { isFreighterConnected, getFreighterAddress } from "@/lib/stellar/wallet/freighter";
-
+import { useEffect, useRef } from 'react';
+import { useWalletStore } from '@/lib/stores/walletStore';
+import { isFreighterConnected, getFreighterAddress } from '@/lib/stellar/wallet/freighter';
 
 export function useWalletConnection() {
   const { address, provider, connected, setConnected, setDisconnected } = useWalletStore();
@@ -14,7 +13,7 @@ export function useWalletConnection() {
     const validateSession = async () => {
       if (!connected || !address) return;
 
-      if (provider === "freighter") {
+      if (provider === 'freighter') {
         try {
           const stillConnected = await isFreighterConnected();
           if (!stillConnected) {
@@ -24,21 +23,20 @@ export function useWalletConnection() {
           const currentAddress = await getFreighterAddress();
           if (currentAddress !== address) {
             // User switched accounts in the extension
-            setConnected(currentAddress, "freighter", useWalletStore.getState().network);
+            setConnected(currentAddress, 'freighter', useWalletStore.getState().network);
           }
         } catch {
           setDisconnected();
         }
       }
-      
     };
 
     validateSession();
-  }, []); 
+  }, []);
 
   // Poll Freighter connection status
   useEffect(() => {
-    if (!connected || provider !== "freighter") {
+    if (!connected || provider !== 'freighter') {
       if (pollingRef.current) clearInterval(pollingRef.current);
       return;
     }
@@ -46,7 +44,7 @@ export function useWalletConnection() {
     const poll = async () => {
       // Skip polling while the tab is hidden; the status will be refreshed
       // when it becomes visible again.
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
         return;
       }
       try {
@@ -57,21 +55,21 @@ export function useWalletConnection() {
       } catch (error) {
         // Transient extension/network errors should not log the user out;
         // surface for debugging without disconnecting.
-        console.debug("[wallet-connection] poll failed", error);
+        console.debug('[wallet-connection] poll failed', error);
       }
     };
 
     pollingRef.current = setInterval(poll, 30_000);
     const onVisible = () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === 'visible') {
         void poll();
       }
     };
-    document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
-      document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [connected, provider, setDisconnected]);
 

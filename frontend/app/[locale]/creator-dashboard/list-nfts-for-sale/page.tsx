@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import { Package, Tag, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useToast } from "@/lib/stores";
-import { useCreatorListings } from "@/hooks/useCreatorListings";
-import { MarketStateBadge } from "@/components/marketplace/MarketStateBadge";
-import { formatAmount } from "@/components/marketplace/format";
-import type { MarketplaceNft } from "@/types/marketplace";
+import { useState } from 'react';
+import Image from 'next/image';
+import { Package, Tag, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { useToast } from '@/lib/stores';
+import { useCreatorListings } from '@/hooks/useCreatorListings';
+import { MarketStateBadge } from '@/components/marketplace/MarketStateBadge';
+import { formatAmount } from '@/components/marketplace/format';
+import type { MarketplaceNft } from '@/types/marketplace';
 
-const FALLBACK_IMAGE = "/images/fallbacks/nft-fallback.svg";
+const FALLBACK_IMAGE = '/images/fallbacks/nft-fallback.svg';
 
 /**
  * A single owned-NFT card: shows the NFT, its resolved market state, and the
@@ -29,14 +29,11 @@ function NftListingCard({
   onCancel,
 }: {
   nft: MarketplaceNft;
-  onCreate: (
-    nft: MarketplaceNft,
-    input: { price: number; currency: string },
-  ) => Promise<void>;
+  onCreate: (nft: MarketplaceNft, input: { price: number; currency: string }) => Promise<void>;
   onCancel: (nft: MarketplaceNft) => Promise<void>;
 }) {
   const [showForm, setShowForm] = useState(false);
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState('');
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -44,9 +41,9 @@ function NftListingCard({
     if (!Number.isFinite(parsed) || parsed <= 0) return;
     setBusy(true);
     try {
-      await onCreate(nft, { price: parsed, currency: "XLM" });
+      await onCreate(nft, { price: parsed, currency: 'XLM' });
       setShowForm(false);
-      setPrice("");
+      setPrice('');
     } finally {
       setBusy(false);
     }
@@ -66,7 +63,7 @@ function NftListingCard({
       <div className="relative aspect-square w-full bg-zinc-900">
         <Image
           src={nft.imageUrl || FALLBACK_IMAGE}
-          alt={nft.name || "NFT"}
+          alt={nft.name || 'NFT'}
           fill
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover"
@@ -100,16 +97,11 @@ function NftListingCard({
         )}
       </CardContent>
       <CardFooter className="gap-2">
-        {nft.state === "ACTIVE" ? (
-          <Button
-            variant="danger-ghost"
-            loading={busy}
-            onClick={cancel}
-            className="w-full"
-          >
+        {nft.state === 'ACTIVE' ? (
+          <Button variant="danger-ghost" loading={busy} onClick={cancel} className="w-full">
             <X className="size-4" /> Cancel listing
           </Button>
-        ) : nft.state === "NOT_LISTED" ? (
+        ) : nft.state === 'NOT_LISTED' ? (
           showForm ? (
             <>
               <Button
@@ -120,12 +112,7 @@ function NftListingCard({
               >
                 Cancel
               </Button>
-              <Button
-                loading={busy}
-                onClick={submit}
-                disabled={!price}
-                className="flex-1"
-              >
+              <Button loading={busy} onClick={submit} disabled={!price} className="flex-1">
                 Confirm
               </Button>
             </>
@@ -136,7 +123,7 @@ function NftListingCard({
           )
         ) : (
           <span className="w-full py-2 text-center text-sm text-lumen-subtext">
-            {nft.state === "SOLD" ? "Already sold" : "Listing expired"}
+            {nft.state === 'SOLD' ? 'Already sold' : 'Listing expired'}
           </span>
         )}
       </CardFooter>
@@ -165,44 +152,32 @@ function LoadingGrid() {
  * cancel listings with immediate per-item feedback.
  */
 export default function ListNFTsForSale() {
-  const { nfts, loading, error, refetch, createListing, cancelListing } =
-    useCreatorListings();
+  const { nfts, loading, error, refetch, createListing, cancelListing } = useCreatorListings();
   const { showSuccess, showError } = useToast();
 
-  const handleCreate = async (
-    nft: MarketplaceNft,
-    input: { price: number; currency: string },
-  ) => {
+  const handleCreate = async (nft: MarketplaceNft, input: { price: number; currency: string }) => {
     try {
       await createListing(nft, input);
-      showSuccess("Listing created.");
+      showSuccess('Listing created.');
     } catch (err) {
-      showError(
-        err instanceof Error ? err.message : "Could not create listing.",
-      );
+      showError(err instanceof Error ? err.message : 'Could not create listing.');
     }
   };
 
   const handleCancel = async (nft: MarketplaceNft) => {
     try {
       await cancelListing(nft);
-      showSuccess("Listing cancelled.");
+      showSuccess('Listing cancelled.');
     } catch (err) {
-      showError(
-        err instanceof Error ? err.message : "Could not cancel listing.",
-      );
+      showError(err instanceof Error ? err.message : 'Could not cancel listing.');
     }
   };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold text-lumen-text">
-          List NFTs For Sale
-        </h1>
-        <p className="text-lumen-subtext">
-          Create or cancel listings for the NFTs you own.
-        </p>
+        <h1 className="text-3xl font-bold text-lumen-text">List NFTs For Sale</h1>
+        <p className="text-lumen-subtext">Create or cancel listings for the NFTs you own.</p>
       </header>
 
       {error && (

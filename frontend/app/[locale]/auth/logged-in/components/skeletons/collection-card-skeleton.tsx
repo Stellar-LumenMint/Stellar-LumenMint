@@ -14,4 +14,4 @@ export const CollectionCardSkeleton = () => (
       </div>
     </div>
   </div>
-)
+);

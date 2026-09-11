@@ -10,15 +10,16 @@ describe('useDebounce', () => {
   });
 
   it('updates value after delay', () => {
-    const { result, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'hello', delay: 500 } },
-    );
+    const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
+      initialProps: { value: 'hello', delay: 500 },
+    });
 
     rerender({ value: 'world', delay: 500 });
     expect(result.current).toBe('hello');
 
-    act(() => { jest.advanceTimersByTime(500); });
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
     expect(result.current).toBe('world');
   });
 

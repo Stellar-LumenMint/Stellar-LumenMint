@@ -1,39 +1,30 @@
-"use client";
-import { MainHero } from "@/components/main-hero";
-import dynamic from "next/dynamic";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import TopSellersSkeleton from "@/components/Skeleton/TopSellersSkeleton";
-import ExploreCategoriesSkeleton from "@/components/Skeleton/ExploreCategoriesSkeleton";
-import "react-loading-skeleton/dist/skeleton.css";
-import { useEffect, useRef, useState } from "react";
-import PopularThisWeekSkeleton from "@/components/Skeleton/PopularThisWeekSkeleton";
+'use client';
+import { MainHero } from '@/components/main-hero';
+import dynamic from 'next/dynamic';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import TopSellersSkeleton from '@/components/Skeleton/TopSellersSkeleton';
+import ExploreCategoriesSkeleton from '@/components/Skeleton/ExploreCategoriesSkeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+import { useEffect, useRef, useState } from 'react';
+import PopularThisWeekSkeleton from '@/components/Skeleton/PopularThisWeekSkeleton';
 // import PopularThisWeekMarqueeParent from "@/components/PopularThisWeekMarqueeParent";
 // import PopularCollection from '@/components/PopularCollection';
 
-const PopularThisWeek = dynamic<{}>(
-  () => import("@/components/PopularThisWeekMarqueeParent"),
-  {
-    loading: () => <PopularThisWeekSkeleton />,
-    ssr: false,
-  }
-);
+const PopularThisWeek = dynamic<{}>(() => import('@/components/PopularThisWeekMarqueeParent'), {
+  loading: () => <PopularThisWeekSkeleton />,
+  ssr: false,
+});
 
 // Repeat similar patterns for TopSellers and ExploreCategories
-const TopSellers = dynamic(
-  () => import("@/components/top-sellers").then((mod) => mod.TopSellers),
-  {
-    loading: () => <TopSellersSkeleton />,
-    ssr: false,
-  }
-);
+const TopSellers = dynamic(() => import('@/components/top-sellers').then((mod) => mod.TopSellers), {
+  loading: () => <TopSellersSkeleton />,
+  ssr: false,
+});
 
-const ExploreCategories = dynamic<{}>(
-  () => import("@/components/explore-categories"),
-  {
-    loading: () => <ExploreCategoriesSkeleton />,
-    ssr: false,
-  }
-);
+const ExploreCategories = dynamic<{}>(() => import('@/components/explore-categories'), {
+  loading: () => <ExploreCategoriesSkeleton />,
+  ssr: false,
+});
 
 export default function Home() {
   const [showComponentOne, setShowComponentOne] = useState(false);
@@ -45,7 +36,7 @@ export default function Home() {
   const refThree = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log("useEffect");
+    console.log('useEffect');
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -56,7 +47,7 @@ export default function Home() {
           }
         });
       },
-      { threshold: 0.7 } // Trigger when 70% is visible
+      { threshold: 0.7 }, // Trigger when 70% is visible
     );
 
     const listOfEnteries: (HTMLDivElement | null)[] = [

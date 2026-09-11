@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
-import { StellarNetwork } from "@/types/stellar";
-import { getHorizonServer } from "@/lib/stellar/client";
+import { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
+import { StellarNetwork } from '@/types/stellar';
+import { getHorizonServer } from '@/lib/stellar/client';
 
 interface Balance {
   asset: string;
@@ -17,7 +17,7 @@ interface WalletBalanceProps {
   className?: string;
 }
 
-export function WalletBalance({ address, network, className = "" }: WalletBalanceProps) {
+export function WalletBalance({ address, network, className = '' }: WalletBalanceProps) {
   const [balances, setBalances] = useState<Balance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +30,8 @@ export function WalletBalance({ address, network, className = "" }: WalletBalanc
       const account = await server.loadAccount(address);
 
       const mapped: Balance[] = account.balances.map((b) => {
-        if (b.asset_type === "native") {
-          return { asset: "XLM", balance: b.balance };
+        if (b.asset_type === 'native') {
+          return { asset: 'XLM', balance: b.balance };
         }
         const code = (b as any).asset_code;
         return {
@@ -43,7 +43,7 @@ export function WalletBalance({ address, network, className = "" }: WalletBalanc
 
       setBalances(mapped);
     } catch {
-      setError("Account not found or unfunded.");
+      setError('Account not found or unfunded.');
       setBalances([]);
     } finally {
       setLoading(false);
@@ -57,19 +57,19 @@ export function WalletBalance({ address, network, className = "" }: WalletBalanc
   return (
     <div className={`space-y-1 ${className}`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-purple-300 uppercase tracking-wider">Balances</span>
+        <span className="text-xs font-medium text-purple-300 uppercase tracking-wider">
+          Balances
+        </span>
         <button
           onClick={fetchBalances}
           disabled={loading}
           className="text-gray-400 hover:text-purple-300 transition-colors"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
-      {error && (
-        <p className="text-xs text-red-400">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-400">{error}</p>}
 
       {balances.length === 0 && !loading && !error && (
         <p className="text-xs text-gray-500">No balances found.</p>

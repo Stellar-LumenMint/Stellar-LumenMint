@@ -1,9 +1,9 @@
 // import { MarketplaceHero } from "@/components/marketplace-hero";
-import { CircuitBackground } from "@/components/circuit-background";
-import { LiveAuctions } from "@/components/live-auctions";
-import { TopSellers } from "@/components/top-sellers";
-import { TodaysPicks } from "@/components/todays-picks";
-import PopularCollection from "@/components/PopularCollection";
+import { CircuitBackground } from '@/components/circuit-background';
+import { LiveAuctions } from '@/components/live-auctions';
+import { TopSellers } from '@/components/top-sellers';
+import { TodaysPicks } from '@/components/todays-picks';
+import PopularCollection from '@/components/PopularCollection';
 // import { CreateAndSell } from "@/components/create-and-sell";
 
 export default function MarketplacePage() {

@@ -1,6 +1,6 @@
-import { API_CONFIG } from "@/lib/config";
-import { WalletProvider } from "@/types/stellar";
-import { WalletAuthResult } from "@/types/auth";
+import { API_CONFIG } from '@/lib/config';
+import { WalletProvider } from '@/types/stellar';
+import { WalletAuthResult } from '@/types/auth';
 
 export interface SignatureVerificationPayload {
   walletAddress: string;
@@ -10,20 +10,19 @@ export interface SignatureVerificationPayload {
   locale?: string;
 }
 
-
 export async function verifyWalletSignature(
-  payload: SignatureVerificationPayload
+  payload: SignatureVerificationPayload,
 ): Promise<WalletAuthResult> {
   const res = await fetch(`${API_CONFIG.baseUrl}/auth/wallet/verify`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Signature verification failed");
+    throw new Error(err.message || 'Signature verification failed');
   }
 
   const body = await res.json();
@@ -34,21 +33,21 @@ export async function verifyWalletSignature(
 
 export async function linkWalletToAccount(
   payload: SignatureVerificationPayload,
-  jwt: string
+  jwt: string,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(`${API_CONFIG.baseUrl}/auth/wallet/link`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${jwt}`,
     },
-    credentials: "include",
+    credentials: 'include',
     body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to link wallet to account");
+    throw new Error(err.message || 'Failed to link wallet to account');
   }
 
   return res.json();

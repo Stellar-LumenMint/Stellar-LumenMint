@@ -1,11 +1,11 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { ClientBody, ClientBodyProps } from "./ClientBody";
-import { Button } from "@/components/ui/button";
+import type { Meta, StoryObj } from '@storybook/react';
+import { ClientBody, ClientBodyProps } from './ClientBody';
+import { Button } from '@/components/ui/button';
 
 const meta: Meta<typeof ClientBody> = {
-  title: "Layout/ClientBody",
+  title: 'Layout/ClientBody',
   component: ClientBody,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
 };
 export default meta;
 
@@ -56,12 +56,8 @@ export const Responsive: Story = {
     ...Default.args,
     children: (
       <div className="p-4">
-        <div className="text-lg mb-4">
-          Resize the Storybook window to see responsive layout.
-        </div>
-        <div className="bg-gray-200 dark:bg-gray-800 p-4 rounded-lg">
-          Responsive content
-        </div>
+        <div className="text-lg mb-4">Resize the Storybook window to see responsive layout.</div>
+        <div className="bg-gray-200 dark:bg-gray-800 p-4 rounded-lg">Responsive content</div>
       </div>
     ),
   },

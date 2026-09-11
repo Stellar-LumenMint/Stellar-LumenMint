@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useId } from "react";
+import React, { useId } from 'react';
 
 interface ModernSearchInputProps {
   placeholder?: string;
@@ -11,8 +11,8 @@ interface ModernSearchInputProps {
 }
 
 export function ModernSearchInput({
-  placeholder = "Search",
-  className = "",
+  placeholder = 'Search',
+  className = '',
   onChange,
   ariaLabel,
 }: ModernSearchInputProps) {

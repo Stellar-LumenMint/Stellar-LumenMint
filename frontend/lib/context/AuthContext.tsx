@@ -1,9 +1,9 @@
-"use client";
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { useAuthStore } from "../stores/auth-store";
-import { User, UserWallet } from "@/types/auth";
+'use client';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useAuthStore } from '../stores/auth-store';
+import { User, UserWallet } from '@/types/auth';
 // Import the full AuthStore type from the store, but override User to match types/auth
-import type { AuthStore as StoreAuthStore } from "../stores/types";
+import type { AuthStore as StoreAuthStore } from '../stores/types';
 
 export interface WalletChallenge {
   sessionId: string;
@@ -19,11 +19,21 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   loginWithWallet: (address: string, walletProvider?: string) => Promise<WalletChallenge>;
-  verifyWalletLogin: (address: string, nonce: string, signature: string, walletProvider?: string) => Promise<void>;
+  verifyWalletLogin: (
+    address: string,
+    nonce: string,
+    signature: string,
+    walletProvider?: string,
+  ) => Promise<void>;
   register: (email: string, password: string, username?: string) => Promise<void>;
   logout: () => void;
   linkWallet: (address: string, walletProvider?: string) => Promise<WalletChallenge>;
-  verifyWalletLink: (address: string, nonce: string, signature: string, walletProvider?: string) => Promise<void>;
+  verifyWalletLink: (
+    address: string,
+    nonce: string,
+    signature: string,
+    walletProvider?: string,
+  ) => Promise<void>;
   unlinkWallet: (address: string) => Promise<void>;
   wallets: UserWallet[];
 }
@@ -36,8 +46,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     register: (email: string, password: string, username?: string) => Promise<void>;
     emailLogin: (email: string, password: string) => Promise<void>;
     getWalletChallenge: (address: string, walletProvider?: string) => Promise<WalletChallenge>;
-    verifyWalletSignature: (address: string, nonce: string, signature: string, walletProvider?: string) => Promise<void>;
-    linkWallet: (address: string, nonce: string, signature: string, walletProvider?: string) => Promise<unknown>;
+    verifyWalletSignature: (
+      address: string,
+      nonce: string,
+      signature: string,
+      walletProvider?: string,
+    ) => Promise<void>;
+    linkWallet: (
+      address: string,
+      nonce: string,
+      signature: string,
+      walletProvider?: string,
+    ) => Promise<unknown>;
     unlinkWallet: (address: string) => Promise<void>;
     listWallets: () => Promise<UserWallet[]>;
     logout: () => void;
@@ -51,7 +71,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Load wallets on user change
   useEffect(() => {
     if (auth.user) {
-      auth.listWallets().then((w) => setWallets(w as UserWallet[])).catch(() => setWallets([]));
+      auth
+        .listWallets()
+        .then((w) => setWallets(w as UserWallet[]))
+        .catch(() => setWallets([]));
     } else {
       setWallets([]);
     }
@@ -61,7 +84,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await auth.emailLogin(email, password);
   };
 
-  const loginWithWallet = async (address: string, walletProvider?: string): Promise<WalletChallenge> => {
+  const loginWithWallet = async (
+    address: string,
+    walletProvider?: string,
+  ): Promise<WalletChallenge> => {
     // 1. Request a challenge from the backend
     const challenge = await auth.getWalletChallenge(address, walletProvider);
     // 2. Return challenge to the caller so the UI can handle wallet signing
@@ -102,12 +128,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     walletProvider?: string,
   ): Promise<void> => {
     await auth.linkWallet(address, nonce, signature, walletProvider);
-    setWallets((await auth.listWallets() as UserWallet[]) || []);
+    setWallets(((await auth.listWallets()) as UserWallet[]) || []);
   };
 
   const unlinkWallet = async (address: string) => {
     await auth.unlinkWallet(address);
-    setWallets((await auth.listWallets() as UserWallet[]) || []);
+    setWallets(((await auth.listWallets()) as UserWallet[]) || []);
   };
 
   const value: AuthContextType = {
@@ -130,6 +156,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuthContext = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuthContext must be used within AuthProvider");
+  if (!ctx) throw new Error('useAuthContext must be used within AuthProvider');
   return ctx;
 };

@@ -1,4 +1,4 @@
-import { Plus, TrendingUp } from "lucide-react"
+import { Plus, TrendingUp } from 'lucide-react';
 
 export const DashboardHeader = () => (
   <div className="shadow-sm border-b border-lumen-border text-lumen-text">
@@ -6,7 +6,9 @@ export const DashboardHeader = () => (
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-lumen-text">Creator Dashboard</h1>
-          <p className="mt-1 text-sm text-lumen-subtext">Manage your NFT collections and track performance</p>
+          <p className="mt-1 text-sm text-lumen-subtext">
+            Manage your NFT collections and track performance
+          </p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-3">
           <button className="inline-flex items-center px-4 py-2 border border-lumen-border rounded-lg text-sm font-medium text-lumen-text bg-lumen-card hover:bg-lumen-surface2 transition-colors">
@@ -21,4 +23,4 @@ export const DashboardHeader = () => (
       </div>
     </div>
   </div>
-)
+);

@@ -1,16 +1,16 @@
-require("@testing-library/jest-dom");
+require('@testing-library/jest-dom');
 
-const { TextEncoder, TextDecoder } = require("util");
+const { TextEncoder, TextDecoder } = require('util');
 
-if (typeof global.TextEncoder === "undefined") {
+if (typeof global.TextEncoder === 'undefined') {
   global.TextEncoder = TextEncoder;
 }
 
-if (typeof global.TextDecoder === "undefined") {
+if (typeof global.TextDecoder === 'undefined') {
   global.TextDecoder = TextDecoder;
 }
 
-jest.mock("next/navigation", () => ({
+jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
@@ -19,18 +19,15 @@ jest.mock("next/navigation", () => ({
     forward: jest.fn(),
     refresh: jest.fn(),
   }),
-  usePathname: () => "/en",
+  usePathname: () => '/en',
   useSearchParams: () => new URLSearchParams(),
 }));
 
 // 💡 Fixed next/link mock to prevent nested <a> tags, merge click handlers, and drop legacyBehavior props safely
-jest.mock("next/link", () => {
-  const React = require("react");
+jest.mock('next/link', () => {
+  const React = require('react');
 
-  return React.forwardRef(function MockNextLink(
-    { href, children, legacyBehavior, ...props },
-    ref,
-  ) {
+  return React.forwardRef(function MockNextLink({ href, children, legacyBehavior, ...props }, ref) {
     const mergeHandlers = (childProps) => {
       return (e) => {
         if (props.onClick) props.onClick(e);
@@ -39,7 +36,7 @@ jest.mock("next/link", () => {
     };
 
     // If the child element is already a native link tag (<a>), flatten the tree
-    if (React.isValidElement(children) && children.type === "a") {
+    if (React.isValidElement(children) && children.type === 'a') {
       // Destructure legacyBehavior to prevent it from bleeding down into the cloneElement
       const { legacyBehavior: _childLegacy, ...cleanedChildProps } = children.props;
 
@@ -53,12 +50,12 @@ jest.mock("next/link", () => {
     }
 
     // Otherwise, fallback to creating a clean single anchor wrapper
-    return React.createElement("a", { ref, href, ...props, onClick: mergeHandlers() }, children);
+    return React.createElement('a', { ref, href, ...props, onClick: mergeHandlers() }, children);
   });
 });
 
 // Mock window.matchMedia for all tests (jsdom does not implement it by default)
-if (typeof window !== "undefined" && !window.matchMedia) {
+if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = function (query) {
     return {
       matches: false,

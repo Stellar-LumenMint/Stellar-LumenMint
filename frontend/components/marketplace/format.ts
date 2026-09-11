@@ -5,7 +5,7 @@
  * Keeps up to 7 decimals (Stellar precision); `toLocaleString` already drops
  * insignificant trailing zeros, so integers render without a decimal part.
  */
-export function formatAmount(amount: number, currency = "XLM"): string {
+export function formatAmount(amount: number, currency = 'XLM'): string {
   const value = Number.isFinite(amount) ? amount : 0;
   const formatted = value.toLocaleString(undefined, {
     maximumFractionDigits: 7,
@@ -16,10 +16,10 @@ export function formatAmount(amount: number, currency = "XLM"): string {
 /** Formats an ISO timestamp into a short, locale-aware date string. */
 export function formatDate(timestamp: string): string {
   const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 }

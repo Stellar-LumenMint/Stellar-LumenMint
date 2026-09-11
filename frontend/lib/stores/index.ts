@@ -1,11 +1,11 @@
 // Types
-export * from "./types";
+export * from './types';
 
 // Auth Store
-export { initializeAuth, useAuth, useAuthStore } from "./auth-store";
+export { initializeAuth, useAuth, useAuthStore } from './auth-store';
 
 // Collection Store
-export { useCollections, useCollectionStore } from "./collection-store";
+export { useCollections, useCollectionStore } from './collection-store';
 
 // Preferences Store
 export {
@@ -17,7 +17,7 @@ export {
   useRecentSearches,
   useTheme,
   useWatchlist,
-} from "./preferences-store";
+} from './preferences-store';
 
 // App Store
 export {
@@ -28,19 +28,19 @@ export {
   useSearch,
   useSidebar,
   useToast,
-} from "./app-store";
+} from './app-store';
 
-export { useMarketplace } from "../../features/marketplace/store/marketplaceStore";
-export { useNFTs } from "../../features/nft/store/nftStore";
-export { useUser, useUserProfile } from "../../features/user/store/userStore";
-export { useStore } from "../../hooks/useStore";
+export { useMarketplace } from '../../features/marketplace/store/marketplaceStore';
+export { useNFTs } from '../../features/nft/store/nftStore';
+export { useUser, useUserProfile } from '../../features/user/store/userStore';
+export { useStore } from '../../hooks/useStore';
 
 // Store initialization helper
-import { initializeAuth } from "./auth-store";
+import { initializeAuth } from './auth-store';
 export const initializeStores = async () => {
   try {
     await initializeAuth();
   } catch (error) {
-    console.error("Failed to initialize stores:", error);
+    console.error('Failed to initialize stores:', error);
   }
 };

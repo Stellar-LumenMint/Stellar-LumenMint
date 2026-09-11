@@ -49,8 +49,7 @@ function writeDismissedAt(): void {
 }
 
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -83,10 +82,7 @@ export default function InstallPrompt() {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
       clearTimer();
-      timerRef.current = setTimeout(
-        () => setShowInstallPrompt(true),
-        PROMPT_DELAY_MS,
-      );
+      timerRef.current = setTimeout(() => setShowInstallPrompt(true), PROMPT_DELAY_MS);
     };
 
     const handleAppInstalled = () => {
@@ -109,10 +105,7 @@ export default function InstallPrompt() {
 
     return () => {
       clearTimer();
-      window.removeEventListener(
-        'beforeinstallprompt',
-        handleBeforeInstallPrompt,
-      );
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
@@ -138,12 +131,7 @@ export default function InstallPrompt() {
     writeDismissedAt();
   }, []);
 
-  if (
-    isInstalled ||
-    isDismissed ||
-    !showInstallPrompt ||
-    !deferredPrompt
-  ) {
+  if (isInstalled || isDismissed || !showInstallPrompt || !deferredPrompt) {
     return null;
   }
 

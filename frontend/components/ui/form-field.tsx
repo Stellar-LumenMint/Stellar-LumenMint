@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { useId } from "react";
-import { cn } from "@/lib/utils";
+import React, { useId } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface FormFieldProps {
   /** Label text for the field */
@@ -44,29 +44,25 @@ export function FormField({
   const hintId = `${fieldId}-hint`;
 
   // Clone the child to inject id, aria-describedby, and aria-invalid
-  const describedBy = [
-    error ? errorId : null,
-    hint ? hintId : null,
-  ]
-    .filter(Boolean)
-    .join(" ") || undefined;
+  const describedBy =
+    [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(' ') || undefined;
 
   const child = React.Children.only(children) as React.ReactElement;
   const enhancedChild = React.cloneElement(child as React.ReactElement<any>, {
     id: fieldId,
-    "aria-describedby": describedBy,
-    "aria-invalid": error ? true : undefined,
+    'aria-describedby': describedBy,
+    'aria-invalid': error ? true : undefined,
     required,
   });
 
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn('space-y-1.5', className)}>
       <label
         htmlFor={fieldId}
         className={cn(
-          "block text-sm font-medium text-card-foreground",
-          hideLabel && "sr-only",
-          error && "text-destructive",
+          'block text-sm font-medium text-card-foreground',
+          hideLabel && 'sr-only',
+          error && 'text-destructive',
         )}
       >
         {label}

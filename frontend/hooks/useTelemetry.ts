@@ -1,6 +1,6 @@
-"use client";
-import { useEffect } from "react";
-import { telemetry } from "../lib/telemetry";
+'use client';
+import { useEffect } from 'react';
+import { telemetry } from '../lib/telemetry';
 
 /**
  * React hook to initialize telemetry at app bootstrap.

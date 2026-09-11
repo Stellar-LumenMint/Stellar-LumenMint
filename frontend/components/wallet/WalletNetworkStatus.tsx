@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { StellarNetwork } from "@/types/stellar";
-import { defaultNetwork } from "@/lib/stellar/client";
+import { StellarNetwork } from '@/types/stellar';
+import { defaultNetwork } from '@/lib/stellar/client';
 
 interface WalletNetworkStatusProps {
   network: StellarNetwork;
@@ -17,9 +17,9 @@ interface WalletNetworkStatusProps {
 export function WalletNetworkStatus({
   network,
   expectedNetwork = defaultNetwork,
-  className = "",
+  className = '',
 }: WalletNetworkStatusProps) {
-  const isTestnet = network === "testnet";
+  const isTestnet = network === 'testnet';
   const isMismatch = network !== expectedNetwork;
 
   if (isMismatch) {
@@ -31,7 +31,7 @@ export function WalletNetworkStatus({
         title={`Wrong network: connected to ${network}, app expects ${expectedNetwork}`}
       >
         <span className="w-1.5 h-1.5 rounded-full bg-red-400" aria-hidden="true" />
-        {`${network === "testnet" ? "Testnet" : "Mainnet"} — wrong network`}
+        {`${network === 'testnet' ? 'Testnet' : 'Mainnet'} — wrong network`}
       </span>
     );
   }
@@ -40,19 +40,17 @@ export function WalletNetworkStatus({
     <span
       className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
         isTestnet
-          ? "bg-yellow-400/10 text-yellow-400 border border-yellow-400/20"
-          : "bg-green-400/10 text-green-400 border border-green-400/20"
+          ? 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/20'
+          : 'bg-green-400/10 text-green-400 border border-green-400/20'
       } ${className}`}
       role="status"
       aria-label={`Connected to ${network}`}
     >
       <span
-        className={`w-1.5 h-1.5 rounded-full ${
-          isTestnet ? "bg-yellow-400" : "bg-green-400"
-        }`}
+        className={`w-1.5 h-1.5 rounded-full ${isTestnet ? 'bg-yellow-400' : 'bg-green-400'}`}
         aria-hidden="true"
       />
-      {isTestnet ? "Testnet" : "Mainnet"}
+      {isTestnet ? 'Testnet' : 'Mainnet'}
     </span>
   );
 }

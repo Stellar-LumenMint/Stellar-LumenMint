@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import React, { useState } from "react";
-import { Menu, X } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { ThemeLogo } from "@/components/ThemeLogo";
-import { usePathname } from "next/navigation";
-import { useCollectionStore } from "@/lib/stores/collection-store";
-import { ApiErrorFallback } from "@/components/api/ApiErrorFallback";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import { DashboardErrorFallback } from "@/components/dashboard/DashboardErrorFallback";
-import { telemetry } from "@/lib/telemetry";
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { Menu, X } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThemeLogo } from '@/components/ThemeLogo';
+import { usePathname } from 'next/navigation';
+import { useCollectionStore } from '@/lib/stores/collection-store';
+import { ApiErrorFallback } from '@/components/api/ApiErrorFallback';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { DashboardErrorFallback } from '@/components/dashboard/DashboardErrorFallback';
+import { telemetry } from '@/lib/telemetry';
 import {
   LayoutDashboard,
   Plus,
@@ -19,13 +19,9 @@ import {
   FolderOpen,
   DollarSign,
   Settings,
-} from "lucide-react";
+} from 'lucide-react';
 
-export default function CreatorDashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function CreatorDashboardLayout({ children }: { children: React.ReactNode }) {
   const { t, locale } = useTranslation();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -33,9 +29,7 @@ export default function CreatorDashboardLayout({
   // Hook into state slice tracking layers for structural side effects
   const storeError = useCollectionStore((state) => state.error);
   const clearStoreError = useCollectionStore((state) => state.clearError);
-  const fetchCollections = useCollectionStore(
-    (state) => state.fetchCollections,
-  );
+  const fetchCollections = useCollectionStore((state) => state.fetchCollections);
   const fetchNFTs = useCollectionStore((state) => state.fetchNFTs);
 
   const toggleSidebar = () => {
@@ -49,9 +43,9 @@ export default function CreatorDashboardLayout({
   // Contextual automated action trigger dependent on active routing path
   const handleGlobalRetry = async () => {
     clearStoreError();
-    if (pathname.includes("/collections")) {
+    if (pathname.includes('/collections')) {
       await fetchCollections();
-    } else if (pathname.includes("/my-nfts")) {
+    } else if (pathname.includes('/my-nfts')) {
       await fetchNFTs();
     } else {
       // General fallthrough fallback reload invocation
@@ -61,18 +55,18 @@ export default function CreatorDashboardLayout({
 
   // Wrap the entire dashboard with enhanced error boundary
   return (
-    <ErrorBoundary 
-      componentName="CreatorDashboardLayout" 
-      showRetry={true} 
+    <ErrorBoundary
+      componentName="CreatorDashboardLayout"
+      showRetry={true}
       showHome={true}
       showReport={true}
       onError={(error, errorInfo) => {
-        telemetry.track("creator_dashboard_layout_crash", {
+        telemetry.track('creator_dashboard_layout_crash', {
           error_message: error.message.slice(0, 200),
           component_stack: errorInfo.componentStack.slice(0, 500),
-          surface: "creator-dashboard",
-          status: "layout_crashed",
-          severity: "critical",
+          surface: 'creator-dashboard',
+          status: 'layout_crashed',
+          severity: 'critical',
         });
       }}
     >
@@ -82,14 +76,10 @@ export default function CreatorDashboardLayout({
           onClick={toggleSidebar}
           className="xl:hidden fixed top-3 z-50 p-2 bg-card border border-border rounded-lg text-card-foreground hover:bg-muted transition-colors transform duration-300 ease-in-out"
           style={{
-            left: isSidebarOpen ? "13rem" : "1rem", // 16rem = 256px (w-64), 1rem = 16px
+            left: isSidebarOpen ? '13rem' : '1rem', // 16rem = 256px (w-64), 1rem = 16px
           }}
         >
-          {isSidebarOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
+          {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
 
         {/* Overlay for mobile */}
@@ -103,7 +93,7 @@ export default function CreatorDashboardLayout({
         {/* Sidebar */}
         <aside
           className={`fixed xl:static inset-y-0 left-0 z-40 w-64 bg-card border-r border-border text-card-foreground transform transition-transform duration-300 ease-in-out h-screen ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full xl:translate-x-0"
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'
           }`}
         >
           <div className="flex flex-col h-screen overflow-hidden">
@@ -123,28 +113,27 @@ export default function CreatorDashboardLayout({
                     href={`/${locale}/creator-dashboard`}
                     className={`flex items-center space-x-3 py-2 px-3 rounded-lg transition-all duration-200 ${
                       pathname === `/${locale}/creator-dashboard`
-                        ? "bg-primary text-primary-foreground font-semibold"
-                        : "text-card-foreground hover:text-primary hover:bg-muted"
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-card-foreground hover:text-primary hover:bg-muted'
                     }`}
                     onClick={closeSidebar}
                   >
                     <LayoutDashboard className="h-5 w-5" />
-                    <span>{t("navigation.dashboard")}</span>
+                    <span>{t('navigation.dashboard')}</span>
                   </Link>
                 </li>
                 <li>
                   <Link
                     href={`/${locale}/creator-dashboard/create-your-collection`}
                     className={`flex items-center space-x-3 py-2 px-3 rounded-lg transition-all duration-200 ${
-                      pathname ===
-                      `/${locale}/creator-dashboard/create-your-collection`
-                        ? "bg-primary text-primary-foreground font-semibold"
-                        : "text-card-foreground hover:text-primary hover:bg-muted"
+                      pathname === `/${locale}/creator-dashboard/create-your-collection`
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-card-foreground hover:text-primary hover:bg-muted'
                     }`}
                     onClick={closeSidebar}
                   >
                     <Plus className="h-5 w-5" />
-                    <span>{t("creator.createNFT")}</span>
+                    <span>{t('creator.createNFT')}</span>
                   </Link>
                 </li>
                 <li>
@@ -152,13 +141,13 @@ export default function CreatorDashboardLayout({
                     href={`/${locale}/creator-dashboard/my-nfts`}
                     className={`flex items-center space-x-3 py-2 px-3 rounded-lg transition-all duration-200 ${
                       pathname === `/${locale}/creator-dashboard/my-nfts`
-                        ? "bg-primary text-primary-foreground font-semibold"
-                        : "text-card-foreground hover:text-primary hover:bg-muted"
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-card-foreground hover:text-primary hover:bg-muted'
                     }`}
                     onClick={closeSidebar}
                   >
                     <ImageIcon className="h-5 w-5" />
-                    <span>{t("profile.myNFTs")}</span>
+                    <span>{t('profile.myNFTs')}</span>
                   </Link>
                 </li>
                 <li>
@@ -166,13 +155,13 @@ export default function CreatorDashboardLayout({
                     href={`/${locale}/creator-dashboard/collections`}
                     className={`flex items-center space-x-3 py-2 px-3 rounded-lg transition-all duration-200 ${
                       pathname === `/${locale}/creator-dashboard/collections`
-                        ? "bg-primary text-primary-foreground font-semibold"
-                        : "text-card-foreground hover:text-primary hover:bg-muted"
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-card-foreground hover:text-primary hover:bg-muted'
                     }`}
                     onClick={closeSidebar}
                   >
                     <FolderOpen className="h-5 w-5" />
-                    <span>{t("profile.myCollections")}</span>
+                    <span>{t('profile.myCollections')}</span>
                   </Link>
                 </li>
                 <li>
@@ -180,13 +169,13 @@ export default function CreatorDashboardLayout({
                     href={`/${locale}/creator-dashboard/sales`}
                     className={`flex items-center space-x-3 py-2 px-3 rounded-lg transition-all duration-200 ${
                       pathname === `/${locale}/creator-dashboard/sales`
-                        ? "bg-primary text-primary-foreground font-semibold"
-                        : "text-card-foreground hover:text-primary hover:bg-muted"
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-card-foreground hover:text-primary hover:bg-muted'
                     }`}
                     onClick={closeSidebar}
                   >
                     <DollarSign className="h-5 w-5" />
-                    <span>{t("creator.earnings")}</span>
+                    <span>{t('creator.earnings')}</span>
                   </Link>
                 </li>
                 <li>
@@ -194,13 +183,13 @@ export default function CreatorDashboardLayout({
                     href={`/${locale}/creator-dashboard/settings`}
                     className={`flex items-center space-x-3 py-2 px-3 rounded-lg transition-all duration-200 ${
                       pathname === `/${locale}/creator-dashboard/settings`
-                        ? "bg-primary text-primary-foreground font-semibold"
-                        : "text-card-foreground hover:text-primary hover:bg-muted"
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-card-foreground hover:text-primary hover:bg-muted'
                     }`}
                     onClick={closeSidebar}
                   >
                     <Settings className="h-5 w-5" />
-                    <span>{t("profile.settings")}</span>
+                    <span>{t('profile.settings')}</span>
                   </Link>
                 </li>
               </ul>
@@ -239,11 +228,11 @@ export default function CreatorDashboardLayout({
               showRetry={true}
               showHome={true}
               onError={(error) => {
-                telemetry.track("creator_dashboard_error", {
+                telemetry.track('creator_dashboard_error', {
                   error_message: error.message.slice(0, 200),
-                  component_name: "creator-dashboard-layout",
-                  surface: "creator-dashboard",
-                  status: "layout_crashed",
+                  component_name: 'creator-dashboard-layout',
+                  surface: 'creator-dashboard',
+                  status: 'layout_crashed',
                 });
               }}
             >

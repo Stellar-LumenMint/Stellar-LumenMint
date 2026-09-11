@@ -1,20 +1,20 @@
 // UI Telemetry Event Types and Enums
 
 export enum DeviceType {
-  Desktop = "desktop",
-  Tablet = "tablet",
-  Mobile = "mobile",
+  Desktop = 'desktop',
+  Tablet = 'tablet',
+  Mobile = 'mobile',
 }
 
 export enum LayoutVariant {
-  Desktop = "desktop",
-  Tablet = "tablet",
-  Mobile = "mobile",
+  Desktop = 'desktop',
+  Tablet = 'tablet',
+  Mobile = 'mobile',
 }
 
 export enum ViewportPosition {
-  AboveFold = "above_fold",
-  BelowFold = "below_fold",
+  AboveFold = 'above_fold',
+  BelowFold = 'below_fold',
 }
 
 export type UIElementViewedPayload = {
@@ -27,7 +27,7 @@ export type UIElementViewedPayload = {
 
 export type UIElementInteractedPayload = {
   element: string;
-  interactionType: "click" | "hover" | "focus";
+  interactionType: 'click' | 'hover' | 'focus';
   timeToInteractionMs: number;
   deviceType: DeviceType;
   timestamp: number;
@@ -77,8 +77,8 @@ export type LayoutVariantRenderedPayload = {
 };
 
 export type AccessibilityInteractionPayload = {
-  interaction: "keyboard_nav" | "focus_move";
-  direction: "forward" | "backward" | "up" | "down";
+  interaction: 'keyboard_nav' | 'focus_move';
+  direction: 'forward' | 'backward' | 'up' | 'down';
   elementBefore: string;
   elementAfter: string;
   deviceType: DeviceType;
@@ -87,14 +87,14 @@ export type AccessibilityInteractionPayload = {
 
 export type ProgressiveDisclosureActionPayload = {
   element: string;
-  action: "expand" | "collapse";
+  action: 'expand' | 'collapse';
   timeInStateMs: number;
   deviceType: DeviceType;
   timestamp: number;
 };
 
 export type MobileGestureInteractionPayload = {
-  gesture: "swipe" | "pinch";
+  gesture: 'swipe' | 'pinch';
   velocity: number;
   completed: boolean;
   deviceType: DeviceType;

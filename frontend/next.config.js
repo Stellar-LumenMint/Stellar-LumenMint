@@ -43,12 +43,7 @@ const nextConfig = {
   // ── Image Optimization ─────────────────────────────────────────
   images: {
     // Allow external image sources (IPFS gateways, Stellar assets)
-    domains: [
-      'ipfs.io',
-      'cloudflare-ipfs.com',
-      'gateway.pinata.cloud',
-      'nftstorage.link',
-    ],
+    domains: ['ipfs.io', 'cloudflare-ipfs.com', 'gateway.pinata.cloud', 'nftstorage.link'],
     // Use modern sharp format for optimized images
     formats: ['image/avif', 'image/webp'],
   },

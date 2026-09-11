@@ -1,5 +1,5 @@
-import { gql } from "@apollo/client";
-import { LISTING_FIELDS_FRAGMENT } from "../fragments";
+import { gql } from '@apollo/client';
+import { LISTING_FIELDS_FRAGMENT } from '../fragments';
 
 export const GET_LISTINGS_QUERY = gql`
   query GetListings($pagination: PaginationInput, $filter: ListingFilterInput) {

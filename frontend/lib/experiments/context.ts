@@ -11,19 +11,25 @@ export interface ExperimentContextType {
 
 const ExperimentContext = createContext<ExperimentContextType | null>(null);
 
-export function ExperimentProvider({ assignments, children }: PropsWithChildren<{ assignments: Map<string, VariantAssignment> }>) {
-  const value = useMemo<ExperimentContextType>(() => ({
-    assignments,
-    getAssignment: (experimentID: string) => assignments.get(experimentID),
-    isVariant: (experimentID: string, variantID: string) => {
-      const a = assignments.get(experimentID);
-      return !!a && a.variant_id === variantID;
-    },
-    isControl: (experimentID: string) => {
-      const a = assignments.get(experimentID);
-      return !!a && a.is_control;
-    },
-  }), [assignments]);
+export function ExperimentProvider({
+  assignments,
+  children,
+}: PropsWithChildren<{ assignments: Map<string, VariantAssignment> }>) {
+  const value = useMemo<ExperimentContextType>(
+    () => ({
+      assignments,
+      getAssignment: (experimentID: string) => assignments.get(experimentID),
+      isVariant: (experimentID: string, variantID: string) => {
+        const a = assignments.get(experimentID);
+        return !!a && a.variant_id === variantID;
+      },
+      isControl: (experimentID: string) => {
+        const a = assignments.get(experimentID);
+        return !!a && a.is_control;
+      },
+    }),
+    [assignments],
+  );
   return React.createElement(ExperimentContext.Provider, { value }, children);
 }
 

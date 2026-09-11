@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { useTranslation } from "@/hooks/useTranslation";
-import { Button } from "@/components/ui/button";
-import { useLocalizedRoute } from "@/lib/routing";
+import React from 'react';
+import Link from 'next/link';
+import { useTranslation } from '@/hooks/useTranslation';
+import { Button } from '@/components/ui/button';
+import { useLocalizedRoute } from '@/lib/routing';
 
 const LoginBox = () => {
   const { t } = useTranslation();
@@ -19,43 +19,49 @@ const LoginBox = () => {
       }}
     >
       <div className="mt-10 w-[420px] bg-opacity-20 border border-white/20 backdrop-blur-lg shadow-lg text-white rounded-lg p-8">
-        <h1 className="text-2xl text-center font-bold">{t("auth.login")}</h1>
+        <h1 className="text-2xl text-center font-bold">{t('auth.login')}</h1>
         <form className="space-y-6">
           <div className="relative">
             <label htmlFor="login-username" className="sr-only">
-              {t("auth.username")}
+              {t('auth.username')}
             </label>
             <input
               id="login-username"
               type="text"
-              placeholder={t("auth.username")}
+              placeholder={t('auth.username')}
               autoComplete="username"
               required
               className="w-full h-12 bg-transparent border border-white/20 rounded-full text-white px-4 pr-12 placeholder-white focus:outline-none focus:ring-2 focus:ring-white"
             />
-            <i className="bx bxs-user absolute right-4 top-1/2 transform -translate-y-1/2 text-xl" aria-hidden="true"></i>
+            <i
+              className="bx bxs-user absolute right-4 top-1/2 transform -translate-y-1/2 text-xl"
+              aria-hidden="true"
+            ></i>
           </div>
           <div className="relative">
             <label htmlFor="login-password" className="sr-only">
-              {t("auth.password")}
+              {t('auth.password')}
             </label>
             <input
               id="login-password"
               type="password"
-              placeholder={t("auth.password")}
+              placeholder={t('auth.password')}
               autoComplete="current-password"
               required
               className="w-full h-12 bg-transparent border border-white/20 rounded-full text-white px-4 pr-12 placeholder-white focus:outline-none focus:ring-2 focus:ring-white"
             />
-            <i className="bx bxs-lock-alt absolute right-4 top-1/2 transform -translate-y-1/2 text-xl" aria-hidden="true"></i>
+            <i
+              className="bx bxs-lock-alt absolute right-4 top-1/2 transform -translate-y-1/2 text-xl"
+              aria-hidden="true"
+            ></i>
           </div>
           <div className="flex justify-between text-sm">
             <label className="flex items-center">
               <input type="checkbox" className="accent-white mr-2" />
-              {t("auth.rememberMe")}
+              {t('auth.rememberMe')}
             </label>
             <a href="#" className="hover:underline">
-              {t("auth.forgotPassword")}
+              {t('auth.forgotPassword')}
             </a>
           </div>
           <Button
@@ -63,13 +69,13 @@ const LoginBox = () => {
             variant="secondary"
             className="w-full rounded-full bg-white text-gray-800 hover:bg-gray-100 font-semibold shadow hover:shadow-lg"
           >
-            {t("auth.login")}
+            {t('auth.login')}
           </Button>
           <div className="text-center text-sm mt-4">
             <p>
-              {t("auth.dontHaveAccount")}{" "}
-              <Link href={localizedRoute("/auth/register")} className="font-bold hover:underline">
-                {t("auth.signUp")}
+              {t('auth.dontHaveAccount')}{' '}
+              <Link href={localizedRoute('/auth/register')} className="font-bold hover:underline">
+                {t('auth.signUp')}
               </Link>
             </p>
           </div>

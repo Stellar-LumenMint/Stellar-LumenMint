@@ -2,8 +2,14 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-jest.mock('next/link', () => ({ __esModule: true, default: ({ children }: any) => <span>{children}</span> }));
-jest.mock('next/image', () => ({ __esModule: true, default: (p: any) => <img {...p} alt={p.alt} /> }));
+jest.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ children }: any) => <span>{children}</span>,
+}));
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (p: any) => <img {...p} alt={p.alt} />,
+}));
 jest.mock('@/hooks/graphql/useCollectionQueries', () => ({
   useLikeCollection: () => ({
     isLiked: false,

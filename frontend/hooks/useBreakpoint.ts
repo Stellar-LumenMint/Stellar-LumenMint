@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { BREAKPOINTS, type BreakpointKey } from "@/utils/breakpoints";
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { BREAKPOINTS, type BreakpointKey } from '@/utils/breakpoints';
 
 // Ordered list of breakpoint keys from smallest to largest
-const BREAKPOINT_ORDER: BreakpointKey[] = ["xs", "sm", "md", "lg", "xl", "2xl"];
+const BREAKPOINT_ORDER: BreakpointKey[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
 
 /**
  * Returns the current active named breakpoint (e.g. "md", "lg").
@@ -16,17 +16,17 @@ function subscribeToResize(callback: () => void): () => void {
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(callback, 100);
   };
-  window.addEventListener("resize", debouncedCallback, { passive: true });
+  window.addEventListener('resize', debouncedCallback, { passive: true });
   return () => {
-    window.removeEventListener("resize", debouncedCallback);
+    window.removeEventListener('resize', debouncedCallback);
     if (timeout) clearTimeout(timeout);
   };
 }
 
 function getSnapshot(): BreakpointKey {
-  if (typeof window === "undefined") return "lg"; // SSR default
+  if (typeof window === 'undefined') return 'lg'; // SSR default
   const width = window.innerWidth;
-  let active: BreakpointKey = "xs";
+  let active: BreakpointKey = 'xs';
   for (const key of BREAKPOINT_ORDER) {
     if (width >= BREAKPOINTS[key]) {
       active = key;
@@ -36,7 +36,7 @@ function getSnapshot(): BreakpointKey {
 }
 
 function getServerSnapshot(): BreakpointKey {
-  return "lg";
+  return 'lg';
 }
 
 /**
@@ -83,10 +83,7 @@ export function useBreakpointDown(breakpoint: BreakpointKey): boolean {
  * @example
  * const isTablet = useBreakpointBetween("md", "lg"); // 768 <= width < 992
  */
-export function useBreakpointBetween(
-  lower: BreakpointKey,
-  upper: BreakpointKey,
-): boolean {
+export function useBreakpointBetween(lower: BreakpointKey, upper: BreakpointKey): boolean {
   // Both hooks must run on every render. Short-circuiting through `&&` would
   // skip the second call whenever the first returned false, so React would
   // see a different number of hooks between renders and the hook state would

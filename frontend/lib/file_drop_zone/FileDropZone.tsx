@@ -1,10 +1,8 @@
 import React from 'react';
 import { useFileDrop } from './useFileDrop';
-import './FileDropZone.css'
+import './FileDropZone.css';
 
 import { FileDropZoneProps } from '../interfaces';
-
-
 
 export const FileDropZone: React.FC<FileDropZoneProps> = ({
   accept = ['image/*'],
@@ -35,17 +33,10 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
 
   return (
     <div className={`file-dropzone-container ${className}`}>
-      <div
-        {...getRootProps()}
-        className={`dropzone ${isDragActive ? 'active' : ''}`}
-      >
+      <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
         <input {...getInputProps()} />
         <div className="dropzone-content">
-          {isDragActive ? (
-            <p>Drop files here...</p>
-          ) : (
-            <p>Drag & drop files or click to select</p>
-          )}
+          {isDragActive ? <p>Drop files here...</p> : <p>Drag & drop files or click to select</p>}
           <div className="file-requirements">
             <small>Accepted: {accept.join(', ')}</small>
             <small>Max size: {maxSizeMB}MB</small>
@@ -60,37 +51,29 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
             {files.map((file) => (
               <li key={file.id}>
                 {file.previewUrl ? (
-                      <img
-                        src={file.previewUrl}
-                        alt={file.file.name}
-                        height={50}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/fallbacks/nft-fallback.svg';
-                        }}
-                      />
-                    ) : (
-                      <span>{file.file.name}</span>
-                    )}
-                <span>{(file.metadata.sizeMB).toFixed(2)} MB</span>
+                  <img
+                    src={file.previewUrl}
+                    alt={file.file.name}
+                    height={50}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/fallbacks/nft-fallback.svg';
+                    }}
+                  />
+                ) : (
+                  <span>{file.file.name}</span>
+                )}
+                <span>{file.metadata.sizeMB.toFixed(2)} MB</span>
               </li>
             ))}
           </ul>
 
           <div className="file-actions">
-            <button 
-              type="button" 
-              onClick={clearFiles}
-              disabled={isUploading}
-            >
+            <button type="button" onClick={clearFiles} disabled={isUploading}>
               Clear All
             </button>
 
             {showUploadButton && uploadFn && (
-              <button
-                type="button"
-                onClick={handleUpload}
-                disabled={isUploading}
-              >
+              <button type="button" onClick={handleUpload} disabled={isUploading}>
                 {isUploading ? 'Uploading...' : 'Upload Now'}
               </button>
             )}

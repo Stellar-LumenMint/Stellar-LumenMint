@@ -14,7 +14,13 @@ export const Default = () => (
 
 export const WithFallback = () => (
   <div style={{ width: 300 }}>
-    <OptimizedImage src="/invalid-url.jpg" alt="Broken" width={120} height={80} fallbackSrc="/images/fallbacks/nft-fallback.svg" />
+    <OptimizedImage
+      src="/invalid-url.jpg"
+      alt="Broken"
+      width={120}
+      height={80}
+      fallbackSrc="/images/fallbacks/nft-fallback.svg"
+    />
   </div>
 );
 
@@ -26,12 +32,24 @@ export const Loading = () => (
 
 export const WithBlur = () => (
   <div style={{ width: 300 }}>
-    <OptimizedImage src="/stellar-lumenmint-mark.svg" alt="Blur" width={300} height={200} blurPlaceholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjMwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjZGRkIi8+PC9zdmc+" />
+    <OptimizedImage
+      src="/stellar-lumenmint-mark.svg"
+      alt="Blur"
+      width={300}
+      height={200}
+      blurPlaceholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjMwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjZGRkIi8+PC9zdmc+"
+    />
   </div>
 );
 
 export const Broken = () => (
   <div style={{ width: 300 }}>
-    <OptimizedImage src="/invalid-url.jpg" alt="Broken" width={300} height={200} fallbackSrc="/images/fallbacks/nft-fallback.svg" />
+    <OptimizedImage
+      src="/invalid-url.jpg"
+      alt="Broken"
+      width={300}
+      height={200}
+      fallbackSrc="/images/fallbacks/nft-fallback.svg"
+    />
   </div>
 );

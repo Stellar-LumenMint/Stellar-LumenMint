@@ -9,4 +9,4 @@ export interface Collection {
     secondary2: string;
   };
   likes: number;
-} 
+}

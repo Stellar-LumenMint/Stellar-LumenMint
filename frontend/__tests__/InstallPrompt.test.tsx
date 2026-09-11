@@ -57,9 +57,7 @@ describe('InstallPrompt', () => {
     });
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /^install$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^install$/i })).toBeInTheDocument();
   });
 
   it('hides the dialog and remembers a dismissal across sessions', () => {
@@ -72,21 +70,14 @@ describe('InstallPrompt', () => {
       jest.advanceTimersByTime(3000);
     });
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /dismiss install prompt/i }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /dismiss install prompt/i }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(
-      window.localStorage.getItem('installPromptDismissedAt'),
-    ).not.toBeNull();
+    expect(window.localStorage.getItem('installPromptDismissedAt')).not.toBeNull();
   });
 
   it('stays hidden when a recent dismissal is stored', () => {
-    window.localStorage.setItem(
-      'installPromptDismissedAt',
-      String(Date.now()),
-    );
+    window.localStorage.setItem('installPromptDismissedAt', String(Date.now()));
 
     render(<InstallPrompt />);
 

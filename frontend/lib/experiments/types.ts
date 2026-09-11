@@ -10,12 +10,7 @@ export enum ExperimentStatus {
 }
 
 export type ExperimentStatusName =
-  | 'draft'
-  | 'running'
-  | 'paused'
-  | 'completed'
-  | 'rolled_out'
-  | 'archived';
+  'draft' | 'running' | 'paused' | 'completed' | 'rolled_out' | 'archived';
 
 export enum InteractionType {
   CLICK = 'click',

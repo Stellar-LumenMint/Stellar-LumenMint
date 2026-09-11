@@ -1,19 +1,12 @@
-"use client";
+'use client';
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type DragEvent,
-} from "react";
-import { ImagePlus, Redo2, Undo2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
+import { ImagePlus, Redo2, Undo2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const MAX_HISTORY = 5;
 const MAX_SIZE_MB = 5;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 type HistoryEntry = {
   previewUrl: string | null;
@@ -25,7 +18,7 @@ export type ImageUploadFieldProps = {
   label?: string;
   value?: string;
   fallbackSeed?: string;
-  aspect?: "square" | "banner";
+  aspect?: 'square' | 'banner';
   className?: string;
   onPendingFileChange?: (file: File | null) => void;
 };
@@ -38,7 +31,7 @@ export function ImageUploadField({
   label,
   value,
   fallbackSeed,
-  aspect = "square",
+  aspect = 'square',
   className,
   onPendingFileChange,
 }: ImageUploadFieldProps) {
@@ -61,7 +54,7 @@ export function ImageUploadField({
   useEffect(() => {
     return () => {
       history.forEach((entry) => {
-        if (entry.previewUrl?.startsWith("blob:")) {
+        if (entry.previewUrl?.startsWith('blob:')) {
           URL.revokeObjectURL(entry.previewUrl);
         }
       });
@@ -83,7 +76,7 @@ export function ImageUploadField({
         const next = [...trimmed, entry];
         if (next.length > MAX_HISTORY) {
           const removed = next.shift();
-          if (removed?.previewUrl?.startsWith("blob:")) {
+          if (removed?.previewUrl?.startsWith('blob:')) {
             URL.revokeObjectURL(removed.previewUrl);
           }
         }
@@ -97,7 +90,7 @@ export function ImageUploadField({
   const applyFile = useCallback(
     (file: File) => {
       if (!isAcceptedImage(file)) {
-        setError("Use JPG, PNG, WebP, or GIF.");
+        setError('Use JPG, PNG, WebP, or GIF.');
         return;
       }
 
@@ -146,11 +139,9 @@ export function ImageUploadField({
   const canRedo = historyIndex < history.length - 1;
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn('space-y-2', className)}>
       {label ? (
-        <span className="block text-sm font-medium text-card-foreground">
-          {label}
-        </span>
+        <span className="block text-sm font-medium text-card-foreground">{label}</span>
       ) : null}
 
       <div
@@ -158,7 +149,7 @@ export function ImageUploadField({
         tabIndex={0}
         onClick={() => inputRef.current?.click()}
         onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
+          if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             inputRef.current?.click();
           }
@@ -177,28 +168,24 @@ export function ImageUploadField({
         }}
         onDrop={handleDrop}
         className={cn(
-          "group relative overflow-hidden rounded-xl border border-dashed border-border bg-muted/20 transition-colors",
-          aspect === "banner" ? "h-36 md:h-44" : "aspect-square max-w-[160px]",
-          isDragActive && "border-purple-400 bg-purple-500/10",
-          "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400",
+          'group relative overflow-hidden rounded-xl border border-dashed border-border bg-muted/20 transition-colors',
+          aspect === 'banner' ? 'h-36 md:h-44' : 'aspect-square max-w-[160px]',
+          isDragActive && 'border-purple-400 bg-purple-500/10',
+          'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400',
         )}
-        aria-label={label || "Upload image"}
+        aria-label={label || 'Upload image'}
       >
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPTED_TYPES.join(",")}
+          accept={ACCEPTED_TYPES.join(',')}
           className="hidden"
           onChange={(event) => handleFiles(event.target.files)}
         />
 
         {displayUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={displayUrl}
-            alt=""
-            className="h-full w-full object-cover"
-          />
+          <img src={displayUrl} alt="" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-muted-foreground">
             <ImagePlus className="h-6 w-6 text-purple-400" />

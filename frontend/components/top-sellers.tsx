@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from 'react';
 import { OptimizedImage } from './image';
-import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { useTranslation } from "@/hooks/useTranslation";
+import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface Seller {
   id: string;
@@ -21,115 +21,115 @@ export function TopSellers() {
   const pathname = usePathname();
   // Strip the locale segment (e.g. /en/marketplace -> /marketplace) so the
   // marketplace variant activates on every locale.
-  const isMarketplacePage = (pathname || "").replace(/^\/[a-z]{2}(?=\/|$)/, "") === "/marketplace";
+  const isMarketplacePage = (pathname || '').replace(/^\/[a-z]{2}(?=\/|$)/, '') === '/marketplace';
   const [showNavButtons, setShowNavButtons] = useState(false);
 
   const sellers: Seller[] = [
     {
-      id: "1",
-      name: isMarketplacePage ? "Crispyn Berry" : "Leighton Kramer",
-      amount: isMarketplacePage ? "24.5 XLM" : "276.4 XLM",
-      avatar: "/avatars/avatar-1.jpg",
+      id: '1',
+      name: isMarketplacePage ? 'Crispyn Berry' : 'Leighton Kramer',
+      amount: isMarketplacePage ? '24.5 XLM' : '276.4 XLM',
+      avatar: '/avatars/avatar-1.jpg',
       highlight: true,
-      bgColor: "bg-yellow-400",
+      bgColor: 'bg-yellow-400',
     },
     {
-      id: "2",
-      name: isMarketplacePage ? "Samuel Rust" : "Haylie Arcand",
-      amount: isMarketplacePage ? "20.8 XLM" : "146.8 XLM",
-      avatar: "/avatars/avatar-2.jpg",
-      bgColor: "bg-teal-400",
+      id: '2',
+      name: isMarketplacePage ? 'Samuel Rust' : 'Haylie Arcand',
+      amount: isMarketplacePage ? '20.8 XLM' : '146.8 XLM',
+      avatar: '/avatars/avatar-2.jpg',
+      bgColor: 'bg-teal-400',
     },
     {
-      id: "3",
-      name: isMarketplacePage ? "Tommy Alvarez" : "Bowen Higgins",
-      amount: isMarketplacePage ? "19.3 XLM" : "98.2 XLM",
-      avatar: "/avatars/avatar-3.jpg",
-      bgColor: "bg-purple-400",
+      id: '3',
+      name: isMarketplacePage ? 'Tommy Alvarez' : 'Bowen Higgins',
+      amount: isMarketplacePage ? '19.3 XLM' : '98.2 XLM',
+      avatar: '/avatars/avatar-3.jpg',
+      bgColor: 'bg-purple-400',
     },
     {
-      id: "4",
-      name: isMarketplacePage ? "Wilbur Lane" : "Saige Fuentes",
-      amount: isMarketplacePage ? "18.7 XLM" : "94.7 XLM",
-      avatar: "/avatars/avatar-4.jpg",
-      bgColor: "bg-violet-400",
+      id: '4',
+      name: isMarketplacePage ? 'Wilbur Lane' : 'Saige Fuentes',
+      amount: isMarketplacePage ? '18.7 XLM' : '94.7 XLM',
+      avatar: '/avatars/avatar-4.jpg',
+      bgColor: 'bg-violet-400',
     },
     {
-      id: "5",
-      name: isMarketplacePage ? "Andy Huxford" : "Sophie Maddox",
-      amount: isMarketplacePage ? "18.2 XLM" : "72.6 XLM",
-      avatar: "/avatars/avatar-5.jpg",
-      bgColor: "bg-green-400",
+      id: '5',
+      name: isMarketplacePage ? 'Andy Huxford' : 'Sophie Maddox',
+      amount: isMarketplacePage ? '18.2 XLM' : '72.6 XLM',
+      avatar: '/avatars/avatar-5.jpg',
+      bgColor: 'bg-green-400',
     },
     {
-      id: "6",
-      name: isMarketplacePage ? "Blake Banks" : "Jeremy Burch",
-      amount: isMarketplacePage ? "16.9 XLM" : "70.3 XLM",
-      avatar: "/avatars/avatar-6.jpg",
-      bgColor: "bg-pink-300",
+      id: '6',
+      name: isMarketplacePage ? 'Blake Banks' : 'Jeremy Burch',
+      amount: isMarketplacePage ? '16.9 XLM' : '70.3 XLM',
+      avatar: '/avatars/avatar-6.jpg',
+      bgColor: 'bg-pink-300',
     },
     {
-      id: "7",
-      name: isMarketplacePage ? "Monroe Lucas" : "Amelia Griffin",
-      amount: isMarketplacePage ? "15.8 XLM" : "65.4 XLM",
-      avatar: "/avatars/avatar-7.jpg",
-      bgColor: "bg-rose-400",
+      id: '7',
+      name: isMarketplacePage ? 'Monroe Lucas' : 'Amelia Griffin',
+      amount: isMarketplacePage ? '15.8 XLM' : '65.4 XLM',
+      avatar: '/avatars/avatar-7.jpg',
+      bgColor: 'bg-rose-400',
     },
     {
-      id: "8",
-      name: isMarketplacePage ? "Nash Romero" : "Isabella Hart",
-      amount: isMarketplacePage ? "14.4 XLM" : "59.2 XLM",
-      avatar: "/avatars/avatar-8.jpg",
-      bgColor: "bg-orange-400",
+      id: '8',
+      name: isMarketplacePage ? 'Nash Romero' : 'Isabella Hart',
+      amount: isMarketplacePage ? '14.4 XLM' : '59.2 XLM',
+      avatar: '/avatars/avatar-8.jpg',
+      bgColor: 'bg-orange-400',
     },
     {
-      id: "9",
-      name: isMarketplacePage ? "Harper Ritchie" : "Diego Bentley",
-      amount: isMarketplacePage ? "13.5 XLM" : "50.7 XLM",
-      avatar: "/avatars/avatar-9.jpg",
-      bgColor: "bg-fuchsia-400",
+      id: '9',
+      name: isMarketplacePage ? 'Harper Ritchie' : 'Diego Bentley',
+      amount: isMarketplacePage ? '13.5 XLM' : '50.7 XLM',
+      avatar: '/avatars/avatar-9.jpg',
+      bgColor: 'bg-fuchsia-400',
     },
     {
-      id: "10",
-      name: isMarketplacePage ? "Daisy Lozano" : "Daisy Lozano",
-      amount: isMarketplacePage ? "12.1 XLM" : "45.1 XLM",
-      avatar: "/avatars/avatar-10.jpg",
-      bgColor: "bg-emerald-400",
+      id: '10',
+      name: isMarketplacePage ? 'Daisy Lozano' : 'Daisy Lozano',
+      amount: isMarketplacePage ? '12.1 XLM' : '45.1 XLM',
+      avatar: '/avatars/avatar-10.jpg',
+      bgColor: 'bg-emerald-400',
     },
     {
-      id: "11",
-      name: isMarketplacePage ? "Eliza Morgan" : "Eliza Morgan",
-      amount: isMarketplacePage ? "11.8 XLM" : "42.3 XLM",
-      avatar: "/avatars/avatar-11.jpg",
-      bgColor: "bg-blue-400",
+      id: '11',
+      name: isMarketplacePage ? 'Eliza Morgan' : 'Eliza Morgan',
+      amount: isMarketplacePage ? '11.8 XLM' : '42.3 XLM',
+      avatar: '/avatars/avatar-11.jpg',
+      bgColor: 'bg-blue-400',
     },
     {
-      id: "12",
-      name: isMarketplacePage ? "Jasper Reed" : "Jasper Reed",
-      amount: isMarketplacePage ? "10.9 XLM" : "39.7 XLM",
-      avatar: "/avatars/avatar-12.jpg",
-      bgColor: "bg-amber-400",
+      id: '12',
+      name: isMarketplacePage ? 'Jasper Reed' : 'Jasper Reed',
+      amount: isMarketplacePage ? '10.9 XLM' : '39.7 XLM',
+      avatar: '/avatars/avatar-12.jpg',
+      bgColor: 'bg-amber-400',
     },
     {
-      id: "13",
-      name: isMarketplacePage ? "Mila Chen" : "Mila Chen",
-      amount: isMarketplacePage ? "10.2 XLM" : "36.5 XLM",
-      avatar: "/avatars/avatar-13.jpg",
-      bgColor: "bg-lime-400",
+      id: '13',
+      name: isMarketplacePage ? 'Mila Chen' : 'Mila Chen',
+      amount: isMarketplacePage ? '10.2 XLM' : '36.5 XLM',
+      avatar: '/avatars/avatar-13.jpg',
+      bgColor: 'bg-lime-400',
     },
     {
-      id: "14",
-      name: isMarketplacePage ? "Felix Dawson" : "Felix Dawson",
-      amount: isMarketplacePage ? "9.7 XLM" : "34.8 XLM",
-      avatar: "/avatars/avatar-14.jpg",
-      bgColor: "bg-sky-400",
+      id: '14',
+      name: isMarketplacePage ? 'Felix Dawson' : 'Felix Dawson',
+      amount: isMarketplacePage ? '9.7 XLM' : '34.8 XLM',
+      avatar: '/avatars/avatar-14.jpg',
+      bgColor: 'bg-sky-400',
     },
     {
-      id: "15",
-      name: isMarketplacePage ? "Zoe Parker" : "Zoe Parker",
-      amount: isMarketplacePage ? "9.1 XLM" : "32.6 XLM",
-      avatar: "/avatars/avatar-15.jpg",
-      bgColor: "bg-red-400",
+      id: '15',
+      name: isMarketplacePage ? 'Zoe Parker' : 'Zoe Parker',
+      amount: isMarketplacePage ? '9.1 XLM' : '32.6 XLM',
+      avatar: '/avatars/avatar-15.jpg',
+      bgColor: 'bg-red-400',
     },
   ];
 
@@ -146,24 +146,24 @@ export function TopSellers() {
       };
 
       checkScrollable();
-      window.addEventListener("resize", checkScrollable);
+      window.addEventListener('resize', checkScrollable);
 
       return () => {
-        window.removeEventListener("resize", checkScrollable);
+        window.removeEventListener('resize', checkScrollable);
       };
     }
   }, []);
 
-  const scroll = (direction: "left" | "right") => {
+  const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
       const { current } = scrollContainerRef;
       // Adjust scroll amount to show approximately 3 new items
       const scrollAmount = 320;
 
-      if (direction === "left") {
-        current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+      if (direction === 'left') {
+        current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
       } else {
-        current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
       }
     }
   };
@@ -173,20 +173,20 @@ export function TopSellers() {
     return (
       <section className="py-12 relative">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">{t("topSellers.title")}</h2>
+          <h2 className="text-2xl font-bold">{t('topSellers.title')}</h2>
           {showNavButtons && (
             <div className="flex gap-2">
               <button
-                onClick={() => scroll("left")}
+                onClick={() => scroll('left')}
                 className="bg-gray-800/50 hover:bg-gray-700/70 text-white p-2 rounded-full"
-                aria-label={t("topSellers.scrollLeft")}
+                aria-label={t('topSellers.scrollLeft')}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
-                onClick={() => scroll("right")}
+                onClick={() => scroll('right')}
                 className="bg-gray-800/50 hover:bg-gray-700/70 text-white p-2 rounded-full"
-                aria-label={t("topSellers.scrollRight")}
+                aria-label={t('topSellers.scrollRight')}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -197,13 +197,10 @@ export function TopSellers() {
         <div
           className="flex overflow-x-auto gap-5 pb-4 snap-x px-1 no-scrollbar"
           ref={scrollContainerRef}
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {sellers.map((seller) => (
-            <div
-              key={seller.id}
-              className="flex flex-col items-center min-w-[100px] snap-start"
-            >
+            <div key={seller.id} className="flex flex-col items-center min-w-[100px] snap-start">
               <div
                 className={`w-16 h-16 rounded-2xl ${seller.bgColor} mb-3 relative overflow-hidden flex items-center justify-center`}
               >
@@ -216,9 +213,7 @@ export function TopSellers() {
                   fallbackSrc="/images/fallbacks/avatar-fallback.svg"
                 />
               </div>
-              <h3 className="text-sm font-medium text-center whitespace-nowrap">
-                {seller.name}
-              </h3>
+              <h3 className="text-sm font-medium text-center whitespace-nowrap">{seller.name}</h3>
               <p className="text-xs text-[#9398a8]">{seller.amount}</p>
             </div>
           ))}
@@ -240,7 +235,7 @@ export function TopSellers() {
         <div className="flex flex-col items-center mb-16">
           <div className="inline-block relative">
             <h2 className="text-4xl font-bold text-center text-white tracking-wider font-display">
-              {t("topSellers.title")}
+              {t('topSellers.title')}
             </h2>
             <div className="absolute -bottom-3 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent"></div>
             <div className="absolute -bottom-5 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
@@ -252,10 +247,10 @@ export function TopSellers() {
             <div
               key={seller.id}
               className={cn(
-                "relative rounded-xl overflow-hidden group cursor-pointer transition-all duration-300 hover:-translate-y-1",
+                'relative rounded-xl overflow-hidden group cursor-pointer transition-all duration-300 hover:-translate-y-1',
                 seller.highlight
-                  ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30"
-                  : "bg-gradient-to-r from-gray-900/80 to-gray-800/80 border border-gray-700/50"
+                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30'
+                  : 'bg-gradient-to-r from-gray-900/80 to-gray-800/80 border border-gray-700/50',
               )}
             >
               <div className="flex items-center p-4 gap-3">
@@ -269,13 +264,11 @@ export function TopSellers() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-white truncate">
-                    {seller.name}
-                  </h3>
+                  <h3 className="text-sm font-medium text-white truncate">{seller.name}</h3>
                   <p
                     className={cn(
-                      "text-xs font-medium",
-                      seller.highlight ? "text-blue-400" : "text-purple-400"
+                      'text-xs font-medium',
+                      seller.highlight ? 'text-blue-400' : 'text-purple-400',
                     )}
                   >
                     {seller.amount}

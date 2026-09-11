@@ -1,33 +1,38 @@
-import { QueryHookOptions, useMutation, useQuery } from "@apollo/client";
+import { QueryHookOptions, useMutation, useQuery } from '@apollo/client';
 import {
   GetTopCollectionsQuery,
   GetTopCollectionsQueryVariables,
   useGetTopCollectionsQuery as useGetTopCollectionsQueryGenerated,
-} from "./generated";
-import { GET_TOP_COLLECTIONS_QUERY } from "@/lib/graphql/queries/collection.queries";
-import { LIKE_COLLECTION_MUTATION, UNLIKE_COLLECTION_MUTATION, GET_COLLECTION_LIKES_QUERY } from "@/lib/graphql/mutations/collection.mutations";
-import { useMemo, useCallback, useRef, useState } from "react";
-import { Collection } from "@/types";
-import { useWalletStore } from "@/lib/stores/walletStore";
-import { useToast } from "@/lib/stores";
+} from './generated';
+import { GET_TOP_COLLECTIONS_QUERY } from '@/lib/graphql/queries/collection.queries';
+import {
+  LIKE_COLLECTION_MUTATION,
+  UNLIKE_COLLECTION_MUTATION,
+  GET_COLLECTION_LIKES_QUERY,
+} from '@/lib/graphql/mutations/collection.mutations';
+import { useMemo, useCallback, useRef, useState } from 'react';
+import { Collection } from '@/types';
+import { useWalletStore } from '@/lib/stores/walletStore';
+import { useToast } from '@/lib/stores';
 
 // Enhanced hook with data transformation
 export function usePopularCollectionsQuery(
-  options?: QueryHookOptions<GetTopCollectionsQuery, GetTopCollectionsQueryVariables>
+  options?: QueryHookOptions<GetTopCollectionsQuery, GetTopCollectionsQueryVariables>,
 ) {
   const result = useGetTopCollectionsQueryGenerated(options);
-  
+
   const transformedData = useMemo(() => {
     if (!result.data?.topCollections) return { topCollections: [] };
-    
+
     const collections: Collection[] = result.data.topCollections.map((col: any) => {
       const nftImages = col.nfts?.edges?.map((edge: any) => edge.node.image) || [];
       const likeCount = col.likes || 0;
-      
+
       return {
         id: col.id,
         title: col.name,
-        creatorName: col.creator?.username || col.creator?.walletAddress?.slice(0, 8) || 'Unknown Creator',
+        creatorName:
+          col.creator?.username || col.creator?.walletAddress?.slice(0, 8) || 'Unknown Creator',
         creatorImage: col.creator?.avatar || '/images/fallbacks/avatar-fallback.svg',
         images: {
           main: col.image || '/images/fallbacks/collection-fallback.svg',
@@ -42,7 +47,7 @@ export function usePopularCollectionsQuery(
         isVerified: col.isVerified,
       };
     });
-    
+
     return { topCollections: collections };
   }, [result.data]);
 
@@ -60,7 +65,7 @@ export function useLikeCollection(collectionId: string) {
   const { showError, showSuccess, showWarning } = useToast(); // Use specific toast methods
   const [isProcessing, setIsProcessing] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Query for current like status
   const { data: likesData, refetch: refetchLikes } = useQuery(GET_COLLECTION_LIKES_QUERY, {
     variables: { collectionId },
@@ -91,10 +96,15 @@ export function useLikeCollection(collectionId: string) {
       debounceRef.current = null;
     }
 
-    return new Promise<{ success: boolean; likesCount?: number; userLiked?: boolean; message?: string }>((resolve) => {
+    return new Promise<{
+      success: boolean;
+      likesCount?: number;
+      userLiked?: boolean;
+      message?: string;
+    }>((resolve) => {
       debounceRef.current = setTimeout(async () => {
         setIsProcessing(true);
-        
+
         try {
           let result;
           if (isLiked) {
@@ -112,16 +122,19 @@ export function useLikeCollection(collectionId: string) {
             });
             result = data?.likeCollection;
           }
-          
+
           if (result?.success) {
             await refetchLikes();
-            showSuccess(isLiked ? 'Collection unliked successfully' : 'Collection liked successfully');
+            showSuccess(
+              isLiked ? 'Collection unliked successfully' : 'Collection liked successfully',
+            );
             resolve({ success: true, likesCount: result.likesCount, userLiked: result.userLiked });
           } else {
             throw new Error(result?.message || 'Failed to update like status');
           }
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to update like status';
+          const errorMessage =
+            error instanceof Error ? error.message : 'Failed to update like status';
           showError(errorMessage);
           resolve({ success: false, message: errorMessage });
         } finally {
@@ -130,7 +143,18 @@ export function useLikeCollection(collectionId: string) {
         }
       }, 300);
     });
-  }, [collectionId, isLiked, connected, isProcessing, likeMutation, unlikeMutation, refetchLikes, showSuccess, showError, showWarning]);
+  }, [
+    collectionId,
+    isLiked,
+    connected,
+    isProcessing,
+    likeMutation,
+    unlikeMutation,
+    refetchLikes,
+    showSuccess,
+    showError,
+    showWarning,
+  ]);
 
   return {
     isLiked,

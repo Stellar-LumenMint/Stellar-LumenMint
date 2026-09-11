@@ -1,6 +1,6 @@
-import { useAuthStore } from "@/lib/stores/auth-store";
-import { getCookie } from "@/lib/CSRFTOKEN";
-import { parseResponseError, normalizeApiError } from "@/utils/fetchUtils";
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { getCookie } from '@/lib/CSRFTOKEN';
+import { parseResponseError, normalizeApiError } from '@/utils/fetchUtils';
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
@@ -18,28 +18,28 @@ export async function fetchWithAuth(
   retry = true,
 ): Promise<Response> {
   const accessToken =
-    typeof window !== "undefined"
-      ? (localStorage.getItem("access_token") || sessionStorage.getItem("access_token"))
+    typeof window !== 'undefined'
+      ? localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
       : null;
   const refreshToken =
-    typeof window !== "undefined"
-      ? (localStorage.getItem("refresh_token") || sessionStorage.getItem("refresh_token"))
+    typeof window !== 'undefined'
+      ? localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token')
       : null;
 
   const headers = new Headers(init?.headers || {});
   if (accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
+    headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
   // Attach the CSRF token to every state-changing request. Doing it here
   // instead of per page guarantees no mutating flow can be sent without
   // one (the token is cached, so this is not an extra round-trip).
-  const method = (init?.method || "GET").toUpperCase();
-  const isMutating = !["GET", "HEAD", "OPTIONS"].includes(method);
-  if (isMutating && typeof window !== "undefined") {
+  const method = (init?.method || 'GET').toUpperCase();
+  const isMutating = !['GET', 'HEAD', 'OPTIONS'].includes(method);
+  if (isMutating && typeof window !== 'undefined') {
     try {
       const csrfToken = await getCookie();
-      headers.set("X-CSRF-Token", csrfToken);
+      headers.set('X-CSRF-Token', csrfToken);
     } catch {
       // CSRF token fetch failure must not block the request; the server
       // still enforces the cookie-based CSRF check where configured.
@@ -48,14 +48,11 @@ export async function fetchWithAuth(
 
   // Synthesize client timeout using a unified AbortController signal
   const clientController = new AbortController();
-  const timeoutId = setTimeout(
-    () => clientController.abort(),
-    DEFAULT_TIMEOUT_MS,
-  );
+  const timeoutId = setTimeout(() => clientController.abort(), DEFAULT_TIMEOUT_MS);
 
   // Link external signals if passed down via configuration parameters
   if (init?.signal) {
-    init.signal.addEventListener("abort", () => clientController.abort());
+    init.signal.addEventListener('abort', () => clientController.abort());
   }
 
   try {
@@ -86,22 +83,17 @@ export async function fetchWithAuth(
         await refreshPromise;
 
         const newAccessToken =
-          typeof window !== "undefined"
-            ? (localStorage.getItem("access_token") || sessionStorage.getItem("access_token"))
+          typeof window !== 'undefined'
+            ? localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
             : null;
         if (newAccessToken) {
-          headers.set("Authorization", `Bearer ${newAccessToken}`);
+          headers.set('Authorization', `Bearer ${newAccessToken}`);
 
           // Construct unique cancellation controllers specifically for the retry execution frame
           const retryController = new AbortController();
-          const retryTimeoutId = setTimeout(
-            () => retryController.abort(),
-            DEFAULT_TIMEOUT_MS,
-          );
+          const retryTimeoutId = setTimeout(() => retryController.abort(), DEFAULT_TIMEOUT_MS);
           if (init?.signal) {
-            init.signal.addEventListener("abort", () =>
-              retryController.abort(),
-            );
+            init.signal.addEventListener('abort', () => retryController.abort());
           }
 
           const retryResponse = await fetch(input, {

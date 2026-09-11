@@ -9,7 +9,7 @@ export class ExperimentAssignmentEngine {
    */
   static assignVariant(
     experiment: ExperimentDefinition,
-    assignmentSeed: string // user_id, session_id, or device_id
+    assignmentSeed: string, // user_id, session_id, or device_id
   ): VariantAssignment {
     // Hash the seed to get a 0-100 score
     const hash = crypto
@@ -20,7 +20,7 @@ export class ExperimentAssignmentEngine {
 
     // Rollout gate: assign control if outside rollout percentage
     if (hashScore >= experiment.rollout_percentage) {
-      const control = experiment.variants.find(v => v.is_control);
+      const control = experiment.variants.find((v) => v.is_control);
       return {
         experiment_id: experiment.experiment_id,
         variant_id: control!.variant_id,
@@ -49,10 +49,10 @@ export class ExperimentAssignmentEngine {
   static getAssignmentsForSurface(
     surface: string,
     assignmentSeed: string,
-    experiments: ExperimentDefinition[] = EXPERIMENT_REGISTRY
+    experiments: ExperimentDefinition[] = EXPERIMENT_REGISTRY,
   ): Map<string, VariantAssignment> {
     const applicableExperiments = experiments.filter(
-      exp => exp.status === 'running' && exp.surfaces.includes(surface)
+      (exp) => exp.status === 'running' && exp.surfaces.includes(surface),
     );
     const assignments = new Map<string, VariantAssignment>();
     for (const exp of applicableExperiments) {

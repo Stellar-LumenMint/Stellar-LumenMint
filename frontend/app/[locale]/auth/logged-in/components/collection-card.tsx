@@ -1,26 +1,26 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { MoreVertical, Edit, Share, Trash2 } from "lucide-react"
+import { useState } from 'react';
+import { MoreVertical, Edit, Share, Trash2 } from 'lucide-react';
 type CollectionCardProps = {
   collection: {
-    id: string | number
-    name: string
-    description: string
-    nftCount: number
-    floorPrice: number
-    totalVolume: number
-    createdAt: string | number | Date
-  }
-  isLoading?: boolean
-}
-import { CollectionCardSkeleton } from "./skeletons/collection-card-skeleton"
+    id: string | number;
+    name: string;
+    description: string;
+    nftCount: number;
+    floorPrice: number;
+    totalVolume: number;
+    createdAt: string | number | Date;
+  };
+  isLoading?: boolean;
+};
+import { CollectionCardSkeleton } from './skeletons/collection-card-skeleton';
 import { OptimizedImage } from '@/components/image';
 
 export const CollectionCard = ({ collection, isLoading = false }: CollectionCardProps) => {
-  const [showMenu, setShowMenu] = useState(false)
+  const [showMenu, setShowMenu] = useState(false);
 
-  if (isLoading) return <CollectionCardSkeleton />
+  if (isLoading) return <CollectionCardSkeleton />;
 
   return (
     <div className="rounded-lg border border-lumen-border bg-lumen-card overflow-hidden hover:shadow-lg transition-shadow group">
@@ -78,9 +78,11 @@ export const CollectionCard = ({ collection, isLoading = false }: CollectionCard
 
         <div className="flex justify-between items-center">
           <span className="text-sm text-lumen-subtext">Volume: {collection.totalVolume} XLM</span>
-          <span className="text-xs text-lumen-subtext">{new Date(collection.createdAt).toLocaleDateString()}</span>
+          <span className="text-xs text-lumen-subtext">
+            {new Date(collection.createdAt).toLocaleDateString()}
+          </span>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

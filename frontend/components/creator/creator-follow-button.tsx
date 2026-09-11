@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useRef, useState } from "react";
-import { useMutation } from "@apollo/client";
-import { Loader2 } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
-import { useAuthStore } from "@/lib/stores/auth-store";
-import { useStellarWallet } from "@/components/wallet/hooks/useStellarWallet";
-import { WalletModal } from "@/components/wallet/WalletModal";
-import { useToast } from "@/lib/stores";
+import { useRef, useState } from 'react';
+import { useMutation } from '@apollo/client';
+import { Loader2 } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useStellarWallet } from '@/components/wallet/hooks/useStellarWallet';
+import { WalletModal } from '@/components/wallet/WalletModal';
+import { useToast } from '@/lib/stores';
 import {
   FOLLOW_CREATOR_MUTATION,
   UNFOLLOW_CREATOR_MUTATION,
-} from "@/lib/graphql/queries/creator.queries";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+} from '@/lib/graphql/queries/creator.queries';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type CreatorFollowButtonProps = {
   creatorId: string;
@@ -48,7 +48,7 @@ export function CreatorFollowButton({
   const [followCreator, followState] = useMutation(FOLLOW_CREATOR_MUTATION, {
     optimisticResponse: {
       followCreator: {
-        __typename: "FollowResult",
+        __typename: 'FollowResult',
         success: true,
         followerCount: followerCount + 1,
         isFollowing: true,
@@ -60,31 +60,28 @@ export function CreatorFollowButton({
     },
     onError: () => {
       restorePreMutationState();
-      showError(t("creator.followError"));
+      showError(t('creator.followError'));
     },
   });
 
-  const [unfollowCreator, unfollowState] = useMutation(
-    UNFOLLOW_CREATOR_MUTATION,
-    {
-      optimisticResponse: {
-        unfollowCreator: {
-          __typename: "FollowResult",
-          success: true,
-          followerCount: Math.max(0, followerCount - 1),
-          isFollowing: false,
-        },
-      },
-      onCompleted: (data) => {
-        setIsFollowing(data.unfollowCreator.isFollowing);
-        setFollowerCount(data.unfollowCreator.followerCount);
-      },
-      onError: () => {
-        restorePreMutationState();
-        showError(t("creator.unfollowError"));
+  const [unfollowCreator, unfollowState] = useMutation(UNFOLLOW_CREATOR_MUTATION, {
+    optimisticResponse: {
+      unfollowCreator: {
+        __typename: 'FollowResult',
+        success: true,
+        followerCount: Math.max(0, followerCount - 1),
+        isFollowing: false,
       },
     },
-  );
+    onCompleted: (data) => {
+      setIsFollowing(data.unfollowCreator.isFollowing);
+      setFollowerCount(data.unfollowCreator.followerCount);
+    },
+    onError: () => {
+      restorePreMutationState();
+      showError(t('creator.unfollowError'));
+    },
+  });
 
   const loading = followState.loading || unfollowState.loading;
   const isAuthenticated = Boolean(authUser?.id);
@@ -114,25 +111,22 @@ export function CreatorFollowButton({
         onClick={handleClick}
         disabled={loading}
         className={cn(
-          "min-w-[108px] bg-gradient-to-r from-[#4e3bff] to-[#9747ff] text-white hover:opacity-90",
-          isFollowing && "border border-gray-600 bg-transparent from-transparent to-transparent",
+          'min-w-[108px] bg-gradient-to-r from-[#4e3bff] to-[#9747ff] text-white hover:opacity-90',
+          isFollowing && 'border border-gray-600 bg-transparent from-transparent to-transparent',
           className,
         )}
-        variant={isFollowing ? "outline" : "default"}
+        variant={isFollowing ? 'outline' : 'default'}
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : isFollowing ? (
-          t("common.unfollow")
+          t('common.unfollow')
         ) : (
-          t("common.follow")
+          t('common.follow')
         )}
       </Button>
 
-      <WalletModal
-        open={walletModalOpen}
-        onClose={() => setWalletModalOpen(false)}
-      />
+      <WalletModal open={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
     </>
   );
 }

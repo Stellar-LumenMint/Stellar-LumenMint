@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -15,16 +15,10 @@ const ITEMS_PER_PAGE = 20;
 export default function MyNFTsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  
+
   // Use correct wallet store properties
-  const { 
-    address, 
-    connected, 
-    user, 
-    setConnecting, 
-    setError: setWalletError 
-  } = useWalletStore();
-  
+  const { address, connected, user, setConnecting, setError: setWalletError } = useWalletStore();
+
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,37 +31,40 @@ export default function MyNFTsPage() {
   // Get userId from user object or wallet address
   const userId = user?.id || address;
 
-  const fetchNFTs = useCallback(async (page: number, search?: string) => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+  const fetchNFTs = useCallback(
+    async (page: number, search?: string) => {
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
 
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const params = {
-        ownerId: userId,
-        page,
-        limit: ITEMS_PER_PAGE,
-        ...(search ? { search } : {}),
-      };
+      try {
+        const params = {
+          ownerId: userId,
+          page,
+          limit: ITEMS_PER_PAGE,
+          ...(search ? { search } : {}),
+        };
 
-      const response: NFTPaginationResponse = await nftService.getOwnerNFTs(params);
-      
-      setNfts(response.items);
-      setTotalItems(response.total);
-      setHasNextPage(response.hasNextPage);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch NFTs';
-      setError(errorMessage);
-      setNfts([]);
-    } finally {
-      setLoading(false);
-      setIsSearching(false);
-    }
-  }, [userId]);
+        const response: NFTPaginationResponse = await nftService.getOwnerNFTs(params);
+
+        setNfts(response.items);
+        setTotalItems(response.total);
+        setHasNextPage(response.hasNextPage);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch NFTs';
+        setError(errorMessage);
+        setNfts([]);
+      } finally {
+        setLoading(false);
+        setIsSearching(false);
+      }
+    },
+    [userId],
+  );
 
   // Initial fetch and page changes
   useEffect(() => {
@@ -127,12 +124,8 @@ export default function MyNFTsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-md mx-auto text-center">
         <div className="p-6 bg-[#1E1A45] rounded-2xl border border-purple-900/30">
-          <h2 className="text-2xl font-bold text-white mb-3">
-            Connect Your Wallet
-          </h2>
-          <p className="text-gray-400 mb-6">
-            Connect your wallet to view your NFT collection
-          </p>
+          <h2 className="text-2xl font-bold text-white mb-3">Connect Your Wallet</h2>
+          <p className="text-gray-400 mb-6">Connect your wallet to view your NFT collection</p>
           <Button
             onClick={() => setConnecting(true)}
             className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3"
@@ -151,7 +144,9 @@ export default function MyNFTsPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">My NFTs</h1>
           <p className="text-gray-400 text-sm mt-1">
-            {totalItems > 0 ? `Showing ${nfts.length} of ${totalItems} NFTs` : 'No NFTs in your collection'}
+            {totalItems > 0
+              ? `Showing ${nfts.length} of ${totalItems} NFTs`
+              : 'No NFTs in your collection'}
           </p>
         </div>
 
@@ -175,9 +170,7 @@ export default function MyNFTsPage() {
               </button>
             )}
           </div>
-          {isSearching && (
-            <div className="text-sm text-purple-400 animate-pulse">Searching...</div>
-          )}
+          {isSearching && <div className="text-sm text-purple-400 animate-pulse">Searching...</div>}
         </div>
       </div>
 
@@ -197,11 +190,7 @@ export default function MyNFTsPage() {
       )}
 
       {/* NFT Grid */}
-      <NFTGrid
-        nfts={nfts}
-        loading={loading}
-        emptyMessage="No NFTs found"
-      />
+      <NFTGrid nfts={nfts} loading={loading} emptyMessage="No NFTs found" />
 
       {/* Pagination */}
       {!loading && !error && totalItems > 0 && (

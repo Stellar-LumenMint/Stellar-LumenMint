@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { X, AlertCircle, Loader2, ExternalLink } from "lucide-react";
-import { WalletInfo, WalletProvider } from "@/types/stellar";
-import { useStellarWallet } from "./hooks/useStellarWallet";
-import { detectInstalledWallets } from "@/lib/stellar/wallet/detection";
-import { useTranslation } from "@/hooks/useTranslation";
-import { OptimizedImage } from "@/components/image";
-import { useToast } from "@/lib/stores";
-import { Button } from "@/components/ui/button";
-import { telemetry } from "@/lib/telemetry";
-import { EVENT_NAMES } from "@/lib/telemetry/events";
-import { v4 as uuidv4 } from "uuid";
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { X, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
+import { WalletInfo, WalletProvider } from '@/types/stellar';
+import { useStellarWallet } from './hooks/useStellarWallet';
+import { detectInstalledWallets } from '@/lib/stellar/wallet/detection';
+import { useTranslation } from '@/hooks/useTranslation';
+import { OptimizedImage } from '@/components/image';
+import { useToast } from '@/lib/stores';
+import { Button } from '@/components/ui/button';
+import { telemetry } from '@/lib/telemetry';
+import { EVENT_NAMES } from '@/lib/telemetry/events';
+import { v4 as uuidv4 } from 'uuid';
 
 interface WalletModalProps {
   open: boolean;
@@ -31,7 +31,9 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
   const firstFocusableRef = useRef<HTMLButtonElement>(null);
   const lastFocusedElementRef = useRef<HTMLElement | null>(null);
   const [attemptId, setAttemptId] = useState<string | null>(null);
-  const [triggerSource, setTriggerSource] = useState<"header_button" | "cta" | "forced_prompt" | "other">("other");
+  const [triggerSource, setTriggerSource] = useState<
+    'header_button' | 'cta' | 'forced_prompt' | 'other'
+  >('other');
 
   useEffect(() => {
     if (open) {
@@ -46,7 +48,7 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
       // Restore focus to the last focused element
       lastFocusedElementRef.current?.focus();
     }
-    
+
     return () => {
       document.body.style.overflow = '';
     };
@@ -63,26 +65,39 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
   useEffect(() => {
     if (open) {
       telemetry.track(EVENT_NAMES.walletConnectModalOpened, {
-        surface: "modal",
+        surface: 'modal',
         trigger_source: triggerSource,
       });
     }
   }, [open, triggerSource]);
 
   // Emit modal closed event
-  const handleClose = useCallback((reason: "backdrop_click" | "escape_key" | "close_button" | "connect_success" | "route_change" = "close_button") => {
-    telemetry.track(EVENT_NAMES.walletConnectModalClosed, {
-      close_reason: reason,
-    });
-    onClose();
-  }, [onClose]);
+  const handleClose = useCallback(
+    (
+      reason:
+        | 'backdrop_click'
+        | 'escape_key'
+        | 'close_button'
+        | 'connect_success'
+        | 'route_change' = 'close_button',
+    ) => {
+      telemetry.track(EVENT_NAMES.walletConnectModalClosed, {
+        close_reason: reason,
+      });
+      onClose();
+    },
+    [onClose],
+  );
 
   // Handle ESC key press
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && open) {
-      handleClose("escape_key");
-    }
-  }, [open, handleClose]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) {
+        handleClose('escape_key');
+      }
+    },
+    [open, handleClose],
+  );
 
   useEffect(() => {
     if (open) {
@@ -90,7 +105,7 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
       // Focus trap - focus first element
       firstFocusableRef.current?.focus();
     }
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
@@ -115,7 +130,7 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
     if (e.key !== 'Tab' || !modalRef.current) return;
 
     const focusableElements = modalRef.current.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     const firstElement = focusableElements[0] as HTMLElement;
     const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
@@ -138,7 +153,7 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
     setSelectedProvider(provider);
     clearError();
     telemetry.track(EVENT_NAMES.walletConnectProviderSelected, {
-      provider: provider ?? "unknown",
+      provider: provider ?? 'unknown',
       provider_available: !!available,
     });
   };
@@ -150,8 +165,8 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
     const newAttemptId = uuidv4();
     setAttemptId(newAttemptId);
     telemetry.track(EVENT_NAMES.walletConnectSubmitted, {
-      provider: provider ?? "unknown",
-      surface: "modal",
+      provider: provider ?? 'unknown',
+      surface: 'modal',
       attempt_id: newAttemptId,
     });
     await connect(provider);
@@ -160,19 +175,19 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
   if (!open) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
       onKeyDown={handleTabKey}
     >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={() => handleClose("backdrop_click")}
+        onClick={() => handleClose('backdrop_click')}
         aria-hidden="true"
       />
 
       {/* Modal */}
-      <div 
+      <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
@@ -188,13 +203,13 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-purple-500/10">
           <h2 id="wallet-modal-title" className="text-lg font-semibold text-white">
-            {t("walletModal.title") || "Connect Wallet"}
+            {t('walletModal.title') || 'Connect Wallet'}
           </h2>
           <Button
             ref={firstFocusableRef}
             variant="ghost"
             size="icon"
-            onClick={() => handleClose("close_button")}
+            onClick={() => handleClose('close_button')}
             aria-label="Close wallet modal"
             className="text-gray-400 hover:text-white min-h-0 h-9 w-9 rounded-lg hover:bg-white/5"
           >
@@ -205,15 +220,18 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
         {/* Body */}
         <div className="px-6 py-4">
           {error && (
-            <div className="mb-4 flex items-start gap-3 p-3 rounded-lg bg-red-900/30 border border-red-500/30 text-red-300 text-sm" role="alert">
+            <div
+              className="mb-4 flex items-start gap-3 p-3 rounded-lg bg-red-900/30 border border-red-500/30 text-red-300 text-sm"
+              role="alert"
+            >
               <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
               <span>{error}</span>
             </div>
           )}
 
           <p className="text-sm text-gray-400 mb-4">
-            {t("walletModal.subtitle") ||
-              "Choose a Stellar wallet to connect. Freighter is recommended for browser use."}
+            {t('walletModal.subtitle') ||
+              'Choose a Stellar wallet to connect. Freighter is recommended for browser use.'}
           </p>
 
           <div className="space-y-2">
@@ -234,7 +252,7 @@ export function WalletModal({ open, onClose, onConnected }: WalletModalProps) {
         {/* Footer */}
         <div className="px-6 py-4 border-t border-purple-500/10">
           <p className="text-xs text-gray-500 text-center">
-            {t("walletModal.poweredBy") || "Secured by Stellar blockchain"}{" "}
+            {t('walletModal.poweredBy') || 'Secured by Stellar blockchain'}{' '}
             <a
               href="https://stellar.org"
               target="_blank"
@@ -293,7 +311,10 @@ function WalletOption({
       {isConnecting ? (
         <Loader2 className="h-4 w-4 text-purple-400 animate-spin" aria-label="Connecting..." />
       ) : (
-        <span className="text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true">
+        <span
+          className="text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity"
+          aria-hidden="true"
+        >
           →
         </span>
       )}

@@ -1,14 +1,18 @@
-"use client";
+'use client';
 
-import { useState, useCallback, useEffect } from "react";
-import { StellarNetwork, WalletProvider } from "@/types/stellar";
-import { connectFreighter, getFreighterAddress, isFreighterConnected } from "@/lib/stellar/wallet/freighter";
-import { connectAlbedo } from "@/lib/stellar/wallet/albedo";
-import { defaultNetwork } from "@/lib/stellar/client";
-import { getHorizonServer } from "@/lib/stellar/client";
-import { useWalletStore } from "@/lib/stores/walletStore";
+import { useState, useCallback, useEffect } from 'react';
+import { StellarNetwork, WalletProvider } from '@/types/stellar';
+import {
+  connectFreighter,
+  getFreighterAddress,
+  isFreighterConnected,
+} from '@/lib/stellar/wallet/freighter';
+import { connectAlbedo } from '@/lib/stellar/wallet/albedo';
+import { defaultNetwork } from '@/lib/stellar/client';
+import { getHorizonServer } from '@/lib/stellar/client';
+import { useWalletStore } from '@/lib/stores/walletStore';
 
-const WALLET_STORAGE_KEY = "stellar_wallet_connection";
+const WALLET_STORAGE_KEY = 'stellar_wallet_connection';
 
 interface PersistedWallet {
   address: string;
@@ -35,13 +39,13 @@ export function useStellarWallet() {
   // Restore persisted connection on mount
   useEffect(() => {
     const restoreConnection = async () => {
-      if (typeof window === "undefined") return;
+      if (typeof window === 'undefined') return;
       const raw = sessionStorage.getItem(WALLET_STORAGE_KEY);
       if (!raw) return;
 
       try {
         const persisted: PersistedWallet = JSON.parse(raw);
-        if (persisted.provider === "freighter") {
+        if (persisted.provider === 'freighter') {
           const stillConnected = await isFreighterConnected();
           if (stillConnected) {
             const currentAddress = await getFreighterAddress();
@@ -76,9 +80,7 @@ export function useStellarWallet() {
       const account = await server.loadAccount(address);
       const mapped = account.balances.map((b) => ({
         asset:
-          b.asset_type === "native"
-            ? "XLM"
-            : `${(b as any).asset_code}:${(b as any).asset_issuer}`,
+          b.asset_type === 'native' ? 'XLM' : `${(b as any).asset_code}:${(b as any).asset_issuer}`,
         balance: b.balance,
       }));
       setBalances(mapped);
@@ -88,37 +90,40 @@ export function useStellarWallet() {
     }
   };
 
-  const connect = useCallback(async (provider: WalletProvider) => {
-    setConnecting(true);
-    setError(null);
+  const connect = useCallback(
+    async (provider: WalletProvider) => {
+      setConnecting(true);
+      setError(null);
 
-    try {
-      let nextAddress: string;
+      try {
+        let nextAddress: string;
 
-      switch (provider) {
-        case "freighter":
-          nextAddress = await connectFreighter();
-          break;
-        case "albedo":
-          nextAddress = await connectAlbedo();
-          break;
-        default:
-          throw new Error(`Provider "${provider}" is not yet supported`);
+        switch (provider) {
+          case 'freighter':
+            nextAddress = await connectFreighter();
+            break;
+          case 'albedo':
+            nextAddress = await connectAlbedo();
+            break;
+          default:
+            throw new Error(`Provider "${provider}" is not yet supported`);
+        }
+
+        const persisted: PersistedWallet = {
+          address: nextAddress,
+          provider,
+          network: defaultNetwork,
+        };
+        sessionStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify(persisted));
+
+        setConnected(nextAddress, provider, defaultNetwork);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to connect wallet';
+        setError(message);
       }
-
-      const persisted: PersistedWallet = {
-        address: nextAddress,
-        provider,
-        network: defaultNetwork,
-      };
-      sessionStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify(persisted));
-
-      setConnected(nextAddress, provider, defaultNetwork);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to connect wallet";
-      setError(message);
-    }
-  }, [setConnected, setConnecting, setError]);
+    },
+    [setConnected, setConnecting, setError],
+  );
 
   const disconnect = useCallback(() => {
     sessionStorage.removeItem(WALLET_STORAGE_KEY);
@@ -141,7 +146,6 @@ export function useStellarWallet() {
     connect,
     disconnect,
     clearError,
-    refetchBalances: () =>
-      address ? fetchBalances(address, network) : undefined,
+    refetchBalances: () => (address ? fetchBalances(address, network) : undefined),
   };
 }

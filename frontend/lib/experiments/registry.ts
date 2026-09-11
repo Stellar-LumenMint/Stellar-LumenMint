@@ -77,11 +77,11 @@ export const EXPERIMENT_REGISTRY: ExperimentDefinition[] = [
 ];
 
 export function getExperimentByID(experimentID: string) {
-  return EXPERIMENT_REGISTRY.find(exp => exp.experiment_id === experimentID);
+  return EXPERIMENT_REGISTRY.find((exp) => exp.experiment_id === experimentID);
 }
 
 export function getActiveExperimentsForSurface(surface: string) {
   return EXPERIMENT_REGISTRY.filter(
-    exp => exp.status === ExperimentStatus.RUNNING && exp.surfaces.includes(surface)
+    (exp) => exp.status === ExperimentStatus.RUNNING && exp.surfaces.includes(surface),
   );
 }

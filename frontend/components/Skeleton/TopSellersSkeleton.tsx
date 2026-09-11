@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { OptimizedImage } from '../image';
 
-
 const SellerSkeleton = () => (
   <div className="relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 animate-pulse bg-gray-800 border border-gray-700/50">
     <div className="flex items-center p-4 gap-3">
@@ -31,66 +30,66 @@ const TopSellersSection = () => {
     setTimeout(() => {
       setSellers([
         {
-          id: "1",
-          name: "Leighton Kramer",
-          amount: "276.4 STK",
-          avatar: "/avatars/avatar-1.jpg",
+          id: '1',
+          name: 'Leighton Kramer',
+          amount: '276.4 STK',
+          avatar: '/avatars/avatar-1.jpg',
           highlight: true,
         },
         {
-          id: "2",
-          name: "Haylie Arcand",
-          amount: "146.8 STK",
-          avatar: "/avatars/avatar-2.jpg",
+          id: '2',
+          name: 'Haylie Arcand',
+          amount: '146.8 STK',
+          avatar: '/avatars/avatar-2.jpg',
         },
         {
-          id: "3",
-          name: "Bowen Higgins",
-          amount: "98.2 STK",
-          avatar: "/avatars/avatar-3.jpg",
+          id: '3',
+          name: 'Bowen Higgins',
+          amount: '98.2 STK',
+          avatar: '/avatars/avatar-3.jpg',
         },
         {
-          id: "4",
-          name: "Saige Fuentes",
-          amount: "94.7 STK",
-          avatar: "/avatars/avatar-4.jpg",
+          id: '4',
+          name: 'Saige Fuentes',
+          amount: '94.7 STK',
+          avatar: '/avatars/avatar-4.jpg',
         },
         {
-          id: "5",
-          name: "Sophie Maddox",
-          amount: "72.6 STK",
-          avatar: "/avatars/avatar-5.jpg",
+          id: '5',
+          name: 'Sophie Maddox',
+          amount: '72.6 STK',
+          avatar: '/avatars/avatar-5.jpg',
         },
         {
-          id: "6",
-          name: "Jeremy Burch",
-          amount: "70.3 STK",
-          avatar: "/avatars/avatar-6.jpg",
+          id: '6',
+          name: 'Jeremy Burch',
+          amount: '70.3 STK',
+          avatar: '/avatars/avatar-6.jpg',
         },
         {
-          id: "7",
-          name: "Amelia Griffin",
-          amount: "65.4 STK",
-          avatar: "/avatars/avatar-7.jpg",
+          id: '7',
+          name: 'Amelia Griffin',
+          amount: '65.4 STK',
+          avatar: '/avatars/avatar-7.jpg',
         },
         {
-          id: "8",
-          name: "Isabella Hart",
-          amount: "59.2 STK",
-          avatar: "/avatars/avatar-8.jpg",
+          id: '8',
+          name: 'Isabella Hart',
+          amount: '59.2 STK',
+          avatar: '/avatars/avatar-8.jpg',
         },
         {
-          id: "9",
-          name: "Diego Bentley",
-          amount: "50.7 STK",
-          avatar: "/avatars/avatar-9.jpg",
+          id: '9',
+          name: 'Diego Bentley',
+          amount: '50.7 STK',
+          avatar: '/avatars/avatar-9.jpg',
         },
         {
-          id: "10",
-          name: "Daisy Lozano",
-          amount: "45.1 STK",
-          avatar: "/avatars/avatar-10.jpg",
-        }
+          id: '10',
+          name: 'Daisy Lozano',
+          amount: '45.1 STK',
+          avatar: '/avatars/avatar-10.jpg',
+        },
       ]);
       setIsLoading(false);
     }, 2000);
@@ -117,9 +116,7 @@ const TopSellersSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {isLoading
-            ? Array.from({ length: 5 }).map((_, index) => (
-                <SellerSkeleton key={index} />
-              ))
+            ? Array.from({ length: 5 }).map((_, index) => <SellerSkeleton key={index} />)
             : sellers?.map((seller) => (
                 <div
                   key={seller.id}
@@ -142,9 +139,7 @@ const TopSellersSection = () => {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-white truncate">
-                        {seller.name}
-                      </h3>
+                      <h3 className="text-sm font-medium text-white truncate">{seller.name}</h3>
                       <p
                         className={`text-xs font-medium ${
                           seller.highlight ? 'text-blue-400' : 'text-purple-400'
@@ -172,4 +167,3 @@ const TopSellersSection = () => {
 };
 
 export default TopSellersSection;
-

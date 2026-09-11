@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useTranslation } from "@/hooks/useTranslation";
-import { Package, Users, DollarSign, TrendingUp, AlertCircle } from "lucide-react";
+import React from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
+import { Package, Users, DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
 
 interface StatsCardsRowProps {
   loading: boolean;
@@ -24,38 +24,38 @@ export function StatsCardsRow({
   const { t } = useTranslation();
 
   // Safeguard: Ensure totalEarnings is a valid numeric string, default to "0" if malformed/undefined
-  const safeEarnings = typeof totalEarnings === "string" ? totalEarnings : "0.00";
+  const safeEarnings = typeof totalEarnings === 'string' ? totalEarnings : '0.00';
   const parsedEarnings = parseFloat(safeEarnings);
-  const displayEarnings = isNaN(parsedEarnings) ? "0.00" : parsedEarnings.toFixed(2);
+  const displayEarnings = isNaN(parsedEarnings) ? '0.00' : parsedEarnings.toFixed(2);
 
   const dashboardCards = [
     {
-      label: t("creatorDashboard.totalNFTs") || "Total NFTs",
-      value: loading ? "..." : String(totalNfts),
-      change: totalNfts > 0 ? "+100%" : "0%",
+      label: t('creatorDashboard.totalNFTs') || 'Total NFTs',
+      value: loading ? '...' : String(totalNfts),
+      change: totalNfts > 0 ? '+100%' : '0%',
       icon: Package,
-      color: "text-purple-400",
+      color: 'text-purple-400',
     },
     {
-      label: t("creatorDashboard.totalCollections") || "Collections",
-      value: loading ? "..." : String(totalCollections),
-      change: totalCollections > 0 ? "+100%" : "0%",
+      label: t('creatorDashboard.totalCollections') || 'Collections',
+      value: loading ? '...' : String(totalCollections),
+      change: totalCollections > 0 ? '+100%' : '0%',
       icon: Users,
-      color: "text-blue-400",
+      color: 'text-blue-400',
     },
     {
-      label: t("creatorDashboard.totalEarnings") || "Total Earnings",
-      value: loading ? "..." : `${displayEarnings} STRK`,
-      change: parsedEarnings > 0 ? "+100%" : "0%",
+      label: t('creatorDashboard.totalEarnings') || 'Total Earnings',
+      value: loading ? '...' : `${displayEarnings} STRK`,
+      change: parsedEarnings > 0 ? '+100%' : '0%',
       icon: DollarSign,
-      color: "text-green-400",
+      color: 'text-green-400',
     },
     {
-      label: t("creatorDashboard.totalTransactions") || "Total Sales",
-      value: loading ? "..." : String(totalTransactions),
-      change: totalTransactions > 0 ? "+100%" : "0%",
+      label: t('creatorDashboard.totalTransactions') || 'Total Sales',
+      value: loading ? '...' : String(totalTransactions),
+      change: totalTransactions > 0 ? '+100%' : '0%',
       icon: TrendingUp,
-      color: "text-red-400",
+      color: 'text-red-400',
     },
   ];
 
@@ -72,7 +72,10 @@ export function StatsCardsRow({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-card/50 border border-border/80 text-card-foreground rounded-xl p-6 animate-pulse backdrop-blur-md">
+          <div
+            key={i}
+            className="bg-card/50 border border-border/80 text-card-foreground rounded-xl p-6 animate-pulse backdrop-blur-md"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 rounded-lg bg-muted" />
               <div className="w-12 h-6 bg-muted rounded-full" />
@@ -102,8 +105,12 @@ export function StatsCardsRow({
                 {card.change}
               </span>
             </div>
-            <div className="text-3xl font-extrabold text-card-foreground mb-1 font-mono tracking-tight">{card.value}</div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{card.label}</div>
+            <div className="text-3xl font-extrabold text-card-foreground mb-1 font-mono tracking-tight">
+              {card.value}
+            </div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {card.label}
+            </div>
           </div>
         );
       })}

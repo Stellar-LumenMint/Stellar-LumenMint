@@ -1,29 +1,32 @@
-import { Metadata } from "next";
-import { getApolloClient } from "@/lib/graphql/client";
-import { GET_NFT_BY_ID_QUERY } from "@/lib/graphql/queries/nft.queries";
-import NFTDetailClient from "./NFTDetailClient";
+import { Metadata } from 'next';
+import { getApolloClient } from '@/lib/graphql/client';
+import { GET_NFT_BY_ID_QUERY } from '@/lib/graphql/queries/nft.queries';
+import NFTDetailClient from './NFTDetailClient';
 
 // Localized fallbacks for metadata
-const fallbacks: Record<string, { description: string; notFoundTitle: string; notFoundDesc: string }> = {
-    en: {
-    description: "View this unique NFT on Stellar-LumenMint",
-    notFoundTitle: "NFT Not Found | Stellar-LumenMint Marketplace",
-    notFoundDesc: "The requested NFT could not be found or does not exist.",
+const fallbacks: Record<
+  string,
+  { description: string; notFoundTitle: string; notFoundDesc: string }
+> = {
+  en: {
+    description: 'View this unique NFT on Stellar-LumenMint',
+    notFoundTitle: 'NFT Not Found | Stellar-LumenMint Marketplace',
+    notFoundDesc: 'The requested NFT could not be found or does not exist.',
   },
-    fr: {
-    description: "Voir cet NFT unique sur Stellar-LumenMint",
-    notFoundTitle: "NFT introuvable | Stellar-LumenMint Marketplace",
+  fr: {
+    description: 'Voir cet NFT unique sur Stellar-LumenMint',
+    notFoundTitle: 'NFT introuvable | Stellar-LumenMint Marketplace',
     notFoundDesc: "L'NFT demandé est introuvable ou n'existe pas.",
   },
-    es: {
-    description: "Ver este NFT único en Stellar-LumenMint",
-    notFoundTitle: "NFT no encontrado | Stellar-LumenMint Marketplace",
-    notFoundDesc: "El NFT solicitado no se pudo encontrar o no existe.",
+  es: {
+    description: 'Ver este NFT único en Stellar-LumenMint',
+    notFoundTitle: 'NFT no encontrado | Stellar-LumenMint Marketplace',
+    notFoundDesc: 'El NFT solicitado no se pudo encontrar o no existe.',
   },
-    de: {
-    description: "Diesen einzigartigen NFT auf Stellar-LumenMint ansehen",
-    notFoundTitle: "NFT nicht gefunden | Stellar-LumenMint Marketplace",
-    notFoundDesc: "Der angeforderte NFT konnte nicht gefunden werden oder existiert nicht.",
+  de: {
+    description: 'Diesen einzigartigen NFT auf Stellar-LumenMint ansehen',
+    notFoundTitle: 'NFT nicht gefunden | Stellar-LumenMint Marketplace',
+    notFoundDesc: 'Der angeforderte NFT konnte nicht gefunden werden oder existiert nicht.',
   },
 };
 
@@ -34,11 +37,11 @@ async function fetchNFT(nftId: string) {
     const { data } = await client.query({
       query: GET_NFT_BY_ID_QUERY,
       variables: { id: nftId },
-      fetchPolicy: "network-only",
+      fetchPolicy: 'network-only',
     });
     return data?.nft;
   } catch (error) {
-    console.error("Error fetching NFT on server:", error);
+    console.error('Error fetching NFT on server:', error);
     return null;
   }
 }
@@ -51,7 +54,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { nftId, locale } = params;
   const nft = await fetchNFT(nftId);
-  const localeKey = (Object.keys(fallbacks).includes(locale) ? locale : "en") as keyof typeof fallbacks;
+  const localeKey = (
+    Object.keys(fallbacks).includes(locale) ? locale : 'en'
+  ) as keyof typeof fallbacks;
   const tFallback = fallbacks[localeKey];
 
   if (!nft) {
@@ -63,7 +68,7 @@ export async function generateMetadata({
 
   const title = `${nft.name} | Stellar-LumenMint Marketplace`;
   const description = nft.description || tFallback.description;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const pageUrl = `${baseUrl}/${locale}/marketplace/${nftId}`;
   const images = nft.image ? [nft.image] : [`${baseUrl}/stellar-lumenmint-mark.svg`];
 
@@ -77,18 +82,18 @@ export async function generateMetadata({
         fr: `${baseUrl}/fr/marketplace/${nftId}`,
         es: `${baseUrl}/es/marketplace/${nftId}`,
         de: `${baseUrl}/de/marketplace/${nftId}`,
-        "x-default": `${baseUrl}/en/marketplace/${nftId}`,
+        'x-default': `${baseUrl}/en/marketplace/${nftId}`,
       },
     },
     openGraph: {
       title,
       description,
       url: pageUrl,
-      type: "website",
+      type: 'website',
       images,
     },
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title,
       description,
       images,
@@ -108,18 +113,18 @@ export default async function NFTDetailPage({
   // Structured Data (JSON-LD Product Schema)
   const jsonLd = nft
     ? {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": nft.name,
-        "image": nft.image,
-        "description": nft.description || undefined,
-        "sku": nft.tokenId,
-        "offers": nft.lastPrice
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: nft.name,
+        image: nft.image,
+        description: nft.description || undefined,
+        sku: nft.tokenId,
+        offers: nft.lastPrice
           ? {
-              "@type": "Offer",
-              "price": nft.lastPrice,
-              "priceCurrency": "XLM",
-              "availability": "https://schema.org/InStock",
+              '@type': 'Offer',
+              price: nft.lastPrice,
+              priceCurrency: 'XLM',
+              availability: 'https://schema.org/InStock',
             }
           : undefined,
       }

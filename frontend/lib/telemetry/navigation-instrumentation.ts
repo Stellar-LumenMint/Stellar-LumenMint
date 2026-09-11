@@ -3,57 +3,58 @@
 
 // --- Stable ID Registries ---
 export const CTA_IDS = {
-  CONNECT_WALLET_HEADER: "connect_wallet_header",
-  EXPLORE_MORE_POPULAR_COLLECTION: "explore_more_popular_collection",
-  CREATE_NFT_DASHBOARD: "create_nft_dashboard",
-  MINT_NFT_LANDING: "mint_nft_landing",
-  SELL_NFT_MARKETPLACE: "sell_nft_marketplace",
-  CATEGORY_CARD_CLICK: "category_card_click",
-  FILTER_CATEGORY: "filter_category",
-  FILTER_PRICE_RANGE: "filter_price_range",
-  FILTER_SALE_TYPE: "filter_sale_type",
-  FILTER_BLOCKCHAIN: "filter_blockchain",
-  FILTER_SORT_BY: "filter_sort_by",
+  CONNECT_WALLET_HEADER: 'connect_wallet_header',
+  EXPLORE_MORE_POPULAR_COLLECTION: 'explore_more_popular_collection',
+  CREATE_NFT_DASHBOARD: 'create_nft_dashboard',
+  MINT_NFT_LANDING: 'mint_nft_landing',
+  SELL_NFT_MARKETPLACE: 'sell_nft_marketplace',
+  CATEGORY_CARD_CLICK: 'category_card_click',
+  FILTER_CATEGORY: 'filter_category',
+  FILTER_PRICE_RANGE: 'filter_price_range',
+  FILTER_SALE_TYPE: 'filter_sale_type',
+  FILTER_BLOCKCHAIN: 'filter_blockchain',
+  FILTER_SORT_BY: 'filter_sort_by',
   // ...add more as needed
 } as const;
 
 export const NAV_ITEM_IDS = {
-  HOME: "home",
-  EXPLORE: "explore",
-  MARKETPLACE: "marketplace",
-  ARTISTS: "artists",
-  VAULT: "vault",
-  CREATE: "create",
-  COLLECTIONS: "collections",
-  ACTIVITY: "activity",
+  HOME: 'home',
+  EXPLORE: 'explore',
+  MARKETPLACE: 'marketplace',
+  ARTISTS: 'artists',
+  VAULT: 'vault',
+  CREATE: 'create',
+  COLLECTIONS: 'collections',
+  ACTIVITY: 'activity',
   // ...add more as needed
 } as const;
 
 export const CTA_PLACEMENTS = {
-  NAVBAR_DESKTOP_RIGHT: "navbar_desktop_right",
-  NAVBAR_DESKTOP_LEFT: "navbar_desktop_left",
-  NAVBAR_MOBILE_DRAWER: "navbar_mobile_drawer",
-  LANDING_HERO_PRIMARY: "landing_hero_primary",
-  LANDING_POPULAR_COLLECTION_HEADER: "landing_popular_collection_header",
-  LANDING_EXPLORE_CATEGORIES_CARD: "landing_explore_categories_card",
-  MARKETPLACE_HEADER: "marketplace_header",
-  MARKETPLACE_FILTER_BAR: "marketplace_filter_bar",
-  DASHBOARD_QUICK_ACTIONS: "dashboard_quick_actions",
-  CREATOR_DASHBOARD_ENTRY: "creator_dashboard_entry",
+  NAVBAR_DESKTOP_RIGHT: 'navbar_desktop_right',
+  NAVBAR_DESKTOP_LEFT: 'navbar_desktop_left',
+  NAVBAR_MOBILE_DRAWER: 'navbar_mobile_drawer',
+  LANDING_HERO_PRIMARY: 'landing_hero_primary',
+  LANDING_POPULAR_COLLECTION_HEADER: 'landing_popular_collection_header',
+  LANDING_EXPLORE_CATEGORIES_CARD: 'landing_explore_categories_card',
+  MARKETPLACE_HEADER: 'marketplace_header',
+  MARKETPLACE_FILTER_BAR: 'marketplace_filter_bar',
+  DASHBOARD_QUICK_ACTIONS: 'dashboard_quick_actions',
+  CREATOR_DASHBOARD_ENTRY: 'creator_dashboard_entry',
   // ...add more as needed
 } as const;
 
 export const NAV_PLACEMENTS = {
-  NAVBAR_DESKTOP: "navbar_desktop",
-  NAVBAR_MOBILE_DRAWER: "navbar_mobile_drawer",
-  FOOTER_NAV: "footer_nav",
-  DASHBOARD_NAV: "dashboard_nav",
+  NAVBAR_DESKTOP: 'navbar_desktop',
+  NAVBAR_MOBILE_DRAWER: 'navbar_mobile_drawer',
+  FOOTER_NAV: 'footer_nav',
+  DASHBOARD_NAV: 'dashboard_nav',
   // ...add more as needed
 } as const;
 
 // --- Event Payload Types ---
-export type CTAInteractionType = "button" | "link" | "icon_button" | "card";
-export type CTAUiVariant = "primary" | "secondary" | "ghost" | "outline" | "text" | "wallet" | "unknown";
+export type CTAInteractionType = 'button' | 'link' | 'icon_button' | 'card';
+export type CTAUiVariant =
+  'primary' | 'secondary' | 'ghost' | 'outline' | 'text' | 'wallet' | 'unknown';
 
 export interface CtaClickedPayload {
   cta_id: string; // Accept any string, enforce at runtime
@@ -68,7 +69,7 @@ export interface CtaClickedPayload {
   [key: string]: any;
 }
 
-export type NavMenuState = "expanded" | "collapsed" | "drawer_open" | "unknown";
+export type NavMenuState = 'expanded' | 'collapsed' | 'drawer_open' | 'unknown';
 
 export interface NavItemClickedPayload {
   nav_item_id: string;
@@ -82,13 +83,13 @@ export interface NavItemClickedPayload {
 
 // --- Route Normalization Utility ---
 export function normalizeRoute(route: string): string {
-  if (!route) return "none";
+  if (!route) return 'none';
   try {
-    const url = new URL(route, "http://dummy");
-    return url.pathname.replace(/\/$/, "");
+    const url = new URL(route, 'http://dummy');
+    return url.pathname.replace(/\/$/, '');
   } catch {
     // Not a full URL, treat as path
-    return route.split(/[?#]/)[0].replace(/\/$/, "");
+    return route.split(/[?#]/)[0].replace(/\/$/, '');
   }
 }
 
@@ -101,16 +102,16 @@ export function dedupeClickEvent(e: Event): boolean {
 }
 
 // --- Event Emitters (to be wired to telemetry.track) ---
-import { telemetry } from "./index";
+import { telemetry } from './index';
 
 export function emitCtaClicked(payload: CtaClickedPayload, e?: Event) {
   if (e && !dedupeClickEvent(e)) return;
-  telemetry.track("cta_clicked", payload);
+  telemetry.track('cta_clicked', payload);
 }
 
 export function emitNavItemClicked(payload: NavItemClickedPayload, e?: Event) {
   if (e && !dedupeClickEvent(e)) return;
-  telemetry.track("nav_item_clicked", payload);
+  telemetry.track('nav_item_clicked', payload);
 }
 
 // --- Registry Enforcement ---

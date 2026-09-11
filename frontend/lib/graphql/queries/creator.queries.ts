@@ -1,5 +1,5 @@
-import { gql } from "@apollo/client";
-import { NFT_FIELDS_FRAGMENT, COLLECTION_FIELDS_FRAGMENT } from "../fragments";
+import { gql } from '@apollo/client';
+import { NFT_FIELDS_FRAGMENT, COLLECTION_FIELDS_FRAGMENT } from '../fragments';
 
 export const PUBLIC_CREATOR_FIELDS_FRAGMENT = gql`
   fragment PublicCreatorFields on PublicCreator {

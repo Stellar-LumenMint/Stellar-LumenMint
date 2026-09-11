@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { AlertTriangle, RefreshCw, Home, MessageCircle } from "lucide-react";
-import { Button } from "./ui/button";
-import Link from "next/link";
-import { telemetry } from "@/lib/telemetry";
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle, RefreshCw, Home, MessageCircle } from 'lucide-react';
+import { Button } from './ui/button';
+import Link from 'next/link';
+import { telemetry } from '@/lib/telemetry';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -45,7 +45,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    const { componentName = "UnknownComponent", onError } = this.props;
+    const { componentName = 'UnknownComponent', onError } = this.props;
 
     // Update state with error info
     this.setState({ errorInfo });
@@ -59,7 +59,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     if (now - (this.lastReportedAt.get(dedupeKey) ?? 0) >= ErrorBoundary.REPORT_DEDUPE_MS) {
       this.lastReportedAt.set(dedupeKey, now);
       try {
-        telemetry.track("error_boundary_caught", {
+        telemetry.track('error_boundary_caught', {
           component: componentName,
           error_name: error.name,
           error_message: error.message,
@@ -70,9 +70,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       }
     }
 
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== 'production') {
       console.error(`Error in ${componentName}:`, error);
-      console.error("Component stack:", errorInfo.componentStack);
+      console.error('Component stack:', errorInfo.componentStack);
     }
 
     // Call custom error handler
@@ -111,10 +111,10 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   handleReport = (): void => {
     const { error, errorInfo } = this.state;
-    const { componentName = "UnknownComponent" } = this.props;
+    const { componentName = 'UnknownComponent' } = this.props;
 
     try {
-      telemetry.track("error_boundary_reported", {
+      telemetry.track('error_boundary_reported', {
         component: componentName,
         error_message: error?.message,
       });
@@ -127,17 +127,17 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       error: error?.toString(),
       stack: error?.stack,
       componentStack: errorInfo?.componentStack,
-      url: typeof window !== "undefined" ? window.location.href : "",
-      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
       timestamp: new Date().toISOString(),
     };
 
-    console.error("Error Report:", report);
+    console.error('Error Report:', report);
 
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const subject = encodeURIComponent(`Error Report: ${componentName}`);
       const body = encodeURIComponent(
-        `Error: ${error?.toString()}\n\nStack: ${error?.stack}\n\nComponent Stack: ${errorInfo?.componentStack}\n\nURL: ${report.url}`
+        `Error: ${error?.toString()}\n\nStack: ${error?.stack}\n\nComponent Stack: ${errorInfo?.componentStack}\n\nURL: ${report.url}`,
       );
       window.open(`mailto:support@stellar-lumenmint.com?subject=${subject}&body=${body}`);
     }
@@ -145,13 +145,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   render(): ReactNode {
     const { hasError, error } = this.state;
-    const { 
-      children, 
-      fallback, 
+    const {
+      children,
+      fallback,
       FallbackComponent,
-      showRetry = true, 
-      showHome = true, 
-      showReport = true 
+      showRetry = true,
+      showHome = true,
+      showReport = true,
     } = this.props;
 
     if (!hasError) {
@@ -176,11 +176,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Something went wrong
-          </h2>
+          <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
           <p className="text-gray-400 mb-6">
-            {error?.message || "An unexpected error occurred while rendering this component."}
+            {error?.message || 'An unexpected error occurred while rendering this component.'}
           </p>
 
           <div className="flex flex-wrap gap-3 justify-center">
@@ -193,18 +191,21 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 Retry
               </Button>
             )}
-            
+
             {showHome && (
               <Link href="/" legacyBehavior>
                 <a>
-                  <Button variant="outline" className="border-purple-600/50 text-purple-400 hover:bg-purple-600/20">
+                  <Button
+                    variant="outline"
+                    className="border-purple-600/50 text-purple-400 hover:bg-purple-600/20"
+                  >
                     <Home className="mr-2 h-4 w-4" />
                     Go Home
                   </Button>
                 </a>
               </Link>
             )}
-            
+
             {showReport && (
               <Button
                 onClick={this.handleReport}
@@ -217,7 +218,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             )}
           </div>
 
-          {process.env.NODE_ENV === "development" && error?.stack && (
+          {process.env.NODE_ENV === 'development' && error?.stack && (
             <details className="mt-6 text-left">
               <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-400">
                 Error Details

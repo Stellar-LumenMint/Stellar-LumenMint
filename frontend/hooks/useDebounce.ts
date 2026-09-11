@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * useDebounce hook
@@ -8,11 +8,7 @@ import { useEffect, useRef, useState } from "react";
  * @param options Optional: { immediate?: boolean }
  * @returns Debounced value
  */
-export function useDebounce<T>(
-  value: T,
-  delay = 300,
-  options?: { immediate?: boolean }
-): T {
+export function useDebounce<T>(value: T, delay = 300, options?: { immediate?: boolean }): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   const immediate = options?.immediate;
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);

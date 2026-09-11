@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { LazyQueryHookOptions, QueryHookOptions } from "@apollo/client";
+import { LazyQueryHookOptions, QueryHookOptions } from '@apollo/client';
 import {
   GetCurrentUserQuery,
   GetCurrentUserQueryVariables,
@@ -9,17 +9,17 @@ import {
   useGetCurrentUserQuery,
   useGetUserByIdLazyQuery,
   useGetUserByIdQuery,
-} from "@/hooks/graphql/generated";
+} from '@/hooks/graphql/generated';
 
 export function useCurrentUserQuery(
-  options?: QueryHookOptions<GetCurrentUserQuery, GetCurrentUserQueryVariables>
+  options?: QueryHookOptions<GetCurrentUserQuery, GetCurrentUserQueryVariables>,
 ) {
   return useGetCurrentUserQuery(options);
 }
 
 export function useUserByIdQuery(
   variables: GetUserByIdQueryVariables,
-  options?: Omit<QueryHookOptions<GetUserByIdQuery, GetUserByIdQueryVariables>, "variables">
+  options?: Omit<QueryHookOptions<GetUserByIdQuery, GetUserByIdQueryVariables>, 'variables'>,
 ) {
   return useGetUserByIdQuery({
     variables,
@@ -28,7 +28,7 @@ export function useUserByIdQuery(
 }
 
 export function useLazyUserByIdQuery(
-  options?: LazyQueryHookOptions<GetUserByIdQuery, GetUserByIdQueryVariables>
+  options?: LazyQueryHookOptions<GetUserByIdQuery, GetUserByIdQueryVariables>,
 ) {
   return useGetUserByIdLazyQuery(options);
 }

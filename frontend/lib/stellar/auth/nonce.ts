@@ -1,4 +1,4 @@
-import { API_CONFIG } from "@/lib/config";
+import { API_CONFIG } from '@/lib/config';
 
 export interface NonceChallenge {
   nonce: string;
@@ -8,9 +8,9 @@ export interface NonceChallenge {
 
 export async function requestAuthChallenge(publicKey: string): Promise<NonceChallenge> {
   const res = await fetch(`${API_CONFIG.baseUrl}/auth/wallet/challenge`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     // The backend DTO is WalletChallengeDto ({ walletAddress, walletProvider }),
     // and the global validation pipe rejects unknown fields.
     body: JSON.stringify({ walletAddress: publicKey }),
@@ -18,7 +18,7 @@ export async function requestAuthChallenge(publicKey: string): Promise<NonceChal
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to request auth challenge");
+    throw new Error(err.message || 'Failed to request auth challenge');
   }
 
   const data = await res.json();

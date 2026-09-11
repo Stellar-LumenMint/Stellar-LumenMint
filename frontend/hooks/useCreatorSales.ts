@@ -1,16 +1,10 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@/lib/stores/auth-store";
-import {
-  getAllAuctions,
-  getAllListings,
-} from "@/lib/services/marketplace";
-import {
-  buildActivityFeed,
-  deriveSalesSummary,
-} from "@/lib/services/marketplace-mapper";
-import type { MarketplaceActivity, SalesSummary } from "@/types/marketplace";
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/lib/stores/auth-store';
+import { getAllAuctions, getAllListings } from '@/lib/services/marketplace';
+import { buildActivityFeed, deriveSalesSummary } from '@/lib/services/marketplace-mapper';
+import type { MarketplaceActivity, SalesSummary } from '@/types/marketplace';
 
 interface UseCreatorSalesResult {
   summary: SalesSummary | null;
@@ -42,16 +36,11 @@ export function useCreatorSales(): UseCreatorSalesResult {
     setLoading(true);
     setError(null);
     try {
-      const [listings, auctions] = await Promise.all([
-        getAllListings(),
-        getAllAuctions(),
-      ]);
+      const [listings, auctions] = await Promise.all([getAllListings(), getAllAuctions()]);
       setSummary(deriveSalesSummary(listings, auctions, creatorId));
       setActivity(buildActivityFeed(listings, auctions, creatorId));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load sales data.",
-      );
+      setError(err instanceof Error ? err.message : 'Failed to load sales data.');
     } finally {
       setLoading(false);
     }

@@ -7,4 +7,4 @@ export const StatCardSkeleton = () => (
     <div className="w-16 h-8 bg-lumen-surface2 rounded mb-2" />
     <div className="w-20 h-4 bg-lumen-surface2 rounded" />
   </div>
-)
+);

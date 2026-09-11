@@ -1,5 +1,5 @@
 import { OptimizedImage } from './image';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
 export interface NFTItem {
   id: string;
@@ -18,7 +18,7 @@ export default function NFTCard({ id, image, name, price, desc }: NFTItem) {
       {/* Card content */}
       <div className="relative flex flex-col h-full bg-gradient-to-b from-[#0d0f1a] via-[#1a1d33] to-[#0d0f1a] backdrop-blur-sm rounded-xl z-10 border border-[#ffffff10]">
         {/* NFT Image with futuristic frame */}
-          <div className="relative w-[290px] h-[240px] p-2">
+        <div className="relative w-[290px] h-[240px] p-2">
           <div className="absolute inset-0 rounded-t-xl bg-[#ffffff05] border-b border-[#00c6fb30]" />
           <OptimizedImage
             src={image}
@@ -37,9 +37,7 @@ export default function NFTCard({ id, image, name, price, desc }: NFTItem) {
             <h3 className="text-xl font-medium text-[#e2e3ff] text-[clamp(1rem,2vw,1.25rem)]">
               {name}
             </h3>
-            <p className="text-sm text-[#8a8cff] text-[clamp(0.9rem,2vw,1.05rem)]">
-              By {desc}
-            </p>
+            <p className="text-sm text-[#8a8cff] text-[clamp(0.9rem,2vw,1.05rem)]">By {desc}</p>
           </div>
 
           {/* Price and Bid Button */}

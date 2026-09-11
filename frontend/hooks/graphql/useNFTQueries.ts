@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { ApolloError, LazyQueryHookOptions, QueryHookOptions } from "@apollo/client";
+import { ApolloError, LazyQueryHookOptions, QueryHookOptions } from '@apollo/client';
 import {
   GatewayHealthQuery,
   GatewayHealthQueryVariables,
@@ -23,26 +23,24 @@ import {
   useGetNftTransferHistoryCursorQuery,
   useGetNftTransferHistoryCursorLazyQuery,
   useGetNftTransferEventQuery,
-} from "@/hooks/graphql/generated";
+} from '@/hooks/graphql/generated';
 
 export function useGatewayHealthQuery(
-  options?: QueryHookOptions<GatewayHealthQuery, GatewayHealthQueryVariables>
+  options?: QueryHookOptions<GatewayHealthQuery, GatewayHealthQueryVariables>,
 ) {
   return useGatewayHealthQueryGenerated({
-    fetchPolicy: "network-only",
+    fetchPolicy: 'network-only',
     ...options,
   });
 }
 
-export function useNFTsQuery(
-  options?: QueryHookOptions<GetNftsQuery, GetNftsQueryVariables>
-) {
+export function useNFTsQuery(options?: QueryHookOptions<GetNftsQuery, GetNftsQueryVariables>) {
   return useGetNftsQuery(options);
 }
 
 export function useNFTByIdQuery(
   variables: GetNftByIdQueryVariables,
-  options?: Omit<QueryHookOptions<GetNftByIdQuery, GetNftByIdQueryVariables>, "variables">
+  options?: Omit<QueryHookOptions<GetNftByIdQuery, GetNftByIdQueryVariables>, 'variables'>,
 ) {
   return useGetNftByIdQuery({
     variables,
@@ -51,7 +49,7 @@ export function useNFTByIdQuery(
 }
 
 export function useLazyNFTByIdQuery(
-  options?: LazyQueryHookOptions<GetNftByIdQuery, GetNftByIdQueryVariables>
+  options?: LazyQueryHookOptions<GetNftByIdQuery, GetNftByIdQueryVariables>,
 ) {
   return useGetNftByIdLazyQuery(options);
 }
@@ -62,7 +60,10 @@ export function useLazyNFTByIdQuery(
  */
 export function useNFTTransferHistoryQuery(
   variables: GetNftTransferHistoryQueryVariables,
-  options?: Omit<QueryHookOptions<GetNftTransferHistoryQuery, GetNftTransferHistoryQueryVariables>, "variables">
+  options?: Omit<
+    QueryHookOptions<GetNftTransferHistoryQuery, GetNftTransferHistoryQueryVariables>,
+    'variables'
+  >,
 ) {
   return useGetNftTransferHistoryQuery({
     variables,
@@ -76,7 +77,7 @@ export function useNFTTransferHistoryQuery(
  * Useful for loading more history on demand
  */
 export function useLazyNFTTransferHistoryQuery(
-  options?: LazyQueryHookOptions<GetNftTransferHistoryQuery, GetNftTransferHistoryQueryVariables>
+  options?: LazyQueryHookOptions<GetNftTransferHistoryQuery, GetNftTransferHistoryQueryVariables>,
 ) {
   return useGetNftTransferHistoryLazyQuery({
     notifyOnNetworkStatusChange: true,
@@ -90,7 +91,10 @@ export function useLazyNFTTransferHistoryQuery(
  */
 export function useNFTTransferHistoryCursorQuery(
   variables: GetNftTransferHistoryCursorQueryVariables,
-  options?: Omit<QueryHookOptions<GetNftTransferHistoryCursorQuery, GetNftTransferHistoryCursorQueryVariables>, "variables">
+  options?: Omit<
+    QueryHookOptions<GetNftTransferHistoryCursorQuery, GetNftTransferHistoryCursorQueryVariables>,
+    'variables'
+  >,
 ) {
   return useGetNftTransferHistoryCursorQuery({
     variables,
@@ -103,7 +107,10 @@ export function useNFTTransferHistoryCursorQuery(
  * Hook for lazy loading NFT transfer history with cursor
  */
 export function useLazyNFTTransferHistoryCursorQuery(
-  options?: LazyQueryHookOptions<GetNftTransferHistoryCursorQuery, GetNftTransferHistoryCursorQueryVariables>
+  options?: LazyQueryHookOptions<
+    GetNftTransferHistoryCursorQuery,
+    GetNftTransferHistoryCursorQueryVariables
+  >,
 ) {
   return useGetNftTransferHistoryCursorLazyQuery({
     notifyOnNetworkStatusChange: true,
@@ -116,7 +123,10 @@ export function useLazyNFTTransferHistoryCursorQuery(
  */
 export function useNFTTransferEventQuery(
   variables: GetNftTransferEventQueryVariables,
-  options?: Omit<QueryHookOptions<GetNftTransferEventQuery, GetNftTransferEventQueryVariables>, "variables">
+  options?: Omit<
+    QueryHookOptions<GetNftTransferEventQuery, GetNftTransferEventQueryVariables>,
+    'variables'
+  >,
 ) {
   return useGetNftTransferEventQuery({
     variables,
@@ -134,7 +144,7 @@ export function mapApolloError(error?: ApolloError): string | null {
   }
 
   if (error.graphQLErrors.length) {
-    return error.graphQLErrors.map((entry) => entry.message).join("; ");
+    return error.graphQLErrors.map((entry) => entry.message).join('; ');
   }
 
   return error.message;

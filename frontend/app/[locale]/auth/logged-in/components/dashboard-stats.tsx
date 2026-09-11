@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { DollarSign, Eye, Grid3X3, Users } from "lucide-react";
-import { StatCard } from "./card-stat";
-import { useDashboardStats, DashboardStats } from "@/hooks/graphql/useDashboardStats";
+import { DollarSign, Eye, Grid3X3, Users } from 'lucide-react';
+import { StatCard } from './card-stat';
+import { useDashboardStats, DashboardStats } from '@/hooks/graphql/useDashboardStats';
 
 const formatNumber = (value: number | string | undefined): string => {
-  if (value === undefined || value === null) return "—";
-  const num = typeof value === "string" ? Number(value) : value;
-  if (Number.isNaN(num)) return "—";
+  if (value === undefined || value === null) return '—';
+  const num = typeof value === 'string' ? Number(value) : value;
+  if (Number.isNaN(num)) return '—';
   return new Intl.NumberFormat().format(num);
 };
 
@@ -16,7 +16,7 @@ export const DashboardStatsCards = () => {
 
   const fallback: DashboardStats = {
     nftsCreated: 0,
-    totalSales: "0",
+    totalSales: '0',
     totalViews: 0,
     followers: 0,
   };
@@ -24,9 +24,8 @@ export const DashboardStatsCards = () => {
   const data: DashboardStats = stats ?? fallback;
 
   // Convert totalSales to number for the StatCard
-  const totalSalesNumber = typeof data.totalSales === "string" 
-    ? Number(data.totalSales) 
-    : data.totalSales || 0;
+  const totalSalesNumber =
+    typeof data.totalSales === 'string' ? Number(data.totalSales) : data.totalSales || 0;
 
   if (error) {
     return (

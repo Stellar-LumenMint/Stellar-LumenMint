@@ -7,17 +7,26 @@ describe('sanitizePayload', () => {
   });
 
   it('passes category allowlist fields for correct category', () => {
-    const result = sanitizePayload({ provider: 'freighter', error_code: 'ERR' }, { category: 'wallet' });
+    const result = sanitizePayload(
+      { provider: 'freighter', error_code: 'ERR' },
+      { category: 'wallet' },
+    );
     expect(result).toEqual({ provider: 'freighter', error_code: 'ERR' });
   });
 
   it('strips category allowlist fields for wrong category', () => {
-    const result = sanitizePayload({ provider: 'freighter', error_code: 'ERR' }, { category: 'auth' });
+    const result = sanitizePayload(
+      { provider: 'freighter', error_code: 'ERR' },
+      { category: 'auth' },
+    );
     expect(result).toEqual({ error_code: 'ERR' });
   });
 
   it('always strips always-blocked fields', () => {
-    const result = sanitizePayload({ provider: 'freighter', email: 'user@example.com', error_code: 'ERR' }, { category: 'wallet' });
+    const result = sanitizePayload(
+      { provider: 'freighter', email: 'user@example.com', error_code: 'ERR' },
+      { category: 'wallet' },
+    );
     expect(result).toEqual({ provider: 'freighter', error_code: 'ERR' });
   });
 
@@ -49,9 +58,16 @@ describe('sanitizePayload', () => {
 
   it('logs stripped fields in debug mode (does not log values)', () => {
     const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    sanitizePayload({ email: 'user@example.com', foo: 'bar', latency_ms: 1 }, { category: 'wallet', debug: true, maxStringLength: 2 });
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[telemetry][strip] wallet: email (always-blocked)'));
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[telemetry][strip] wallet: foo (not-in-allowlist)'));
+    sanitizePayload(
+      { email: 'user@example.com', foo: 'bar', latency_ms: 1 },
+      { category: 'wallet', debug: true, maxStringLength: 2 },
+    );
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('[telemetry][strip] wallet: email (always-blocked)'),
+    );
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('[telemetry][strip] wallet: foo (not-in-allowlist)'),
+    );
     spy.mockRestore();
   });
 });

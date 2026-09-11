@@ -1,12 +1,12 @@
-import { QueryHookOptions } from "@apollo/client";
+import { QueryHookOptions } from '@apollo/client';
 import {
   GetListingsQuery,
   GetListingsQueryVariables,
   useGetListingsQuery as useGetListingsQueryGenerated,
-} from "./generated";
+} from './generated';
 
 export function useListingsQuery(
-  options?: QueryHookOptions<GetListingsQuery, GetListingsQueryVariables>
+  options?: QueryHookOptions<GetListingsQuery, GetListingsQueryVariables>,
 ) {
   return useGetListingsQueryGenerated(options);
 }

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { WalletProvider } from "@/types/stellar";
-import { requestAuthChallenge } from "@/lib/stellar/auth/nonce";
-import { verifyWalletSignature } from "@/lib/stellar/auth/signature";
-import { signMessageWithFreighter } from "@/lib/stellar/wallet/freighter";
-import { signMessageWithAlbedo } from "@/lib/stellar/wallet/albedo";
+import { useState, useCallback } from 'react';
+import { WalletProvider } from '@/types/stellar';
+import { requestAuthChallenge } from '@/lib/stellar/auth/nonce';
+import { verifyWalletSignature } from '@/lib/stellar/auth/signature';
+import { signMessageWithFreighter } from '@/lib/stellar/wallet/freighter';
+import { signMessageWithAlbedo } from '@/lib/stellar/wallet/albedo';
 
 interface WalletAuthState {
   loading: boolean;
@@ -19,11 +19,7 @@ export function useStellarAuth() {
   });
 
   const authenticateWithWallet = useCallback(
-    async (
-      publicKey: string,
-      provider: WalletProvider,
-      onSuccess?: (token: string) => void
-    ) => {
+    async (publicKey: string, provider: WalletProvider, onSuccess?: (token: string) => void) => {
       setState({ loading: true, error: null });
       try {
         // 1. Request challenge from backend. The message returned by the
@@ -34,9 +30,9 @@ export function useStellarAuth() {
 
         // 2. Sign the server-issued message with the appropriate wallet.
         let signature: string;
-        if (provider === "freighter") {
+        if (provider === 'freighter') {
           signature = await signMessageWithFreighter(message);
-        } else if (provider === "albedo") {
+        } else if (provider === 'albedo') {
           const result = await signMessageWithAlbedo(message);
           signature = result.signature;
         } else {
@@ -53,20 +49,20 @@ export function useStellarAuth() {
 
         // 4. Persist the access token using the same key the rest of the
         //    app reads (fetchWithAuth, auth-store).
-        if (typeof window !== "undefined") {
-          localStorage.setItem("access_token", result.access_token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('access_token', result.access_token);
         }
 
         onSuccess?.(result.access_token);
         setState({ loading: false, error: null });
         return result;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Authentication failed";
+        const message = err instanceof Error ? err.message : 'Authentication failed';
         setState({ loading: false, error: message });
         throw err;
       }
     },
-    []
+    [],
   );
 
   const clearError = useCallback(() => {

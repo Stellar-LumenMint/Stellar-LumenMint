@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "@/lib/utils";
-import { EmptyState, EmptyStateProps } from "./empty-state";
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { EmptyState, EmptyStateProps } from './empty-state';
 
 export interface DataGridProps<T> {
   data: T[];
@@ -17,8 +17,8 @@ export interface DataGridProps<T> {
     lg?: number;
     xl?: number;
   };
-  gap?: "sm" | "md" | "lg";
-  emptyState?: Omit<EmptyStateProps, "className"> & { className?: string };
+  gap?: 'sm' | 'md' | 'lg';
+  emptyState?: Omit<EmptyStateProps, 'className'> & { className?: string };
   className?: string;
   loading?: boolean;
   /** Skeleton card count shown while loading */
@@ -27,9 +27,9 @@ export interface DataGridProps<T> {
   renderSkeleton?: (index: number) => React.ReactNode;
 }
 
-const gapClass = { sm: "gap-3", md: "gap-6", lg: "gap-8" };
+const gapClass = { sm: 'gap-3', md: 'gap-6', lg: 'gap-8' };
 
-const colsClass = (cols: DataGridProps<unknown>["cols"] = {}) => {
+const colsClass = (cols: DataGridProps<unknown>['cols'] = {}) => {
   const { default: d = 1, sm, md, lg, xl } = cols;
   return [
     `grid-cols-${d}`,
@@ -39,7 +39,7 @@ const colsClass = (cols: DataGridProps<unknown>["cols"] = {}) => {
     xl && `xl:grid-cols-${xl}`,
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(' ');
 };
 
 /**
@@ -50,7 +50,7 @@ export function DataGrid<T>({
   renderItem,
   rowKey,
   cols = { default: 1, sm: 2, md: 3, lg: 4 },
-  gap = "md",
+  gap = 'md',
   emptyState,
   className,
   loading,
@@ -60,7 +60,7 @@ export function DataGrid<T>({
   if (!loading && data.length === 0) {
     return (
       <EmptyState
-        title={emptyState?.title ?? "Nothing here yet"}
+        title={emptyState?.title ?? 'Nothing here yet'}
         description={emptyState?.description}
         icon={emptyState?.icon}
         actionLabel={emptyState?.actionLabel}
@@ -73,10 +73,7 @@ export function DataGrid<T>({
   }
 
   return (
-    <div
-      className={cn("grid", colsClass(cols), gapClass[gap], className)}
-      aria-busy={loading}
-    >
+    <div className={cn('grid', colsClass(cols), gapClass[gap], className)} aria-busy={loading}>
       {loading
         ? Array.from({ length: skeletonCount }).map((_, i) =>
             renderSkeleton ? (
@@ -87,12 +84,10 @@ export function DataGrid<T>({
                 aria-hidden="true"
                 className="rounded-2xl bg-purple-500/10 animate-pulse h-64"
               />
-            )
+            ),
           )
         : data.map((item, i) => (
-            <React.Fragment key={rowKey(item, i)}>
-              {renderItem(item, i)}
-            </React.Fragment>
+            <React.Fragment key={rowKey(item, i)}>{renderItem(item, i)}</React.Fragment>
           ))}
     </div>
   );

@@ -1,51 +1,64 @@
-"use client";
-import Link from "next/link";
-import { OptimizedImage } from "./image";
-import { Github, Twitter, Instagram, Mail, Youtube, Zap, Sparkles, Globe, ArrowUpRight } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+'use client';
+import Link from 'next/link';
+import { OptimizedImage } from './image';
+import {
+  Github,
+  Twitter,
+  Instagram,
+  Mail,
+  Youtube,
+  Zap,
+  Sparkles,
+  Globe,
+  ArrowUpRight,
+} from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const Footer = () => {
   const { t, locale } = useTranslation();
   const year = new Date().getFullYear();
 
   const quickLinks = [
-    { href: `/${locale}/marketplace`,  label: t("navigation.marketplace") },
-    { href: `/${locale}/explore`,      label: t("navigation.explore") },
-    { href: `/${locale}/artists`,      label: t("navigation.artists") },
-    { href: `/${locale}/vault`,        label: t("navigation.vault") },
+    { href: `/${locale}/marketplace`, label: t('navigation.marketplace') },
+    { href: `/${locale}/explore`, label: t('navigation.explore') },
+    { href: `/${locale}/artists`, label: t('navigation.artists') },
+    { href: `/${locale}/vault`, label: t('navigation.vault') },
   ];
 
   const resources = [
-    { href: "/docs",           label: "Documentation" },
-    { href: "/api",            label: "API Reference" },
-    { href: "/blog",           label: "Blog" },
-    { href: "/status",         label: "Network Status" },
+    { href: '/docs', label: 'Documentation' },
+    { href: '/api', label: 'API Reference' },
+    { href: '/blog', label: 'Blog' },
+    { href: '/status', label: 'Network Status' },
   ];
 
   const supportLinks = [
-    { href: "/contact",        label: t("footer.contactUs") },
-    { href: "/help",           label: t("footer.helpCenter") },
-    { href: "/privacy-policy", label: t("footer.privacyPolicy") },
-    { href: "/terms-of-service", label: t("footer.termsOfService") },
+    { href: '/contact', label: t('footer.contactUs') },
+    { href: '/help', label: t('footer.helpCenter') },
+    { href: '/privacy-policy', label: t('footer.privacyPolicy') },
+    { href: '/terms-of-service', label: t('footer.termsOfService') },
   ];
 
   const socials = [
-    { href: "https://twitter.com",   icon: Twitter,   label: "Twitter / X" },
-    { href: "https://github.com",    icon: Github,    label: "GitHub" },
-    { href: "https://instagram.com", icon: Instagram, label: "Instagram" },
-    { href: "https://youtube.com",   icon: Youtube,   label: "YouTube" },
-    { href: "mailto:hello@stellar-lumenmint.io", icon: Mail, label: "Email" },
+    { href: 'https://twitter.com', icon: Twitter, label: 'Twitter / X' },
+    { href: 'https://github.com', icon: Github, label: 'GitHub' },
+    { href: 'https://instagram.com', icon: Instagram, label: 'Instagram' },
+    { href: 'https://youtube.com', icon: Youtube, label: 'YouTube' },
+    { href: 'mailto:hello@stellar-lumenmint.io', icon: Mail, label: 'Email' },
   ];
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <footer className="relative bg-[#0D1117] border-t border-[#1E2D3D] text-white overflow-hidden">
       {/* Premium background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0A1628]/50 to-transparent pointer-events-none" aria-hidden="true" />
-      
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-[#0A1628]/50 to-transparent pointer-events-none"
+        aria-hidden="true"
+      />
+
       {/* Top accent line */}
       <div className="h-[1px] bg-gradient-to-r from-transparent via-[#00D4FF]/30 to-[#7B6FFF]/30 to-transparent" />
 
@@ -59,10 +72,8 @@ const Footer = () => {
       </button>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-
         {/* ── Main grid ─────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
-
           {/* Brand block - spans 2 cols */}
           <div className="lg:col-span-2 flex flex-col gap-5">
             <Link href={`/${locale}`} className="flex items-center group">
@@ -77,16 +88,16 @@ const Footer = () => {
               />
             </Link>
             <p className="text-sm text-[#8A9BB0] leading-relaxed max-w-sm">
-              {t("footer.description")}
+              {t('footer.description')}
             </p>
-            
+
             {/* Social icons */}
             <div className="flex items-center gap-2 flex-wrap mt-1">
               {socials.map(({ href, icon: Icon, label }) => (
                 <a
                   key={label}
                   href={href}
-                  target={href.startsWith("http") ? "_blank" : undefined}
+                  target={href.startsWith('http') ? '_blank' : undefined}
                   rel="noopener noreferrer"
                   aria-label={label}
                   className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#141B24] border border-[#1E2D3D] text-[#8A9BB0] hover:text-[#00D4FF] hover:border-[#00D4FF]/40 hover:bg-[#1C2433] transition-all duration-300"
@@ -110,8 +121,11 @@ const Footer = () => {
             </h3>
             <nav className="flex flex-col gap-2.5" aria-label="Platform links">
               {quickLinks.map(({ href, label }) => (
-                <Link key={href} href={href}
-                  className="text-sm text-[#8A9BB0] hover:text-white transition-colors duration-200 w-fit">
+                <Link
+                  key={href}
+                  href={href}
+                  className="text-sm text-[#8A9BB0] hover:text-white transition-colors duration-200 w-fit"
+                >
                   {label}
                 </Link>
               ))}
@@ -125,8 +139,11 @@ const Footer = () => {
             </h3>
             <nav className="flex flex-col gap-2.5" aria-label="Resources links">
               {resources.map(({ href, label }) => (
-                <Link key={href} href={href}
-                  className="text-sm text-[#8A9BB0] hover:text-white transition-colors duration-200 w-fit">
+                <Link
+                  key={href}
+                  href={href}
+                  className="text-sm text-[#8A9BB0] hover:text-white transition-colors duration-200 w-fit"
+                >
                   {label}
                 </Link>
               ))}
@@ -136,12 +153,15 @@ const Footer = () => {
           {/* Support links */}
           <div className="flex flex-col gap-4">
             <h3 className="text-xs font-semibold text-white/60 uppercase tracking-widest">
-              {t("footer.support")}
+              {t('footer.support')}
             </h3>
             <nav className="flex flex-col gap-2.5" aria-label="Support links">
               {supportLinks.map(({ href, label }) => (
-                <Link key={href} href={href}
-                  className="text-sm text-[#8A9BB0] hover:text-white transition-colors duration-200 w-fit">
+                <Link
+                  key={href}
+                  href={href}
+                  className="text-sm text-[#8A9BB0] hover:text-white transition-colors duration-200 w-fit"
+                >
                   {label}
                 </Link>
               ))}
@@ -161,9 +181,7 @@ const Footer = () => {
         {/* ── Bottom bar ────────────────────────────────────── */}
         <div className="border-t border-[#1E2D3D]/60 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs text-[#8A9BB0] text-center sm:text-left">
-            <p>
-              © {year} Stellar-LumenMint. All rights reserved.
-            </p>
+            <p>© {year} Stellar-LumenMint. All rights reserved.</p>
             <span className="hidden sm:inline text-[#1E2D3D]">·</span>
             <div className="flex items-center gap-1">
               <span>Built on</span>
@@ -173,9 +191,21 @@ const Footer = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs text-[#6B7A8D]">
-            <Link href={`/${locale}/privacy-policy`} className="hover:text-[#8A9BB0] transition-colors">Privacy</Link>
-            <Link href={`/${locale}/terms-of-service`} className="hover:text-[#8A9BB0] transition-colors">Terms</Link>
-            <Link href={`/${locale}/cookies`} className="hover:text-[#8A9BB0] transition-colors">Cookies</Link>
+            <Link
+              href={`/${locale}/privacy-policy`}
+              className="hover:text-[#8A9BB0] transition-colors"
+            >
+              Privacy
+            </Link>
+            <Link
+              href={`/${locale}/terms-of-service`}
+              className="hover:text-[#8A9BB0] transition-colors"
+            >
+              Terms
+            </Link>
+            <Link href={`/${locale}/cookies`} className="hover:text-[#8A9BB0] transition-colors">
+              Cookies
+            </Link>
           </div>
         </div>
       </div>

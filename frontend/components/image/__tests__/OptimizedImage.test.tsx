@@ -21,19 +21,41 @@ import OptimizedImage from '../OptimizedImage';
 
 describe('OptimizedImage', () => {
   it('renders fallback when src is empty', () => {
-    render(<OptimizedImage src={''} alt={'test alt'} fallbackSrc={'/images/fallbacks/avatar-fallback.svg'} width={40} height={40} />);
+    render(
+      <OptimizedImage
+        src={''}
+        alt={'test alt'}
+        fallbackSrc={'/images/fallbacks/avatar-fallback.svg'}
+        width={40}
+        height={40}
+      />,
+    );
     const img = screen.getByAltText('Fallback for test alt');
     expect(img).toBeInTheDocument();
   });
 
   it('renders provided src when given', () => {
-    render(<OptimizedImage src={'/images/fallbacks/avatar-fallback.svg'} alt={'avatar'} width={40} height={40} />);
+    render(
+      <OptimizedImage
+        src={'/images/fallbacks/avatar-fallback.svg'}
+        alt={'avatar'}
+        width={40}
+        height={40}
+      />,
+    );
     const img = screen.getByAltText('avatar');
     expect(img).toBeInTheDocument();
   });
 
   it('renders skeleton (test env shows immediately) with correct dimensions', () => {
-    render(<OptimizedImage src={'/images/fallbacks/avatar-fallback.svg'} alt={'avatar'} width={80} height={60} />);
+    render(
+      <OptimizedImage
+        src={'/images/fallbacks/avatar-fallback.svg'}
+        alt={'avatar'}
+        width={80}
+        height={60}
+      />,
+    );
     const skeleton = screen.getByRole('status');
     expect(skeleton).toBeInTheDocument();
     // style width/height applied
@@ -61,8 +83,17 @@ describe('OptimizedImage', () => {
   });
 
   it('passes blurPlaceholder as blurDataURL to next/image', () => {
-    const blur = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNkZGQiLz48L3N2Zz4=';
-    render(<OptimizedImage src={'/images/avatar.svg'} alt={'blur-test'} width={40} height={40} blurPlaceholder={blur} />);
+    const blur =
+      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNkZGQiLz48L3N2Zz4=';
+    render(
+      <OptimizedImage
+        src={'/images/avatar.svg'}
+        alt={'blur-test'}
+        width={40}
+        height={40}
+        blurPlaceholder={blur}
+      />,
+    );
     const img = screen.getByAltText('blur-test');
     expect(img).toHaveAttribute('data-blur', blur);
   });

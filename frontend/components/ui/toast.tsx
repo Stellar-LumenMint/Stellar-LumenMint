@@ -63,10 +63,13 @@ export function Toast() {
           role={toast.type === 'error' ? 'alert' : 'status'}
           className={cn(
             'flex items-center gap-3 p-4 rounded-lg border backdrop-blur-sm max-w-sm shadow-lg animate-in slide-in-from-top-2 duration-300',
-            colors[toast.type]
+            colors[toast.type],
           )}
         >
-          <Icon aria-hidden="true" className={cn('h-5 w-5 flex-shrink-0', iconColors[toast.type])} />
+          <Icon
+            aria-hidden="true"
+            className={cn('h-5 w-5 flex-shrink-0', iconColors[toast.type])}
+          />
           <p className="text-sm font-medium flex-1">{toast.message}</p>
           <button
             onClick={hideToast}

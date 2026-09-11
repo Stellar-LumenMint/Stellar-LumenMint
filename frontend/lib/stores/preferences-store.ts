@@ -10,18 +10,13 @@ import { PreferencesStore } from './types';
  * legacy or partially corrupted payload can never crash rehydration or wipe
  * the user's preferences. Exported for direct unit testing.
  */
-export function migratePreferences(
-  persistedState: unknown,
-  _version: number
-): typeof initialState {
+export function migratePreferences(persistedState: unknown, _version: number): typeof initialState {
   const legacy = (persistedState as Partial<typeof initialState>) ?? {};
   return {
     ...initialState,
     theme: {
       ...initialState.theme,
-      ...(legacy.theme && typeof legacy.theme === 'object'
-        ? legacy.theme
-        : {}),
+      ...(legacy.theme && typeof legacy.theme === 'object' ? legacy.theme : {}),
     },
     notifications: {
       ...initialState.notifications,
@@ -31,27 +26,17 @@ export function migratePreferences(
     },
     display: {
       ...initialState.display,
-      ...(legacy.display && typeof legacy.display === 'object'
-        ? legacy.display
-        : {}),
+      ...(legacy.display && typeof legacy.display === 'object' ? legacy.display : {}),
     },
-    language:
-      typeof legacy.language === 'string'
-        ? legacy.language
-        : initialState.language,
-    timezone:
-      typeof legacy.timezone === 'string'
-        ? legacy.timezone
-        : initialState.timezone,
+    language: typeof legacy.language === 'string' ? legacy.language : initialState.language,
+    timezone: typeof legacy.timezone === 'string' ? legacy.timezone : initialState.timezone,
     recentSearches: Array.isArray(legacy.recentSearches)
       ? legacy.recentSearches
       : initialState.recentSearches,
     favoriteCollections: Array.isArray(legacy.favoriteCollections)
       ? legacy.favoriteCollections
       : initialState.favoriteCollections,
-    watchlist: Array.isArray(legacy.watchlist)
-      ? legacy.watchlist
-      : initialState.watchlist,
+    watchlist: Array.isArray(legacy.watchlist) ? legacy.watchlist : initialState.watchlist,
   };
 }
 
@@ -148,7 +133,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
         removeFromFavorites: (collectionId) =>
           set((state) => {
             state.favoriteCollections = state.favoriteCollections.filter(
-              (id) => id !== collectionId
+              (id) => id !== collectionId,
             );
           }),
 
@@ -200,12 +185,12 @@ export const usePreferencesStore = create<PreferencesStore>()(
           favoriteCollections: state.favoriteCollections,
           watchlist: state.watchlist,
         }),
-      }
+      },
     ),
     {
       name: 'preferences-store',
-    }
-  )
+    },
+  ),
 );
 
 // Hooks for specific preference sections
@@ -226,7 +211,7 @@ export const useDisplaySettings = () => {
 
 export const useFavorites = () => {
   const { favoriteCollections, addToFavorites, removeFromFavorites } = usePreferencesStore();
-  
+
   const isFavorite = (collectionId: string) => favoriteCollections.includes(collectionId);
   const toggleFavorite = (collectionId: string) => {
     if (isFavorite(collectionId)) {
@@ -247,7 +232,7 @@ export const useFavorites = () => {
 
 export const useWatchlist = () => {
   const { watchlist, addToWatchlist, removeFromWatchlist } = usePreferencesStore();
-  
+
   const isWatched = (nftId: string) => watchlist.includes(nftId);
   const toggleWatchlist = (nftId: string) => {
     if (isWatched(nftId)) {
@@ -302,4 +287,4 @@ export const usePreferences = () => {
     setTimezone,
     resetPreferences,
   };
-}; 
+};

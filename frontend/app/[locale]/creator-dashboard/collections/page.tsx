@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { API_CONFIG } from "@/lib/config";
-import { WidgetErrorBoundary } from "@/components/dashboard/WidgetErrorBoundary";
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { API_CONFIG } from '@/lib/config';
+import { WidgetErrorBoundary } from '@/components/dashboard/WidgetErrorBoundary';
 
 interface Collection {
   id: string;
@@ -41,10 +41,10 @@ export default function CollectionsPage() {
     setError(null);
 
     fetch(`${API_CONFIG.baseUrl}/collections?page=${page}&limit=${limit}`, {
-      credentials: "include",
+      credentials: 'include',
     })
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to load collections");
+        if (!res.ok) throw new Error('Failed to load collections');
         return res.json();
       })
       .then((result) => {
@@ -63,7 +63,9 @@ export default function CollectionsPage() {
         if (!cancelled) setLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [page, retryTrigger]);
 
   if (loading) {
@@ -120,7 +122,13 @@ export default function CollectionsPage() {
               {col.imageUrl && (
                 <div className="relative -mt-8 ml-4">
                   <div className="w-16 h-16 rounded-full border-2 border-lumen-teal/40 overflow-hidden bg-lumen-surface">
-                    <Image src={col.imageUrl} alt={col.name} width={64} height={64} className="object-cover" />
+                    <Image
+                      src={col.imageUrl}
+                      alt={col.name}
+                      width={64}
+                      height={64}
+                      className="object-cover"
+                    />
                   </div>
                 </div>
               )}

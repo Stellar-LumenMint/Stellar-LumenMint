@@ -21,7 +21,7 @@ export class JourneySessionManager {
   static getOrCreateSession(initialStage: FunnelStage, userId?: string): FunnelJourneySession {
     const stored = this.loadFromStorage();
     const now = Date.now();
-    if (stored && (now - stored.last_activity_timestamp_ms < this.SESSION_IDLE_MS)) {
+    if (stored && now - stored.last_activity_timestamp_ms < this.SESSION_IDLE_MS) {
       stored.last_activity_timestamp_ms = now;
       this.saveToStorage(stored);
       return stored;

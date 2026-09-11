@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { useTranslation } from "@/hooks/useTranslation";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import Image from 'next/image';
+import { useTranslation } from '@/hooks/useTranslation';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Button } from '@/components/ui/button';
 
 type NftEdge = {
   node: {
@@ -32,12 +32,7 @@ export function CreatorNftGrid({
   const { t } = useTranslation();
 
   if (!edges.length) {
-    return (
-      <EmptyState
-        title={t("creatorProfile.emptyNfts")}
-        className="py-12"
-      />
-    );
+    return <EmptyState title={t('creatorProfile.emptyNfts')} className="py-12" />;
   }
 
   return (
@@ -67,9 +62,7 @@ export function CreatorNftGrid({
             <div className="space-y-1 p-3">
               <p className="truncate text-sm font-medium text-white">{node.name}</p>
               {node.lastPrice ? (
-                <p className="text-xs text-gray-400">
-                  {Number(node.lastPrice).toFixed(2)} XLM
-                </p>
+                <p className="text-xs text-gray-400">{Number(node.lastPrice).toFixed(2)} XLM</p>
               ) : null}
             </div>
           </Link>
@@ -85,7 +78,7 @@ export function CreatorNftGrid({
             disabled={loadingMore}
             className="border-gray-700 bg-transparent text-gray-200"
           >
-            {loadingMore ? t("common.loading") : t("common.next")}
+            {loadingMore ? t('common.loading') : t('common.next')}
           </Button>
         </div>
       ) : null}

@@ -1,33 +1,31 @@
-"use client";
+'use client';
 
-import { CircuitBackground } from "@/components/circuit-background";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useAuth } from "@/lib/stores/auth-store";
-import { useAuthStore } from "@/lib/stores/auth-store";
-import { useTranslation } from "@/hooks/useTranslation";
-import { useStellarWallet } from "@/components/wallet/hooks/useStellarWallet";
-import { useStellarAuth } from "@/components/wallet/hooks/useStellarAuth";
-import { WalletModal } from "@/components/wallet/WalletModal";
-import { WalletNetworkStatus } from "@/components/wallet/WalletNetworkStatus";
-import { defaultNetwork } from "@/lib/stellar/client";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, LoginFormData } from "@/lib/validation/auth";
-import { mapServerError } from "@/lib/errors/serverErrorMapper";
-import {
-  LogIn, Wallet, Mail, Lock, Eye, EyeOff, ChevronRight, Loader2,
-} from "lucide-react";
-import { OptimizedImage } from "@/components/image";
-import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/lib/stores";
-import { API_CONFIG } from "@/lib/config";
-import { getCookie } from "@/lib/CSRFTOKEN";
-import { buildLocalizedRoute } from "@/lib/routing";
+import { CircuitBackground } from '@/components/circuit-background';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '@/lib/stores/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useStellarWallet } from '@/components/wallet/hooks/useStellarWallet';
+import { useStellarAuth } from '@/components/wallet/hooks/useStellarAuth';
+import { WalletModal } from '@/components/wallet/WalletModal';
+import { WalletNetworkStatus } from '@/components/wallet/WalletNetworkStatus';
+import { defaultNetwork } from '@/lib/stellar/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, LoginFormData } from '@/lib/validation/auth';
+import { mapServerError } from '@/lib/errors/serverErrorMapper';
+import { LogIn, Wallet, Mail, Lock, Eye, EyeOff, ChevronRight, Loader2 } from 'lucide-react';
+import { OptimizedImage } from '@/components/image';
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/lib/stores';
+import { API_CONFIG } from '@/lib/config';
+import { getCookie } from '@/lib/CSRFTOKEN';
+import { buildLocalizedRoute } from '@/lib/routing';
 
-type AuthMode = "wallet" | "email";
+type AuthMode = 'wallet' | 'email';
 
 export default function LoginPage() {
   const { t, locale } = useTranslation();
@@ -43,54 +41,67 @@ export default function LoginPage() {
   const { emailLogin } = useAuthStore();
 
   const {
-    connected, address, provider, connecting,
-    error: walletError, disconnect, clearError: clearWalletError,
+    connected,
+    address,
+    provider,
+    connecting,
+    error: walletError,
+    disconnect,
+    clearError: clearWalletError,
   } = useStellarWallet();
 
   const {
-    loading: authLoading, error: authError,
-    authenticateWithWallet, clearError: clearAuthError,
+    loading: authLoading,
+    error: authError,
+    authenticateWithWallet,
+    clearError: clearAuthError,
   } = useStellarAuth();
 
-  const [mode, setMode] = useState<AuthMode>("wallet");
+  const [mode, setMode] = useState<AuthMode>('wallet');
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [localError, setLocalError] = useState("");
+  const [localError, setLocalError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState("");
+  const [submittedEmail, setSubmittedEmail] = useState('');
   const [resending, setResending] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const redirectTo = sessionStorage.getItem("redirectTo") || "/creator-dashboard";
-      sessionStorage.removeItem("redirectTo");
+      const redirectTo = sessionStorage.getItem('redirectTo') || '/creator-dashboard';
+      sessionStorage.removeItem('redirectTo');
       router.push(buildLocalizedRoute(locale, redirectTo));
     }
   }, [isAuthenticated, user, locale, router]);
 
   const handleResendVerification = async () => {
-    const emailVal = getValues("email") || submittedEmail;
+    const emailVal = getValues('email') || submittedEmail;
     if (!emailVal) {
-      showError("Please enter your email address first");
+      showError('Please enter your email address first');
       return;
     }
     try {
       setResending(true);
       const csrfToken = await getCookie();
       const res = await fetch(`${API_CONFIG.baseUrl}/auth/resend-verification`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken,
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         body: JSON.stringify({ email: emailVal }),
       });
       if (!res.ok) {
-        throw new Error("Failed to resend");
+        throw new Error('Failed to resend');
       }
-      showSuccess(t("auth.verificationResent") || "Verification email resent successfully! Please check your inbox.");
+      showSuccess(
+        t('auth.verificationResent') ||
+          'Verification email resent successfully! Please check your inbox.',
+      );
     } catch (err) {
-      showError(t("auth.verificationResendFailed") || "Failed to resend verification email. Please try again.");
+      showError(
+        t('auth.verificationResendFailed') ||
+          'Failed to resend verification email. Please try again.',
+      );
     } finally {
       setResending(false);
     }
@@ -110,7 +121,7 @@ export default function LoginPage() {
     clearEmailError();
     clearWalletError();
     clearAuthError();
-    setLocalError("");
+    setLocalError('');
   };
 
   const switchMode = (m: AuthMode) => {
@@ -120,7 +131,7 @@ export default function LoginPage() {
 
   const handleWalletAuth = async () => {
     if (!address || !provider) {
-      setLocalError("Please connect your wallet first");
+      setLocalError('Please connect your wallet first');
       return;
     }
     clearAllErrors();
@@ -136,9 +147,9 @@ export default function LoginPage() {
     setSubmittedEmail(data.email);
     try {
       await emailLogin(data.email, data.password, rememberMe);
-      showSuccess(t("auth.loginSuccess") || "Login successful! Welcome back.");
-      const redirectTo = sessionStorage.getItem("redirectTo") || "/creator-dashboard";
-      sessionStorage.removeItem("redirectTo");
+      showSuccess(t('auth.loginSuccess') || 'Login successful! Welcome back.');
+      const redirectTo = sessionStorage.getItem('redirectTo') || '/creator-dashboard';
+      sessionStorage.removeItem('redirectTo');
       router.push(buildLocalizedRoute(locale, redirectTo));
     } catch (err: unknown) {
       const { fieldErrors, formError } = mapServerError(err);
@@ -154,9 +165,7 @@ export default function LoginPage() {
 
   const globalErrorInstance = emailError || authError || walletError;
   const globalErrorMessage =
-    typeof globalErrorInstance === "string"
-      ? globalErrorInstance
-      : globalErrorInstance?.message;
+    typeof globalErrorInstance === 'string' ? globalErrorInstance : globalErrorInstance?.message;
 
   const displayGeneralError = localError || globalErrorMessage;
 
@@ -183,16 +192,16 @@ export default function LoginPage() {
                 <div className="flex-1">
                   <p className="font-medium text-red-200">Authentication Alert</p>
                   <p className="text-xs text-red-300/90 mt-0.5">{displayGeneralError}</p>
-                  {(displayGeneralError.toLowerCase().includes("verified") ||
-                    displayGeneralError.toLowerCase().includes("verify") ||
-                    displayGeneralError.toLowerCase().includes("verification")) && (
+                  {(displayGeneralError.toLowerCase().includes('verified') ||
+                    displayGeneralError.toLowerCase().includes('verify') ||
+                    displayGeneralError.toLowerCase().includes('verification')) && (
                     <button
                       type="button"
                       onClick={handleResendVerification}
                       disabled={resending}
                       className="text-xs text-purple-400 hover:text-purple-300 underline mt-2 block font-medium disabled:opacity-50"
                     >
-                      {resending ? "Resending..." : "Resend verification email"}
+                      {resending ? 'Resending...' : 'Resend verification email'}
                     </button>
                   )}
                 </div>
@@ -202,32 +211,36 @@ export default function LoginPage() {
             <div className="flex rounded-lg bg-[#1C2433] p-1 mb-6 gap-1">
               <button
                 type="button"
-                onClick={() => switchMode("wallet")}
+                onClick={() => switchMode('wallet')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-                  mode === "wallet" ? "bg-[#00D4FF] text-[#0D1117] shadow-sm" : "text-[#8A9BB0] hover:text-white"
+                  mode === 'wallet'
+                    ? 'bg-[#00D4FF] text-[#0D1117] shadow-sm'
+                    : 'text-[#8A9BB0] hover:text-white'
                 }`}
               >
                 <Wallet className="h-4 w-4" />
-                {t("login.walletTab") || "Wallet"}
+                {t('login.walletTab') || 'Wallet'}
               </button>
               <button
                 type="button"
-                onClick={() => switchMode("email")}
+                onClick={() => switchMode('email')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-                  mode === "email" ? "bg-[#00D4FF] text-[#0D1117] shadow-sm" : "text-[#8A9BB0] hover:text-white"
+                  mode === 'email'
+                    ? 'bg-[#00D4FF] text-[#0D1117] shadow-sm'
+                    : 'text-[#8A9BB0] hover:text-white'
                 }`}
               >
                 <Mail className="h-4 w-4" />
-                {t("login.emailTab") || "Email"}
+                {t('login.emailTab') || 'Email'}
               </button>
             </div>
 
             {/* WALLET MODE */}
-            {mode === "wallet" && (
+            {mode === 'wallet' && (
               <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium mb-2 text-purple-300">
-                    {t("login.walletAddress") || "Wallet Address"}
+                    {t('login.walletAddress') || 'Wallet Address'}
                   </label>
                   {connected && address ? (
                     <div className="flex items-center justify-between w-full bg-gray-800/50 border border-purple-500/20 rounded-lg px-4 py-3">
@@ -244,14 +257,16 @@ export default function LoginPage() {
                           onClick={disconnect}
                           className="text-xs text-red-400 hover:text-red-300 transition-colors"
                         >
-                          {t("connectWallet.disconnect") || "Disconnect"}
+                          {t('connectWallet.disconnect') || 'Disconnect'}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <Input
-                      type="text" value="" readOnly
-                      placeholder={t("login.inputPlaceholder") || "Connect wallet to populate"}
+                      type="text"
+                      value=""
+                      readOnly
+                      placeholder={t('login.inputPlaceholder') || 'Connect wallet to populate'}
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg px-4 py-3 text-sm"
                     />
                   )}
@@ -265,7 +280,7 @@ export default function LoginPage() {
                       disabled={loading}
                     >
                       <Wallet className="mr-2 h-5 w-5" />
-                      {t("login.connectWallet") || "Connect Wallet"}
+                      {t('login.connectWallet') || 'Connect Wallet'}
                     </Button>
                   ) : (
                     <Button
@@ -275,22 +290,28 @@ export default function LoginPage() {
                       disabled={loading}
                     >
                       <LogIn className="mr-2 h-5 w-5" />
-                      {loading ? t("login.signingIn") || "Signing in…" : t("login.signAndLogin") || "Sign & Login"}
+                      {loading
+                        ? t('login.signingIn') || 'Signing in…'
+                        : t('login.signAndLogin') || 'Sign & Login'}
                     </Button>
                   )}
                 </div>
                 <p className="text-xs text-gray-500 text-center leading-relaxed">
-                  {t("login.walletAuthNote") || "You will be asked to sign a message to verify ownership of your Stellar wallet. No transaction will be submitted."}
+                  {t('login.walletAuthNote') ||
+                    'You will be asked to sign a message to verify ownership of your Stellar wallet. No transaction will be submitted.'}
                 </p>
               </div>
             )}
 
             {/* EMAIL MODE */}
-            {mode === "email" && (
+            {mode === 'email' && (
               <form onSubmit={handleSubmit(onEmailSubmit)} className="space-y-5" noValidate>
                 <div>
-                  <label htmlFor="email-input" className="block text-sm font-medium mb-2 text-gray-300">
-                    {t("login.email") || "Email"}
+                  <label
+                    htmlFor="email-input"
+                    className="block text-sm font-medium mb-2 text-gray-300"
+                  >
+                    {t('login.email') || 'Email'}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -299,7 +320,7 @@ export default function LoginPage() {
                       type="email"
                       placeholder="you@example.com"
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg pl-9 pr-4 py-3 text-sm"
-                      {...register("email")}
+                      {...register('email')}
                     />
                   </div>
                   {errors.email && (
@@ -308,17 +329,20 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="password-input" className="block text-sm font-medium mb-2 text-gray-300">
-                    {t("login.password") || "Password"}
+                  <label
+                    htmlFor="password-input"
+                    className="block text-sm font-medium mb-2 text-gray-300"
+                  >
+                    {t('login.password') || 'Password'}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
                       id="password-input"
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
                       className="w-full bg-gray-800/50 border border-purple-500/20 rounded-lg pl-9 pr-10 py-3 text-sm"
-                      {...register("password")}
+                      {...register('password')}
                     />
                     <button
                       type="button"
@@ -342,14 +366,14 @@ export default function LoginPage() {
                       className="rounded border-purple-500/30 bg-gray-800/50 text-[#4e3bff] focus:ring-0 focus:ring-offset-0 h-4 w-4"
                     />
                     <span className="text-gray-300 text-xs">
-                      {t("auth.rememberMe") || "Remember me"}
+                      {t('auth.rememberMe') || 'Remember me'}
                     </span>
                   </label>
                   <Link
                     href={`/${locale}/auth/forgot-password`}
                     className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
                   >
-                    {t("auth.forgotPassword") || "Forgot password?"}
+                    {t('auth.forgotPassword') || 'Forgot password?'}
                   </Link>
                 </div>
 
@@ -363,18 +387,18 @@ export default function LoginPage() {
                   ) : (
                     <LogIn className="mr-2 h-5 w-5" />
                   )}
-                  {loading ? t("login.signingIn") || "Signing in…" : t("login.signIn") || "Sign In"}
+                  {loading ? t('login.signingIn') || 'Signing in…' : t('login.signIn') || 'Sign In'}
                 </Button>
               </form>
             )}
 
             <div className="text-center text-sm text-gray-400 mt-6">
-              {t("login.dontHave") || "Don't have an account?"}{" "}
+              {t('login.dontHave') || "Don't have an account?"}{' '}
               <Link
                 href={`/${locale}/auth/register`}
                 className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-0.5"
               >
-                {t("login.registerWith") || "Register"}
+                {t('login.registerWith') || 'Register'}
                 <ChevronRight className="h-3 w-3" />
               </Link>
             </div>

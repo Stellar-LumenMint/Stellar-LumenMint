@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { ArrowUpRight, Gavel, Sparkles, Tag } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import Link from 'next/link';
+import { ArrowUpRight, Gavel, Sparkles, Tag } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type ActivityEdge = {
   node: {
-    type: "MINT" | "SALE" | "LISTING";
+    type: 'MINT' | 'SALE' | 'LISTING';
     occurredAt: string;
     nftId?: string | null;
     price?: string | null;
@@ -40,12 +40,7 @@ export function CreatorActivityFeed({
   const { t } = useTranslation();
 
   if (!edges.length) {
-    return (
-      <EmptyState
-        title={t("creatorProfile.emptyActivity")}
-        className="py-12"
-      />
-    );
+    return <EmptyState title={t('creatorProfile.emptyActivity')} className="py-12" />;
   }
 
   return (
@@ -54,20 +49,20 @@ export function CreatorActivityFeed({
         {edges.map(({ node, cursor }) => {
           const Icon = activityIcons[node.type];
           const labelKey =
-            node.type === "MINT"
-              ? "creatorProfile.activityMint"
-              : node.type === "SALE"
-                ? "creatorProfile.activitySale"
-                : "creatorProfile.activityListing";
+            node.type === 'MINT'
+              ? 'creatorProfile.activityMint'
+              : node.type === 'SALE'
+                ? 'creatorProfile.activitySale'
+                : 'creatorProfile.activityListing';
 
           return (
             <li key={cursor} className="flex items-center gap-4 px-4 py-3">
               <div
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-full",
-                  node.type === "MINT" && "bg-emerald-500/10 text-emerald-300",
-                  node.type === "SALE" && "bg-purple-500/10 text-purple-300",
-                  node.type === "LISTING" && "bg-blue-500/10 text-blue-300",
+                  'flex h-10 w-10 items-center justify-center rounded-full',
+                  node.type === 'MINT' && 'bg-emerald-500/10 text-emerald-300',
+                  node.type === 'SALE' && 'bg-purple-500/10 text-purple-300',
+                  node.type === 'LISTING' && 'bg-blue-500/10 text-blue-300',
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -83,8 +78,7 @@ export function CreatorActivityFeed({
               <div className="flex items-center gap-3 text-sm text-gray-300">
                 {node.price ? (
                   <span>
-                    {Number(node.price).toFixed(2)}{" "}
-                    {node.currency || "XLM"}
+                    {Number(node.price).toFixed(2)} {node.currency || 'XLM'}
                   </span>
                 ) : null}
                 {node.nftId ? (
@@ -110,7 +104,7 @@ export function CreatorActivityFeed({
             disabled={loadingMore}
             className="border-gray-700 bg-transparent text-gray-200"
           >
-            {loadingMore ? t("common.loading") : t("common.next")}
+            {loadingMore ? t('common.loading') : t('common.next')}
           </Button>
         </div>
       ) : null}

@@ -1,22 +1,15 @@
-import {
-  ApolloClient,
-  HttpLink,
-  InMemoryCache,
-  from,
-  NormalizedCacheObject,
-} from "@apollo/client";
-import { onError } from "@apollo/client/link/error";
-import { setContext } from "@apollo/client/link/context";
+import { ApolloClient, HttpLink, InMemoryCache, from, NormalizedCacheObject } from '@apollo/client';
+import { onError } from '@apollo/client/link/error';
+import { setContext } from '@apollo/client/link/context';
 
-const GRAPHQL_URL =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3001/graphql";
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3001/graphql';
 
 function getAuthToken(): string | null {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return null;
   }
 
-  const tokenKeys = ["auth-token", "auth_token", "token", "accessToken", "access_token"];
+  const tokenKeys = ['auth-token', 'auth_token', 'token', 'accessToken', 'access_token'];
 
   for (const key of tokenKeys) {
     const token = window.localStorage.getItem(key) || window.sessionStorage.getItem(key);
@@ -25,7 +18,8 @@ function getAuthToken(): string | null {
     }
   }
 
-  const storedUser = window.localStorage.getItem("auth-user") || window.sessionStorage.getItem("auth-user");
+  const storedUser =
+    window.localStorage.getItem('auth-user') || window.sessionStorage.getItem('auth-user');
   if (storedUser) {
     try {
       const parsedUser = JSON.parse(storedUser);
@@ -51,9 +45,7 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
   const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
     if (graphQLErrors) {
       graphQLErrors.forEach((error) => {
-        console.error(
-          `[GraphQL error][${operation.operationName}]: ${error.message}`
-        );
+        console.error(`[GraphQL error][${operation.operationName}]: ${error.message}`);
       });
     }
 
@@ -75,7 +67,7 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
 
   const httpLink = new HttpLink({
     uri: GRAPHQL_URL,
-    credentials: "include",
+    credentials: 'include',
   });
 
   return new ApolloClient({
@@ -85,19 +77,19 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
         Query: {
           fields: {
             nfts: {
-              keyArgs: ["filters", "page", "limit"],
+              keyArgs: ['filters', 'page', 'limit'],
               merge: false,
             },
             collections: {
-              keyArgs: ["filters", "page", "limit"],
+              keyArgs: ['filters', 'page', 'limit'],
               merge: false,
             },
             listings: {
-              keyArgs: ["filters", "page", "limit"],
+              keyArgs: ['filters', 'page', 'limit'],
               merge: false,
             },
             auctions: {
-              keyArgs: ["filters", "page", "limit"],
+              keyArgs: ['filters', 'page', 'limit'],
               merge: false,
             },
           },
@@ -105,18 +97,18 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
       },
     }),
     devtools: {
-      enabled: process.env.NODE_ENV !== "production",
+      enabled: process.env.NODE_ENV !== 'production',
     },
     defaultOptions: {
       watchQuery: {
-        errorPolicy: "all",
-        fetchPolicy: "cache-and-network",
+        errorPolicy: 'all',
+        fetchPolicy: 'cache-and-network',
       },
       query: {
-        errorPolicy: "all",
+        errorPolicy: 'all',
       },
       mutate: {
-        errorPolicy: "all",
+        errorPolicy: 'all',
       },
     },
   });

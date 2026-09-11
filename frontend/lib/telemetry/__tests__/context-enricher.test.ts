@@ -16,8 +16,16 @@ describe('Telemetry Context Enrichment Pipeline', () => {
     expect(typeof ctx.route).toBe('string');
     expect(typeof ctx.locale).toBe('string');
     expect(typeof ctx.session_id).toBe('string');
-    expect(['mobile','tablet','desktop','unknown']).toContain(ctx.device_type);
-    expect(['landing','auth','creator_dashboard','marketplace','profile','settings','unknown']).toContain(ctx.app_surface);
+    expect(['mobile', 'tablet', 'desktop', 'unknown']).toContain(ctx.device_type);
+    expect([
+      'landing',
+      'auth',
+      'creator_dashboard',
+      'marketplace',
+      'profile',
+      'settings',
+      'unknown',
+    ]).toContain(ctx.app_surface);
   });
 
   it('applies override fields', () => {
@@ -64,7 +72,7 @@ describe('Context Resolvers', () => {
 
   it('device resolver returns known type', () => {
     const type = resolveDeviceType();
-    expect(['mobile','tablet','desktop','unknown']).toContain(type);
+    expect(['mobile', 'tablet', 'desktop', 'unknown']).toContain(type);
   });
 
   it('app surface resolver maps routes', () => {

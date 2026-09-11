@@ -1,7 +1,4 @@
-export function getCreatorAvatarUrl(
-  userId: string,
-  avatarUrl?: string | null,
-): string {
+export function getCreatorAvatarUrl(userId: string, avatarUrl?: string | null): string {
   if (avatarUrl?.trim()) {
     return avatarUrl;
   }
@@ -9,10 +6,7 @@ export function getCreatorAvatarUrl(
   return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(userId)}`;
 }
 
-export function getCreatorBannerUrl(
-  userId: string,
-  bannerUrl?: string | null,
-): string | null {
+export function getCreatorBannerUrl(userId: string, bannerUrl?: string | null): string | null {
   if (bannerUrl?.trim()) {
     return bannerUrl;
   }
@@ -20,10 +14,7 @@ export function getCreatorBannerUrl(
   return null;
 }
 
-export function getCreatorDisplayName(
-  username?: string | null,
-  id?: string,
-): string {
+export function getCreatorDisplayName(username?: string | null, id?: string): string {
   if (username?.trim()) {
     return username.trim();
   }
@@ -32,22 +23,17 @@ export function getCreatorDisplayName(
     return `${id.slice(0, 6)}…${id.slice(-4)}`;
   }
 
-  return "Creator";
+  return 'Creator';
 }
 
-export function buildCreatorProfilePath(
-  usernameOrId: string,
-  locale?: string,
-): string {
+export function buildCreatorProfilePath(usernameOrId: string, locale?: string): string {
   const slug = encodeURIComponent(usernameOrId);
   return locale ? `/${locale}/creator/${slug}` : `/creator/${slug}`;
 }
 
-export function normalizeSocialHandle(
-  handle?: string | null,
-): string | null {
+export function normalizeSocialHandle(handle?: string | null): string | null {
   if (!handle?.trim()) return null;
-  return handle.startsWith("@") ? handle.slice(1) : handle;
+  return handle.startsWith('@') ? handle.slice(1) : handle;
 }
 
 export function buildTwitterUrl(handle?: string | null): string | null {
@@ -65,7 +51,7 @@ export function sanitizeExternalUrl(url?: string | null): string | null {
 
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return null;
     }
     return parsed.toString();

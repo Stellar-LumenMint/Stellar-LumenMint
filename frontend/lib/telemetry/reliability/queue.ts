@@ -26,15 +26,13 @@ export class TelemetryQueue {
    * dequeue so expired events are never dispatched after an offline gap.
    */
   private dropExpired(now: number) {
-    const expired = this.queue.filter(
-      (event) => now - event.enqueuedAt > this.maxEventAgeMs
-    );
+    const expired = this.queue.filter((event) => now - event.enqueuedAt > this.maxEventAgeMs);
     if (expired.length > 0) {
       this.queue = this.queue.filter((event) => !expired.includes(event));
       if (this.debug) {
         // eslint-disable-next-line no-console
         console.log(
-          `[telemetry][queue_drop_expired] count=${expired.length} maxAgeMs=${this.maxEventAgeMs}`
+          `[telemetry][queue_drop_expired] count=${expired.length} maxAgeMs=${this.maxEventAgeMs}`,
         );
       }
     }
@@ -45,13 +43,17 @@ export class TelemetryQueue {
       const dropped = this.queue.shift();
       if (this.debug) {
         // eslint-disable-next-line no-console
-        console.log(`[telemetry][queue_drop_overflow] eventName=${dropped?.eventName} queueSize=${this.queue.length}`);
+        console.log(
+          `[telemetry][queue_drop_overflow] eventName=${dropped?.eventName} queueSize=${this.queue.length}`,
+        );
       }
     }
     this.queue.push(event);
     if (this.debug) {
       // eslint-disable-next-line no-console
-      console.log(`[telemetry][queue_enqueue] eventName=${event.eventName} queueSize=${this.queue.length}`);
+      console.log(
+        `[telemetry][queue_enqueue] eventName=${event.eventName} queueSize=${this.queue.length}`,
+      );
     }
   }
 

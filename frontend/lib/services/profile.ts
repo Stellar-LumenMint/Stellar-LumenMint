@@ -1,7 +1,7 @@
-import { fetchWithAuth } from "@/lib/api/fetchWithAuth";
-import { API_CONFIG } from "@/lib/config";
-import { signMessageWithAlbedo } from "@/lib/stellar/wallet/albedo";
-import { WalletProvider } from "@/types/stellar";
+import { fetchWithAuth } from '@/lib/api/fetchWithAuth';
+import { API_CONFIG } from '@/lib/config';
+import { signMessageWithAlbedo } from '@/lib/stellar/wallet/albedo';
+import { WalletProvider } from '@/types/stellar';
 
 export interface ProfileUser {
   id?: string;
@@ -46,15 +46,15 @@ export interface WalletChallenge {
 }
 
 const jsonHeaders = {
-  "Content-Type": "application/json",
+  'Content-Type': 'application/json',
 };
 
 function unwrapApiData<T>(payload: unknown): T {
   const typed = payload as { data?: { data?: T } | T };
-  if (typed?.data && typeof typed.data === "object" && "data" in typed.data) {
+  if (typed?.data && typeof typed.data === 'object' && 'data' in typed.data) {
     return (typed.data as { data: T }).data;
   }
-  if ("data" in (typed || {})) {
+  if ('data' in (typed || {})) {
     return typed.data as T;
   }
   return payload as T;
@@ -74,90 +74,90 @@ async function parseResponse<T>(response: Response, fallbackMessage: string): Pr
 export function cleanProfilePayload(values: UpdateProfilePayload): UpdateProfilePayload {
   return Object.fromEntries(
     Object.entries(values)
-      .map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
-      .filter(([, value]) => value !== undefined && value !== "")
+      .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])
+      .filter(([, value]) => value !== undefined && value !== ''),
   ) as UpdateProfilePayload;
 }
 
 export async function fetchProfileByAddress(address: string): Promise<ProfileUser> {
   const response = await fetchWithAuth(`${API_CONFIG.baseUrl}/users/${address}`, {
-    method: "GET",
-    credentials: "include",
+    method: 'GET',
+    credentials: 'include',
   });
 
-  return parseResponse<ProfileUser>(response, "Failed to load profile");
+  return parseResponse<ProfileUser>(response, 'Failed to load profile');
 }
 
 export async function updateMyProfile(
   walletAddress: string,
-  payload: UpdateProfilePayload
+  payload: UpdateProfilePayload,
 ): Promise<ProfileUser> {
   const response = await fetchWithAuth(`${API_CONFIG.baseUrl}/users/me`, {
-    method: "PATCH",
-    credentials: "include",
+    method: 'PATCH',
+    credentials: 'include',
     headers: {
       ...jsonHeaders,
-      "x-wallet-address": walletAddress,
+      'x-wallet-address': walletAddress,
     },
     body: JSON.stringify(cleanProfilePayload(payload)),
   });
 
-  return parseResponse<ProfileUser>(response, "Failed to save profile");
+  return parseResponse<ProfileUser>(response, 'Failed to save profile');
 }
 
 export async function fetchLinkedWallets(): Promise<LinkedWallet[]> {
   const response = await fetchWithAuth(`${API_CONFIG.baseUrl}/users/wallets`, {
-    method: "GET",
-    credentials: "include",
+    method: 'GET',
+    credentials: 'include',
     headers: jsonHeaders,
   });
 
-  return parseResponse<LinkedWallet[]>(response, "Failed to load linked wallets");
+  return parseResponse<LinkedWallet[]>(response, 'Failed to load linked wallets');
 }
 
 export async function requestWalletChallenge(
   walletAddress: string,
-  walletProvider?: WalletProvider
+  walletProvider?: WalletProvider,
 ): Promise<WalletChallenge> {
   const response = await fetch(`${API_CONFIG.baseUrl}/auth/wallet/challenge`, {
-    method: "POST",
-    credentials: "include",
+    method: 'POST',
+    credentials: 'include',
     headers: jsonHeaders,
     body: JSON.stringify({ walletAddress, walletProvider }),
   });
 
-  return parseResponse<WalletChallenge>(response, "Failed to request wallet challenge");
+  return parseResponse<WalletChallenge>(response, 'Failed to request wallet challenge');
 }
 
 export async function signWalletChallenge(
   message: string,
   walletProvider: WalletProvider,
-  walletAddress: string
+  walletAddress: string,
 ): Promise<string> {
-  if (walletProvider === "freighter") {
-    const freighterApi = (await import("@stellar/freighter-api")) as {
+  if (walletProvider === 'freighter') {
+    const freighterApi = (await import('@stellar/freighter-api')) as {
       signMessage?: (
         message: string,
-        opts: { address: string }
+        opts: { address: string },
       ) => Promise<{ signedMessage: string | null; signerAddress?: string; error?: string }>;
     };
 
     if (!freighterApi.signMessage) {
-      throw new Error("Freighter message signing is unavailable in this browser.");
+      throw new Error('Freighter message signing is unavailable in this browser.');
     }
 
     const result = await freighterApi.signMessage(message, { address: walletAddress });
     if (result.error || !result.signedMessage) {
-      throw new Error(result.error || "Freighter did not return a signature.");
+      throw new Error(result.error || 'Freighter did not return a signature.');
     }
 
     return result.signedMessage;
   }
 
-  if (walletProvider === "albedo") {
+  if (walletProvider === 'albedo') {
     const result = await signMessageWithAlbedo(message);
     if (result.publicKey !== walletAddress) {
-      throw new Error("Signed wallet does not match the connected wallet.");
+      throw new Error('Signed wallet does not match the connected wallet.');
     }
     return result.signature;
   }
@@ -167,18 +167,14 @@ export async function signWalletChallenge(
 
 export async function linkWalletWithChallenge(
   walletAddress: string,
-  walletProvider: WalletProvider
+  walletProvider: WalletProvider,
 ): Promise<{ success: boolean; wallet: LinkedWallet }> {
   const challenge = await requestWalletChallenge(walletAddress, walletProvider);
-  const signature = await signWalletChallenge(
-    challenge.message,
-    walletProvider,
-    walletAddress
-  );
+  const signature = await signWalletChallenge(challenge.message, walletProvider, walletAddress);
 
   const response = await fetchWithAuth(`${API_CONFIG.baseUrl}/auth/wallet/link`, {
-    method: "POST",
-    credentials: "include",
+    method: 'POST',
+    credentials: 'include',
     headers: jsonHeaders,
     body: JSON.stringify({
       walletAddress,
@@ -190,14 +186,14 @@ export async function linkWalletWithChallenge(
 
   return parseResponse<{ success: boolean; wallet: LinkedWallet }>(
     response,
-    "Failed to link wallet"
+    'Failed to link wallet',
   );
 }
 
 export async function unlinkWallet(walletAddress: string): Promise<{ success: boolean }> {
   const requestInit: RequestInit = {
-    method: "DELETE",
-    credentials: "include",
+    method: 'DELETE',
+    credentials: 'include',
     headers: jsonHeaders,
     body: JSON.stringify({ walletAddress }),
   };
@@ -207,11 +203,10 @@ export async function unlinkWallet(walletAddress: string): Promise<{ success: bo
   if (response.status === 404 || response.status === 405) {
     const legacyResponse = await fetchWithAuth(`${API_CONFIG.baseUrl}/auth/wallet/unlink`, {
       ...requestInit,
-      method: "POST",
+      method: 'POST',
     });
-    return parseResponse<{ success: boolean }>(legacyResponse, "Failed to unlink wallet");
+    return parseResponse<{ success: boolean }>(legacyResponse, 'Failed to unlink wallet');
   }
 
-  return parseResponse<{ success: boolean }>(response, "Failed to unlink wallet");
+  return parseResponse<{ success: boolean }>(response, 'Failed to unlink wallet');
 }
-

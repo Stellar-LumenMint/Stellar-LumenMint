@@ -1,7 +1,7 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { StellarNetwork, StellarWalletState, WalletProvider } from "@/types/stellar";
-import { defaultNetwork } from "@/lib/stellar/client";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { StellarNetwork, StellarWalletState, WalletProvider } from '@/types/stellar';
+import { defaultNetwork } from '@/lib/stellar/client';
 
 // Define user type for the store
 export interface WalletUser {
@@ -25,7 +25,12 @@ interface WalletStore extends StellarWalletState {
   userId: string | null; // Convenience getter for user ID
 
   // Existing methods
-  setConnected: (address: string, provider: WalletProvider, network: StellarNetwork, user?: WalletUser) => void;
+  setConnected: (
+    address: string,
+    provider: WalletProvider,
+    network: StellarNetwork,
+    user?: WalletUser,
+  ) => void;
   setDisconnected: () => void;
   setConnecting: (connecting: boolean) => void;
   setError: (error: string | null) => void;
@@ -82,7 +87,7 @@ export const useWalletStore = create<WalletStore>()(
       setUser: (user) => set({ user }),
     }),
     {
-      name: "stellar-wallet-store",
+      name: 'stellar-wallet-store',
       // Only persist non-sensitive state
       partialize: (state) => ({
         address: state.address,
@@ -91,8 +96,8 @@ export const useWalletStore = create<WalletStore>()(
         connected: state.connected,
         // Don't persist user to avoid stale data - fetch on each session
       }),
-    }
-  )
+    },
+  ),
 );
 
 // Convenience selectors for common wallet store access

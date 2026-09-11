@@ -22,13 +22,7 @@ describe('CreationStepCard component', () => {
   });
 
   it('renders a completion badge when the step is completed', () => {
-    render(
-      <CreationStepCard
-        step={{ ...step, isCompleted: true }}
-        index={1}
-        layout="mobile"
-      />
-    );
+    render(<CreationStepCard step={{ ...step, isCompleted: true }} index={1} layout="mobile" />);
     expect(screen.getByText('Upload Artwork')).toBeInTheDocument();
     // Completion badge renders the Check icon
     expect(document.querySelector('svg')).toBeInTheDocument();

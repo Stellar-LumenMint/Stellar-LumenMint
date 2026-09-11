@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "@/lib/utils";
-import { EmptyState, EmptyStateProps } from "./empty-state";
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { EmptyState, EmptyStateProps } from './empty-state';
 
 // ---------------------------------------------------------------------------
 // Column definition
@@ -16,7 +16,7 @@ export interface DataTableColumn<T> {
   className?: string;
   /** Optional header className */
   headerClassName?: string;
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
 }
 
 // ---------------------------------------------------------------------------
@@ -28,7 +28,7 @@ export interface DataTableProps<T> {
   /** Key extractor for rows */
   rowKey: (row: T, index: number) => string | number;
   /** Props forwarded to EmptyState when data is empty */
-  emptyState?: Omit<EmptyStateProps, "className"> & { className?: string };
+  emptyState?: Omit<EmptyStateProps, 'className'> & { className?: string };
   caption?: string;
   className?: string;
   /** Extra className applied to each <tr> */
@@ -37,9 +37,9 @@ export interface DataTableProps<T> {
 }
 
 const alignClass = {
-  left: "text-left",
-  center: "text-center",
-  right: "text-right",
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
 };
 
 /**
@@ -58,7 +58,7 @@ export function DataTable<T>({
   if (!loading && data.length === 0) {
     return (
       <EmptyState
-        title={emptyState?.title ?? "No data"}
+        title={emptyState?.title ?? 'No data'}
         description={emptyState?.description}
         icon={emptyState?.icon}
         actionLabel={emptyState?.actionLabel}
@@ -71,11 +71,9 @@ export function DataTable<T>({
   }
 
   return (
-    <div className={cn("w-full overflow-x-auto rounded-xl border border-purple-500/20", className)}>
+    <div className={cn('w-full overflow-x-auto rounded-xl border border-purple-500/20', className)}>
       <table className="w-full text-sm text-left text-gray-300" aria-busy={loading}>
-        {caption && (
-          <caption className="sr-only">{caption}</caption>
-        )}
+        {caption && <caption className="sr-only">{caption}</caption>}
         <thead className="text-xs uppercase text-gray-400 bg-purple-900/20 border-b border-purple-500/20">
           <tr>
             {columns.map((col) => (
@@ -83,9 +81,9 @@ export function DataTable<T>({
                 key={col.key}
                 scope="col"
                 className={cn(
-                  "px-4 py-3 font-medium",
-                  alignClass[col.align ?? "left"],
-                  col.headerClassName
+                  'px-4 py-3 font-medium',
+                  alignClass[col.align ?? 'left'],
+                  col.headerClassName,
                 )}
               >
                 {col.header}
@@ -106,29 +104,20 @@ export function DataTable<T>({
               ))
             : data.map((row, i) => {
                 const trClass =
-                  typeof rowClassName === "function"
-                    ? rowClassName(row, i)
-                    : rowClassName;
+                  typeof rowClassName === 'function' ? rowClassName(row, i) : rowClassName;
                 return (
                   <tr
                     key={rowKey(row, i)}
-                    className={cn(
-                      "hover:bg-purple-500/5 transition-colors",
-                      trClass
-                    )}
+                    className={cn('hover:bg-purple-500/5 transition-colors', trClass)}
                   >
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={cn(
-                          "px-4 py-3",
-                          alignClass[col.align ?? "left"],
-                          col.className
-                        )}
+                        className={cn('px-4 py-3', alignClass[col.align ?? 'left'], col.className)}
                       >
                         {col.render
                           ? col.render(row, i)
-                          : String((row as Record<string, unknown>)[col.key] ?? "")}
+                          : String((row as Record<string, unknown>)[col.key] ?? '')}
                       </td>
                     ))}
                   </tr>

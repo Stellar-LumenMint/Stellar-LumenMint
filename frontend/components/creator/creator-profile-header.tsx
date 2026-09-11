@@ -1,16 +1,10 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  BadgeCheck,
-  Calendar,
-  ExternalLink,
-  Globe,
-  Instagram,
-} from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useMemo } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { BadgeCheck, Calendar, ExternalLink, Globe, Instagram } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   buildCreatorProfilePath,
   buildInstagramUrl,
@@ -19,9 +13,9 @@ import {
   getCreatorBannerUrl,
   getCreatorDisplayName,
   sanitizeExternalUrl,
-} from "@/lib/utils/creator-profile";
-import { CreatorFollowButton } from "./creator-follow-button";
-import { CreatorShareButton } from "./creator-share-button";
+} from '@/lib/utils/creator-profile';
+import { CreatorFollowButton } from './creator-follow-button';
+import { CreatorShareButton } from './creator-share-button';
 
 type CreatorProfileHeaderProps = {
   creator: {
@@ -55,11 +49,7 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
-export function CreatorProfileHeader({
-  creator,
-  profileSlug,
-  locale,
-}: CreatorProfileHeaderProps) {
+export function CreatorProfileHeader({ creator, profileSlug, locale }: CreatorProfileHeaderProps) {
   const { t } = useTranslation();
 
   const displayName = getCreatorDisplayName(creator.username, creator.id);
@@ -73,8 +63,8 @@ export function CreatorProfileHeader({
   const joinedLabel = useMemo(() => {
     if (!creator.createdAt) return null;
     return new Date(creator.createdAt).toLocaleDateString(undefined, {
-      month: "short",
-      year: "numeric",
+      month: 'short',
+      year: 'numeric',
     });
   }, [creator.createdAt]);
 
@@ -82,14 +72,7 @@ export function CreatorProfileHeader({
     <section className="overflow-hidden rounded-2xl border border-gray-800/60 bg-gray-900/40">
       <div className="relative h-36 md:h-48">
         {bannerUrl ? (
-          <Image
-            src={bannerUrl}
-            alt=""
-            fill
-            className="object-cover"
-            priority
-            unoptimized
-          />
+          <Image src={bannerUrl} alt="" fill className="object-cover" priority unoptimized />
         ) : (
           <div className="h-full w-full bg-gradient-to-r from-[#181359] via-[#2a1f7a] to-[#4e3bff]/40" />
         )}
@@ -99,13 +82,7 @@ export function CreatorProfileHeader({
         <div className="-mt-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="flex items-end gap-4">
             <div className="relative h-20 w-20 overflow-hidden rounded-2xl border-4 border-gray-900 bg-gray-900 md:h-24 md:w-24">
-              <Image
-                src={avatarUrl}
-                alt={displayName}
-                fill
-                className="object-cover"
-                unoptimized
-              />
+              <Image src={avatarUrl} alt={displayName} fill className="object-cover" unoptimized />
               {creator.isVerified ? (
                 <span className="absolute -bottom-1 -right-1 rounded-full bg-gray-900 p-0.5">
                   <BadgeCheck className="h-5 w-5 text-emerald-400" />
@@ -120,15 +97,13 @@ export function CreatorProfileHeader({
                 </h1>
                 {creator.isVerified ? (
                   <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-300">
-                    {t("creatorProfile.verified")}
+                    {t('creatorProfile.verified')}
                   </span>
                 ) : null}
               </div>
 
               {creator.bio ? (
-                <p className="mt-1 max-w-2xl text-sm text-gray-300 line-clamp-2">
-                  {creator.bio}
-                </p>
+                <p className="mt-1 max-w-2xl text-sm text-gray-300 line-clamp-2">{creator.bio}</p>
               ) : null}
 
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-400">
@@ -139,16 +114,13 @@ export function CreatorProfileHeader({
                   </span>
                 ) : null}
                 <span>
-                  {creator.followerCount.toLocaleString()}{" "}
-                  {t("creatorProfile.followers")}
+                  {creator.followerCount.toLocaleString()} {t('creatorProfile.followers')}
                 </span>
                 <span>
-                  {creator.totalNftsCreated.toLocaleString()}{" "}
-                  {t("creatorProfile.nftsCreated")}
+                  {creator.totalNftsCreated.toLocaleString()} {t('creatorProfile.nftsCreated')}
                 </span>
                 <span>
-                  {Number(creator.totalSalesVolume).toFixed(2)} XLM{" "}
-                  {t("creatorProfile.volume")}
+                  {Number(creator.totalSalesVolume).toFixed(2)} XLM {t('creatorProfile.volume')}
                 </span>
               </div>
 

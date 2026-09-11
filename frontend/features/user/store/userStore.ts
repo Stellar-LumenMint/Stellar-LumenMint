@@ -1,7 +1,7 @@
-import type { User } from "@/lib/stores/types";
-import { create, StateCreator } from "zustand";
-import { devtools, persist, PersistOptions } from "zustand/middleware";
-import { immer } from "zustand/middleware/immer";
+import type { User } from '@/lib/stores/types';
+import { create, StateCreator } from 'zustand';
+import { devtools, persist, PersistOptions } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
 
 // --- Types ---
 interface UserState {
@@ -21,23 +21,21 @@ export type UserStore = UserState & UserActions;
 
 // --- Logging Middleware ---
 const logMiddleware =
-  <T extends object>(
-    config: StateCreator<T, [], [], T>
-  ): StateCreator<T, [], [], T> =>
+  <T extends object>(config: StateCreator<T, [], [], T>): StateCreator<T, [], [], T> =>
   (set, get, api) =>
     config(
       (partial, replace) => {
         if (
-          typeof process !== "undefined" &&
-          typeof (process as any).env !== "undefined" &&
-          (process as any).env.NODE_ENV === "development"
+          typeof process !== 'undefined' &&
+          typeof (process as any).env !== 'undefined' &&
+          (process as any).env.NODE_ENV === 'development'
         ) {
-          console.log("[UserStore action]", partial);
+          console.log('[UserStore action]', partial);
         }
         set(partial, replace as false | undefined);
       },
       get,
-      api
+      api,
     );
 
 // --- Initial State ---
@@ -54,23 +52,19 @@ export const useUserStore = create<UserStore>()(
       immer(
         logMiddleware<UserStore>((set, get) => ({
           ...initialState,
-          setUser: (user: User | null) =>
-            set((state: UserState) => ({ ...state, user })),
-          setLoading: (loading: boolean) =>
-            set((state: UserState) => ({ ...state, loading })),
-          setError: (error: string | null) =>
-            set((state: UserState) => ({ ...state, error })),
-          clearError: () =>
-            set((state: UserState) => ({ ...state, error: null })),
-        }))
+          setUser: (user: User | null) => set((state: UserState) => ({ ...state, user })),
+          setLoading: (loading: boolean) => set((state: UserState) => ({ ...state, loading })),
+          setError: (error: string | null) => set((state: UserState) => ({ ...state, error })),
+          clearError: () => set((state: UserState) => ({ ...state, error: null })),
+        })),
       ),
       {
-        name: "user-store",
+        name: 'user-store',
         partialize: (state: UserStore) => ({ user: state.user }), // Only persist user
-      } as PersistOptions<UserStore>
+      } as PersistOptions<UserStore>,
     ),
-    { name: "user-store" }
-  )
+    { name: 'user-store' },
+  ),
 );
 
 // --- Selectors & Hooks ---

@@ -1,2 +1,2 @@
-declare module "firebase/app";
-declare module "firebase/storage";
+declare module 'firebase/app';
+declare module 'firebase/storage';

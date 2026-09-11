@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import localFont from "next/font/local";
-import { Navbar } from "@/components/navbar";
-import "../globals.css";
-import Footer from "@/components/Footer";
-import { CircuitBackground } from "@/components/circuit-background";
-import { WebVitals } from "@/components/web-vitals";
-import { StellarWalletProvider } from "@/components/StellarWalletProvider";
-import { StoreProvider } from "@/lib/stores/store-provider";
-import { Toast } from "@/components/ui/toast";
-import { usePathname } from "next/navigation";
-import { useTranslation } from "@/hooks/useTranslation";
-import { ClientBody } from "@/components/layout/ClientBody";
-import { SkipToContent } from "@/components/a11y/SkipToContent";
+import localFont from 'next/font/local';
+import { Navbar } from '@/components/navbar';
+import '../globals.css';
+import Footer from '@/components/Footer';
+import { CircuitBackground } from '@/components/circuit-background';
+import { WebVitals } from '@/components/web-vitals';
+import { StellarWalletProvider } from '@/components/StellarWalletProvider';
+import { StoreProvider } from '@/lib/stores/store-provider';
+import { Toast } from '@/components/ui/toast';
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
+import { ClientBody } from '@/components/layout/ClientBody';
+import { SkipToContent } from '@/components/a11y/SkipToContent';
 
 const inter = localFont({
-  src: "../../public/fonts/inter-var.woff2",
-  display: "swap",
-  weight: "100 900",
-  variable: "--font-inter",
+  src: '../../public/fonts/inter-var.woff2',
+  display: 'swap',
+  weight: '100 900',
+  variable: '--font-inter',
 });
 
 interface LocaleLayoutProps {
@@ -31,18 +31,23 @@ interface LocaleLayoutProps {
 export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
   const pathname = usePathname();
   const { t, locales } = useTranslation();
-  const isAuthPage = pathname?.includes("/auth/");
-  const isCreatorDashboard = pathname?.includes("/creator-dashboard");
-  const isNftDetailPage = pathname ? /^\/[a-z]{2}\/marketplace\/(?!auction$|auctions$|auction\/|auctions\/)[^/]+$/.test(pathname) : false;
+  const isAuthPage = pathname?.includes('/auth/');
+  const isCreatorDashboard = pathname?.includes('/creator-dashboard');
+  const isNftDetailPage = pathname
+    ? /^\/[a-z]{2}\/marketplace\/(?!auction$|auctions$|auction\/|auctions\/)[^/]+$/.test(pathname)
+    : false;
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const currentPath = pathname?.replace(/^\/[a-z]{2}/, "") || "";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const currentPath = pathname?.replace(/^\/[a-z]{2}/, '') || '';
 
   // Generate hreflang URLs dynamically based on available locales
-  const hreflangUrls = locales.reduce((acc, loc) => {
-    acc[loc] = `${baseUrl}/${loc}${currentPath}`;
-    return acc;
-  }, {} as Record<string, string>);
+  const hreflangUrls = locales.reduce(
+    (acc, loc) => {
+      acc[loc] = `${baseUrl}/${loc}${currentPath}`;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 
   return (
     <html lang={params.locale} className="scroll-smooth">
@@ -63,9 +68,9 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
 
         {!isNftDetailPage && (
           <>
-            <title>{t("seo.title")}</title>
-            <meta name="description" content={t("seo.description")} />
-            <meta name="keywords" content={t("seo.keywords")} />
+            <title>{t('seo.title')}</title>
+            <meta name="description" content={t('seo.description')} />
+            <meta name="keywords" content={t('seo.keywords')} />
 
             {/* Hreflang Tags */}
             {Object.entries(hreflangUrls).map(([lang, url]) => (
@@ -79,8 +84,8 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
 
         {!isNftDetailPage && (
           <>
-            <meta property="og:title" content={t("seo.title")} />
-            <meta property="og:description" content={t("seo.description")} />
+            <meta property="og:title" content={t('seo.title')} />
+            <meta property="og:description" content={t('seo.description')} />
             <meta property="og:type" content="website" />
             <meta property="og:locale" content={params.locale} />
             {locales
@@ -89,8 +94,8 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
                 <meta key={alt} property="og:locale:alternate" content={alt} />
               ))}
             <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content={t("seo.title")} />
-            <meta name="twitter:description" content={t("seo.description")} />
+            <meta name="twitter:title" content={t('seo.title')} />
+            <meta name="twitter:description" content={t('seo.description')} />
           </>
         )}
       </head>
@@ -109,9 +114,7 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
                   {!isAuthPage && <Navbar />}
                   {!isAuthPage && <CircuitBackground />}
                   <WebVitals />
-                  <div className="container-responsive py-4 md:py-8">
-                    {children}
-                  </div>
+                  <div className="container-responsive py-4 md:py-8">{children}</div>
                   {!isAuthPage && <Footer />}
                 </main>
               </div>

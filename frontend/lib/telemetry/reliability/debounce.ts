@@ -16,7 +16,7 @@ export class TelemetryDebouncer {
   }
 
   shouldDebounce(eventName: string): DebounceRule | undefined {
-    return this.rules.find(r => r.eventName === eventName);
+    return this.rules.find((r) => r.eventName === eventName);
   }
 
   debounce(eventKey: string, event: any, rule: DebounceRule, dispatch: (event: any) => void) {

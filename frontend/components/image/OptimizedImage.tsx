@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useEffect, useRef } from 'react';
 import NextImage, { ImageProps as NextImageProps } from 'next/image';
@@ -104,7 +104,9 @@ export default function OptimizedImage({
       aria-busy={state === 'loading'}
       aria-label={state === 'loading' ? `Loading ${alt}` : undefined}
     >
-      {showSkeleton && <ImageSkeleton width={width} height={height} className={skeletonClassName} />}
+      {showSkeleton && (
+        <ImageSkeleton width={width} height={height} className={skeletonClassName} />
+      )}
 
       {state !== 'error' && src ? (
         <NextImage

@@ -1,28 +1,26 @@
-import type { AuthStore, User } from "@/lib/stores/types";
-import type { StateCreator } from "zustand";
-import { create } from "zustand";
-import { devtools, persist, PersistOptions } from "zustand/middleware";
-import { immer } from "zustand/middleware/immer";
+import type { AuthStore, User } from '@/lib/stores/types';
+import type { StateCreator } from 'zustand';
+import { create } from 'zustand';
+import { devtools, persist, PersistOptions } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
 
 // --- Logging Middleware ---
 const logMiddleware =
-  <T extends object>(
-    config: StateCreator<T, [], [], T>
-  ): StateCreator<T, [], [], T> =>
+  <T extends object>(config: StateCreator<T, [], [], T>): StateCreator<T, [], [], T> =>
   (set, get, api) =>
     config(
       (partial, replace) => {
         if (
-          typeof process !== "undefined" &&
-          typeof (process as any).env !== "undefined" &&
-          (process as any).env.NODE_ENV === "development"
+          typeof process !== 'undefined' &&
+          typeof (process as any).env !== 'undefined' &&
+          (process as any).env.NODE_ENV === 'development'
         ) {
-          console.log("[AuthStore action]", partial);
+          console.log('[AuthStore action]', partial);
         }
         set(partial, replace as false | undefined);
       },
       get,
-      api
+      api,
     );
 
 const initialState = {
@@ -42,66 +40,74 @@ export const useAuthStore = create<AuthStore>()(
           ...initialState,
           setUser: (user: User | null) =>
             set((state) => ({ ...state, user, isAuthenticated: !!user })),
-          setLoading: (loading: boolean) =>
-            set((state) => ({ ...state, loading })),
-          setError: (error: string | null) =>
-            set((state) => ({ ...state, error })),
+          setLoading: (loading: boolean) => set((state) => ({ ...state, loading })),
+          setError: (error: string | null) => set((state) => ({ ...state, error })),
           clearError: () => set((state) => ({ ...state, error: null })),
           requestNonce: async (_walletAddress: string) => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
           verifySignature: async (
             _walletAddress: string,
             _signature: [string, string],
             _nonce: string,
             _walletProvider: 'freighter' | 'albedo' | 'walletconnect',
-            _locale: string
+            _locale: string,
           ) => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
           register: async (_email: string, _password: string, _username?: string) => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
           emailLogin: async (_email: string, _password: string) => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
           getWalletChallenge: async (_walletAddress: string, _walletProvider?: string) => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
-          verifyWalletSignature: async (_walletAddress: string, _nonce: string, _signature: string, _walletProvider?: string) => {
-            throw new Error("Not implemented");
+          verifyWalletSignature: async (
+            _walletAddress: string,
+            _nonce: string,
+            _signature: string,
+            _walletProvider?: string,
+          ) => {
+            throw new Error('Not implemented');
           },
-          linkWallet: async (_walletAddress: string, _nonce: string, _signature: string, _walletProvider?: string) => {
-            throw new Error("Not implemented");
+          linkWallet: async (
+            _walletAddress: string,
+            _nonce: string,
+            _signature: string,
+            _walletProvider?: string,
+          ) => {
+            throw new Error('Not implemented');
           },
           unlinkWallet: async (_walletAddress: string) => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
           listWallets: async () => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
           isAccessTokenExpired: () => true,
           logout: async () => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
           refreshToken: async () => {
-            throw new Error("Not implemented");
+            throw new Error('Not implemented');
           },
           getCurrentUser: () => get().user,
-        }))
+        })),
       ),
       {
-        name: "auth-store",
+        name: 'auth-store',
         partialize: (state: AuthStore) => ({
           user: state.user,
           isAuthenticated: state.isAuthenticated,
           accessToken: state.accessToken,
           refreshTokenValue: state.refreshTokenValue,
         }),
-      } as PersistOptions<AuthStore>
+      } as PersistOptions<AuthStore>,
     ),
-    { name: "auth-store" }
-  )
+    { name: 'auth-store' },
+  ),
 );
 
 export const useAuth = () =>

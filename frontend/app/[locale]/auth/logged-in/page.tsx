@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { StatCard } from "./components/card-stat";
-import { QuickActions } from "./components/quick-actions";
-import { DashboardHeader } from "./components/dashboard-header";
-import { CollectionsSection } from "./components/collections-section";
-import { DashboardStatsCards } from "./components/dashboard-stats";
-import { useCollections, useAuth } from "@/lib/stores";
+import { useEffect } from 'react';
+import { StatCard } from './components/card-stat';
+import { QuickActions } from './components/quick-actions';
+import { DashboardHeader } from './components/dashboard-header';
+import { CollectionsSection } from './components/collections-section';
+import { DashboardStatsCards } from './components/dashboard-stats';
+import { useCollections, useAuth } from '@/lib/stores';
 
 export default function CreatorDashboard() {
   const { userCollections, loading, fetchUserCollections } = useCollections();
@@ -34,10 +34,7 @@ export default function CreatorDashboard() {
         </div>
 
         {/* Collections Grid */}
-        <CollectionsSection
-          collections={userCollections}
-          isLoading={loading.userCollections}
-        />
+        <CollectionsSection collections={userCollections} isLoading={loading.userCollections} />
       </div>
     </div>
   );

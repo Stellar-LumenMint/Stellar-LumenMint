@@ -1,20 +1,20 @@
-import { Plus, Grid3X3 } from "lucide-react"
+import { Plus, Grid3X3 } from 'lucide-react';
 type Collection = {
-  id: string | number
-  name: string
-  description: string
-  nftCount: number
-  floorPrice: number
-  totalVolume: number
-  createdAt: string | number | Date
-}
-import { CollectionCard } from "./collection-card"
-import { CollectionCardSkeleton } from "./skeletons/collection-card-skeleton"
+  id: string | number;
+  name: string;
+  description: string;
+  nftCount: number;
+  floorPrice: number;
+  totalVolume: number;
+  createdAt: string | number | Date;
+};
+import { CollectionCard } from './collection-card';
+import { CollectionCardSkeleton } from './skeletons/collection-card-skeleton';
 
 type CollectionsSectionProps = {
-  collections: Collection[]
-  isLoading: boolean
-}
+  collections: Collection[];
+  isLoading: boolean;
+};
 
 export const CollectionsSection = ({ collections, isLoading }: CollectionsSectionProps) => (
   <div className="rounded-lg border border-purple-900">
@@ -51,4 +51,4 @@ export const CollectionsSection = ({ collections, isLoading }: CollectionsSectio
       )}
     </div>
   </div>
-)
+);
