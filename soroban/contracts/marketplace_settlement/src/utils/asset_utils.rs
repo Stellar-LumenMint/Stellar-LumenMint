@@ -104,9 +104,41 @@ pub fn check_nft_ownership(
     Ok(current_owner == *owner)
 }
 
-/// Transfer NFT
+/// Transfer an NFT, authorizing as the marketplace contract itself.
+///
+/// The caller position of the NFT contract's `transfer` must be an owner or an
+/// approved operator of the token, so this only works for tokens the
+/// marketplace already holds — which is the case when releasing escrow.
+///
+/// See [`transfer_nft_from`] for moving a token out of the seller's own
+/// custody.
 pub fn transfer_nft(
     nft_contract: &Address,
+    from: &Address,
+    to: &Address,
+    token_id: u64,
+    env: &Env,
+) -> Result<(), SettlementError> {
+    transfer_nft_from(
+        nft_contract,
+        &env.current_contract_address(),
+        from,
+        to,
+        token_id,
+        env,
+    )
+}
+
+/// Transfer an NFT, authorizing as `caller`.
+///
+/// Escrowing a token the seller still owns has to authorize as the seller:
+/// the NFT contract checks `owner_of(token) == caller` (or an approval), and
+/// the marketplace is neither. The seller can satisfy that check without an
+/// extra signature because they already authorized the enclosing marketplace
+/// call, and Soroban auth applies to the whole invocation tree.
+pub fn transfer_nft_from(
+    nft_contract: &Address,
+    caller: &Address,
     from: &Address,
     to: &Address,
     token_id: u64,
@@ -117,7 +149,7 @@ pub fn transfer_nft(
         &Symbol::new(env, "transfer"),
         soroban_sdk::vec![
             env,
-            env.current_contract_address().into_val(env),
+            caller.into_val(env),
             from.into_val(env),
             to.into_val(env),
             token_id.into_val(env),

@@ -396,8 +396,14 @@ impl MarketplaceSettlement {
             // Check NFT ownership
             asset_utils::check_nft_ownership(&nft_address, token_id, &seller, &env)?;
 
-            // Calculate royalties (with seller and platform addresses)
+            // Resolve the platform fee once, through the module that owns the
+            // fee configuration, and reuse it both as the platform's share of
+            // the distribution and as the amount recorded on the sale. It used
+            // to be computed twice from different inputs: the distribution
+            // hardcoded 5% of the remainder while this stored the configured
+            // basis points, so the two could not agree.
             let fee_config = FeeManager::get_fee_config(&env)?;
+            let platform_fee = FeeManager::calculate_fee(&env, price, &seller)?;
             let royalty_distribution = RoyaltyDistributor::calculate_royalties(
                 &env,
                 &nft_address,
@@ -405,10 +411,8 @@ impl MarketplaceSettlement {
                 price,
                 &seller,
                 &fee_config.fee_recipient,
+                platform_fee,
             )?;
-
-            // Calculate platform fee
-            let platform_fee = FeeManager::calculate_fee(&env, price, &seller)?;
 
             let transaction_id = SaleTransactionStore::next_id(&env);
 
@@ -430,16 +434,30 @@ impl MarketplaceSettlement {
 
             SaleTransactionStore::put(&env, &sale)?;
 
-            // Initialize atomic swap
+            // Escrow the NFT for the lifetime of the listing. Settlement — and
+            // dispute resolution — then move it out of escrow, so the seller
+            // neither has to be present nor to have approved the marketplace
+            // when the sale executes.
+            let nft_asset = Asset {
+                contract: nft_address.clone(),
+                symbol: Symbol::new(&env, "NFT"),
+            };
             AtomicSwapEngine::initialize_swap(
                 &env,
                 transaction_id,
                 &seller,
-                &seller, // Placeholder buyer
                 &nft_address,
                 token_id,
                 &currency,
                 price,
+            )?;
+            AtomicSwapEngine::deposit_to_escrow(
+                &env,
+                transaction_id,
+                &seller,
+                &nft_asset,
+                token_id as i128,
+                true,
             )?;
 
             Ok(transaction_id)
@@ -481,12 +499,25 @@ impl MarketplaceSettlement {
                 return Err(SettlementError::InvalidAmount);
             }
 
+            // Escrow the buyer's payment before anything is paid out, so every
+            // payout below is backed by funds received in this transaction
+            // rather than by the contract's pooled balance.
+            AtomicSwapEngine::deposit_to_escrow(
+                &env,
+                transaction_id,
+                &buyer,
+                &sale.currency,
+                payment_amount,
+                false,
+            )?;
+
             // Update sale with buyer
             sale.buyer = Some(buyer.clone());
             sale.state = crate::types::TransactionState::Funded;
             SaleTransactionStore::update(&env, &sale)?;
 
-            // Execute atomic swap
+            // Release the NFT from escrow to the buyer. The payment leg is not
+            // moved here; the distribution below splits it three ways.
             AtomicSwapEngine::execute_swap(&env, transaction_id, &buyer)?;
 
             // Distribute royalties and fees
@@ -497,8 +528,11 @@ impl MarketplaceSettlement {
                 &sale.currency,
             )?;
 
-            // Collect platform fee
-            FeeManager::collect_platform_fee(&env, sale.platform_fee, &sale.currency, &buyer)?;
+            // The platform's share was paid out by the distribution above, so
+            // only record the buyer's trailing volume here. Accumulating it as
+            // an unwithdrawn platform fee as well would let
+            // `withdraw_platform_fees` pay the platform a second time.
+            FeeManager::record_platform_volume(&env, &buyer, sale.platform_fee)?;
 
             // Update final state
             sale.state = crate::types::TransactionState::Executed;
@@ -860,6 +894,9 @@ impl MarketplaceSettlement {
                 if sale.state != crate::types::TransactionState::Pending {
                     return Err(SettlementError::InvalidState);
                 }
+                // Return the escrowed NFT to the seller. Cancelling must not
+                // strand it in the contract.
+                AtomicSwapEngine::cancel_swap(&env, transaction_id, &canceller)?;
                 sale.state = crate::types::TransactionState::Cancelled;
                 SaleTransactionStore::update(&env, &sale)?;
             } else {

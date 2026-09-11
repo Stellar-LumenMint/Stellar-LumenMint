@@ -27,8 +27,15 @@ pub struct RoyaltyDistributor;
 
 impl RoyaltyDistributor {
     /// Calculate royalties for an NFT sale.
-    /// Royalty is calculated on the full sale price, then seller and platform
-    /// fees are calculated only on the post-royalty remainder.
+    ///
+    /// The creator's royalty comes out of the full sale price. The platform
+    /// fee — an amount the caller resolved through `FeeManager`, which owns the
+    /// configured basis points, the min/max bounds and the volume discounts —
+    /// comes out of the remainder, and the seller receives what is left. The
+    /// three shares always sum to exactly `sale_price`, which
+    /// `validate_royalty_distribution` re-checks before a single transfer is
+    /// attempted.
+    #[allow(clippy::too_many_arguments)]
     pub fn calculate_royalties(
         env: &Env,
         nft_contract: &Address,
@@ -36,6 +43,7 @@ impl RoyaltyDistributor {
         sale_price: i128,
         seller: &Address,
         platform_address: &Address,
+        platform_fee: i128,
     ) -> Result<RoyaltyDistribution, SettlementError> {
         let royalty_info = Self::get_royalty_info(env, nft_contract, token_id)?;
 
@@ -46,19 +54,39 @@ impl RoyaltyDistributor {
         // Post-royalty remainder: seller and platform split only this amount
         let remainder = math_utils::safe_sub(sale_price, royalty_amount, env)?;
 
-        let seller_percentage = 9500u64; // 95% of remainder
-        let platform_percentage = 500u64; // 5% of remainder
-
-        // Platform fee calculated on the remainder (not the full sale price)
-        let platform_amount =
-            math_utils::calculate_percentage(remainder, platform_percentage, env)?;
+        // A negative fee is meaningless, and one larger than the remainder
+        // would drive the seller's share below zero; clamp into [0, remainder]
+        // so the distribution can never exceed the amount actually escrowed.
+        let platform_amount = if platform_fee < 0 {
+            0
+        } else if platform_fee > remainder {
+            remainder
+        } else {
+            platform_fee
+        };
         let seller_amount = math_utils::safe_sub(remainder, platform_amount, env)?;
 
-        // Add all amounts to the distribution map
+        // Kept for reporting only; derived from the settled amounts so the
+        // percentages always describe the distribution that was built.
+        let platform_percentage = if sale_price > 0 {
+            ((platform_amount * 10_000) / sale_price) as u64
+        } else {
+            0
+        };
+        let seller_percentage = if sale_price > 0 {
+            ((seller_amount * 10_000) / sale_price) as u64
+        } else {
+            0
+        };
+
+        // A creator is frequently also the seller, and the platform recipient
+        // can be either. Accumulate per address: overwriting would drop an
+        // earlier share, the map would no longer sum to the sale price, and
+        // `validate_royalty_distribution` would reject the whole sale.
         let mut amounts = Map::new(env);
-        amounts.set(royalty_info.creator.clone(), royalty_amount);
-        amounts.set(seller.clone(), seller_amount);
-        amounts.set(platform_address.clone(), platform_amount);
+        Self::add_amount(&mut amounts, &royalty_info.creator, royalty_amount);
+        Self::add_amount(&mut amounts, seller, seller_amount);
+        Self::add_amount(&mut amounts, platform_address, platform_amount);
 
         Ok(RoyaltyDistribution {
             creator_address: royalty_info.creator,
@@ -70,6 +98,12 @@ impl RoyaltyDistributor {
             total_amount: sale_price,
             amounts,
         })
+    }
+
+    /// Add `amount` to a recipient's existing share, if they already have one.
+    fn add_amount(amounts: &mut Map<Address, i128>, recipient: &Address, amount: i128) {
+        let existing = amounts.get(recipient.clone()).unwrap_or(0);
+        amounts.set(recipient.clone(), existing + amount);
     }
 
     /// Distribute royalties for a transaction.
@@ -390,6 +424,7 @@ impl RoyaltyEnforcer {
         _payment_asset: &Asset,
         seller: &Address,
         platform_address: &Address,
+        platform_fee: i128,
     ) -> Result<(), SettlementError> {
         let royalty_distribution = RoyaltyDistributor::calculate_royalties(
             env,
@@ -398,6 +433,7 @@ impl RoyaltyEnforcer {
             sale_price,
             seller,
             platform_address,
+            platform_fee,
         )?;
 
         // Check if sufficient funds are available for royalties

@@ -1,5 +1,4 @@
 use crate::error::SettlementError;
-use crate::security::reentrancy_guard::ReentrancyGuard;
 use crate::types::{Asset, ExecutionResult};
 use crate::utils::asset_utils;
 use soroban_sdk::{contracttype, symbol_short, Address, Bytes, Env, Map, Symbol, Vec};
@@ -16,6 +15,10 @@ pub struct EscrowHolding {
     pub asset: Asset,
     pub amount: i128, // For tokens, or token_id for NFTs
     pub is_nft: bool,
+    /// Whether the deposit has actually been made. Kept separate from
+    /// `deposited_at` because the ledger timestamp is legitimately zero at
+    /// chain genesis, so "timestamp > 0" cannot double as "funded".
+    pub deposited: bool,
     pub deposited_at: u64,
     pub released_at: Option<u64>,
 }
@@ -28,6 +31,14 @@ pub struct AtomicSwap {
     pub transaction_id: u64,
     pub seller_escrow: Vec<EscrowHolding>,
     pub buyer_escrow: Vec<EscrowHolding>,
+    /// Asset the buyer is expected to pay with, recorded when the sale is
+    /// listed so the first payment deposit can be validated against it.
+    pub payment_asset: Asset,
+    /// Exact amount the buyer must deposit. Recorded at listing time.
+    pub payment_amount: i128,
+    /// Set the first time a buyer funds the swap. `None` until then — the
+    /// buyer of a fixed-price sale is unknown when the sale is created.
+    pub buyer: Option<Address>,
     pub state: SwapState,
     pub created_at: u64,
     pub executed_at: Option<u64>,
@@ -48,13 +59,19 @@ pub enum SwapState {
 pub struct AtomicSwapEngine;
 
 impl AtomicSwapEngine {
-    /// Initialize an atomic swap for a transaction
+    /// Initialize an atomic swap for a transaction.
+    ///
+    /// Only the seller's side is seeded — with the NFT they are about to
+    /// escrow, and `deposited_at: 0` because nothing has moved yet. The buyer
+    /// is deliberately left unset: at listing time nobody has bought the item,
+    /// and this used to record the seller as the buyer, which made the swap
+    /// claim a counterparty that had never agreed to anything and sent the NFT
+    /// back to the seller on execution.
     #[allow(clippy::too_many_arguments)]
     pub fn initialize_swap(
         env: &Env,
         transaction_id: u64,
         seller: &Address,
-        buyer: &Address,
         nft_address: &Address,
         token_id: u64,
         payment_asset: &Asset,
@@ -72,18 +89,8 @@ impl AtomicSwapEngine {
             },
             amount: token_id as i128,
             is_nft: true,
-            deposited_at: env.ledger().timestamp(),
-            released_at: None,
-        });
-
-        let mut buyer_escrow = Vec::new(env);
-        buyer_escrow.push_back(EscrowHolding {
-            transaction_id,
-            holder: buyer.clone(),
-            asset: payment_asset.clone(),
-            amount: payment_amount,
-            is_nft: false,
-            deposited_at: env.ledger().timestamp(),
+            deposited: false,
+            deposited_at: 0,
             released_at: None,
         });
 
@@ -91,7 +98,10 @@ impl AtomicSwapEngine {
             swap_id,
             transaction_id,
             seller_escrow,
-            buyer_escrow,
+            buyer_escrow: Vec::new(env),
+            payment_asset: payment_asset.clone(),
+            payment_amount,
+            buyer: None,
             state: SwapState::Pending,
             created_at: env.ledger().timestamp(),
             executed_at: None,
@@ -122,7 +132,15 @@ impl AtomicSwapEngine {
             .iter()
             .any(|h| h.holder == *depositor && h.asset == *asset);
 
-        if !is_seller_deposit && !is_buyer_deposit {
+        // A buyer funding the listed payment for the first time. There is no
+        // pre-seeded buyer holding to match against, so this is validated
+        // against the asset and amount recorded at listing time instead.
+        let is_listed_payment = !is_nft
+            && swap.buyer.is_none()
+            && asset.contract == swap.payment_asset.contract
+            && amount == swap.payment_amount;
+
+        if !is_seller_deposit && !is_buyer_deposit && !is_listed_payment {
             return Err(SettlementError::Unauthorized);
         }
 
@@ -132,6 +150,10 @@ impl AtomicSwapEngine {
         // Update escrow holdings
         Self::update_escrow_holding(env, &mut swap, depositor, asset, amount, is_nft)?;
 
+        if is_listed_payment && !is_buyer_deposit {
+            swap.buyer = Some(depositor.clone());
+        }
+
         // Update swap state
         Self::update_swap_state(env, &mut swap)?;
 
@@ -139,38 +161,46 @@ impl AtomicSwapEngine {
         Ok(())
     }
 
-    /// Execute the atomic swap
+    /// Execute the atomic swap.
+    ///
+    /// Internal helper, not a contract entrypoint: the only caller is
+    /// `MarketplaceSettlement::execute_sale`, which already holds the
+    /// contract-wide re-entrancy guard. `ReentrancyGuard` is a single global
+    /// flag rather than a per-call lock, so acquiring it a second time here
+    /// always failed with `ReentrancyDetected` — which is why every sale
+    /// execution reverted.
     pub fn execute_swap(
         env: &Env,
         transaction_id: u64,
-        executor: &Address,
+        _executor: &Address,
     ) -> Result<ExecutionResult, SettlementError> {
-        ReentrancyGuard::execute(env, executor, "execute_swap", || {
-            let mut swap = Self::get_swap_by_transaction(env, transaction_id)?;
+        let mut swap = Self::get_swap_by_transaction(env, transaction_id)?;
 
-            // Validate swap is ready for execution
-            if swap.state != SwapState::Ready {
-                return Err(SettlementError::InvalidState);
-            }
+        // Validate swap is ready for execution
+        if swap.state != SwapState::Ready {
+            return Err(SettlementError::InvalidState);
+        }
 
-            // Perform the atomic swap
-            Self::perform_atomic_swap(env, &swap)?;
+        // Perform the atomic swap
+        Self::perform_atomic_swap(env, &swap)?;
 
-            // Update swap state
-            swap.state = SwapState::Executed;
-            swap.executed_at = Some(env.ledger().timestamp());
+        // Update swap state
+        swap.state = SwapState::Executed;
+        swap.executed_at = Some(env.ledger().timestamp());
 
-            Self::store_swap(env, &swap)?;
+        Self::store_swap(env, &swap)?;
 
-            Ok(ExecutionResult {
-                transaction_id,
-                success: true,
-                transferred_nft: true,
-                transferred_payment: true,
-                distributed_royalties: true, // This would be handled by royalty system
-                collected_platform_fee: true, // This would be handled by fee system
-                timestamp: env.ledger().timestamp(),
-            })
+        Ok(ExecutionResult {
+            transaction_id,
+            success: true,
+            transferred_nft: true,
+            // The payment is not moved here: the caller splits the escrowed
+            // payment through `distribute_royalties`, which is the only place
+            // that knows the creator/seller/platform shares.
+            transferred_payment: false,
+            distributed_royalties: true,
+            collected_platform_fee: true,
+            timestamp: env.ledger().timestamp(),
         })
     }
 
@@ -236,9 +266,12 @@ impl AtomicSwapEngine {
         is_nft: bool,
     ) -> Result<(), SettlementError> {
         if is_nft {
-            // Transfer NFT to escrow contract
-            asset_utils::transfer_nft(
+            // The token still belongs to `from`, who authorized the enclosing
+            // marketplace call, so authorize as them: the NFT contract only
+            // accepts an owner or an approved operator as the caller.
+            asset_utils::transfer_nft_from(
                 &asset.contract,
+                from,
                 from,
                 &env.current_contract_address(),
                 amount as u64,
@@ -286,36 +319,25 @@ impl AtomicSwapEngine {
     }
 
     /// Internal: Perform the actual atomic swap
+    /// Internal: move the NFT leg of the swap out of escrow.
+    ///
+    /// The payment leg is deliberately left in the contract. Moving it to the
+    /// seller here would pay the creator and the platform out of the
+    /// contract's own balance, because the creator/seller/platform split is
+    /// performed afterwards by `RoyaltyDistributor::distribute_royalties` out
+    /// of the escrowed payment.
     fn perform_atomic_swap(env: &Env, swap: &AtomicSwap) -> Result<(), SettlementError> {
-        // Transfer NFT from seller escrow to buyer
+        let buyer = swap.buyer.clone().ok_or(SettlementError::NotFound)?;
+
         for holding in swap.seller_escrow.iter() {
             if holding.is_nft {
-                // Find corresponding buyer
-                if let Some(buyer_holding) = swap.buyer_escrow.get(0) {
-                    Self::transfer_from_escrow(
-                        env,
-                        &buyer_holding.holder,
-                        &holding.asset,
-                        holding.amount,
-                        holding.is_nft,
-                    )?;
-                }
-            }
-        }
-
-        // Transfer payment from buyer escrow to seller
-        for holding in swap.buyer_escrow.iter() {
-            if !holding.is_nft {
-                // Find corresponding seller
-                if let Some(seller_holding) = swap.seller_escrow.get(0) {
-                    Self::transfer_from_escrow(
-                        env,
-                        &seller_holding.holder,
-                        &holding.asset,
-                        holding.amount,
-                        holding.is_nft,
-                    )?;
-                }
+                Self::transfer_from_escrow(
+                    env,
+                    &buyer,
+                    &holding.asset,
+                    holding.amount,
+                    holding.is_nft,
+                )?;
             }
         }
 
@@ -355,8 +377,8 @@ impl AtomicSwapEngine {
         swap: &mut AtomicSwap,
         depositor: &Address,
         asset: &Asset,
-        _amount: i128,
-        _is_nft: bool,
+        amount: i128,
+        is_nft: bool,
     ) -> Result<(), SettlementError> {
         let timestamp = env.ledger().timestamp();
 
@@ -364,9 +386,11 @@ impl AtomicSwapEngine {
         for i in 0..swap.seller_escrow.len() {
             if let Some(mut holding) = swap.seller_escrow.get(i) {
                 if holding.holder == *depositor && holding.asset.contract == asset.contract {
+                    holding.deposited = true;
                     holding.deposited_at = timestamp;
+                    holding.amount = amount;
                     swap.seller_escrow.set(i, holding);
-                    break;
+                    return Ok(());
                 }
             }
         }
@@ -375,11 +399,32 @@ impl AtomicSwapEngine {
         for i in 0..swap.buyer_escrow.len() {
             if let Some(mut holding) = swap.buyer_escrow.get(i) {
                 if holding.holder == *depositor && holding.asset.contract == asset.contract {
+                    holding.deposited = true;
                     holding.deposited_at = timestamp;
+                    holding.amount = amount;
                     swap.buyer_escrow.set(i, holding);
-                    break;
+                    return Ok(());
                 }
             }
+        }
+
+        // First deposit from this party: record a new holding so the escrow
+        // ledger matches what the contract actually holds. The NFT side is the
+        // seller's, the payment side is the buyer's.
+        let holding = EscrowHolding {
+            transaction_id: swap.transaction_id,
+            holder: depositor.clone(),
+            asset: asset.clone(),
+            amount,
+            is_nft,
+            deposited: true,
+            deposited_at: timestamp,
+            released_at: None,
+        };
+        if is_nft {
+            swap.seller_escrow.push_back(holding);
+        } else {
+            swap.buyer_escrow.push_back(holding);
         }
 
         Ok(())
@@ -387,8 +432,12 @@ impl AtomicSwapEngine {
 
     /// Internal: Update swap state based on escrow status
     fn update_swap_state(_env: &Env, swap: &mut AtomicSwap) -> Result<(), SettlementError> {
-        let seller_funded = swap.seller_escrow.iter().all(|h| h.deposited_at > 0);
-        let buyer_funded = swap.buyer_escrow.iter().all(|h| h.deposited_at > 0);
+        // `all()` is vacuously true for an empty escrow, which would report a
+        // side as funded before anything had been deposited.
+        let seller_funded =
+            !swap.seller_escrow.is_empty() && swap.seller_escrow.iter().all(|h| h.deposited);
+        let buyer_funded =
+            !swap.buyer_escrow.is_empty() && swap.buyer_escrow.iter().all(|h| h.deposited);
 
         match (seller_funded, buyer_funded) {
             (true, false) => swap.state = SwapState::SellerFunded,

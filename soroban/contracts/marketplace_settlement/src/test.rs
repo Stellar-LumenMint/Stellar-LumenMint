@@ -4,7 +4,7 @@ use crate::{
     error::SettlementError,
     royalty_distributor::RoyaltyDistributor,
     settlement_core::{MarketplaceSettlement, MarketplaceSettlementClient},
-    types::{Asset, AuctionType, FeeConfig},
+    types::{Asset, AuctionType, FeeConfig, TransactionState},
 };
 use soroban_sdk::{
     testutils::{Address as _, Ledger as _},
@@ -45,7 +45,18 @@ impl MockNft {
             Address::generate(&env)
         }
     }
-    pub fn transfer(_env: Env, _from: Address, _to: Address, _token_id: u64) {}
+    /// Record the new owner so tests can assert the token actually moved. The
+    /// production contract enforces authorization here; the mock only needs to
+    /// capture the effect.
+    ///
+    /// The argument list mirrors `NftContract::transfer` — the marketplace
+    /// invokes it as `transfer(caller, from, to, token_id)` — so a mismatch in
+    /// the real ABI surfaces here as an arity error.
+    pub fn transfer(env: Env, _caller: Address, _from: Address, to: Address, _token_id: u64) {
+        env.storage()
+            .instance()
+            .set(&soroban_sdk::Symbol::new(&env, "owner"), &to);
+    }
 }
 
 fn mk_asset(env: &Env) -> Asset {
@@ -170,6 +181,84 @@ fn test_cancel_sale_non_seller_fails() {
     assert!(client
         .try_cancel_transaction(&id, &Symbol::new(&env, "sale"), &attacker)
         .is_err());
+}
+
+#[test]
+fn test_create_sale_escrows_the_nft() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    let nft_client = MockNftClient::new(&env, &nft);
+    nft_client.set_owner(&seller);
+
+    client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+
+    // The listing holds the token so settlement does not need the seller.
+    assert_eq!(nft_client.owner_of(&1u64), cid);
+}
+
+#[test]
+fn test_execute_sale_completes() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    let nft_client = MockNftClient::new(&env, &nft);
+    nft_client.set_owner(&seller);
+
+    let id = client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+
+    client.execute_sale(&id, &buyer, &1_000_000i128);
+
+    let sale = client.get_sale(&id);
+    assert_eq!(sale.buyer, Some(buyer.clone()));
+    assert_eq!(sale.state, TransactionState::Executed);
+    assert_eq!(sale.seller, seller);
+    // The escrowed token reaches the buyer, not back to the seller.
+    assert_eq!(nft_client.owner_of(&1u64), buyer);
+}
+
+#[test]
+fn test_execute_sale_twice_fails() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let id = client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+    client.execute_sale(&id, &buyer, &1_000_000i128);
+
+    assert!(client
+        .try_execute_sale(&id, &buyer, &1_000_000i128)
+        .is_err());
+}
+
+#[test]
+fn test_cancel_sale_returns_the_escrowed_nft() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    let nft_client = MockNftClient::new(&env, &nft);
+    nft_client.set_owner(&seller);
+
+    let id = client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+    client.cancel_transaction(&id, &Symbol::new(&env, "sale"), &seller);
+
+    // Cancelling must not strand the token in the contract.
+    assert_eq!(nft_client.owner_of(&1u64), seller);
 }
 
 #[test]

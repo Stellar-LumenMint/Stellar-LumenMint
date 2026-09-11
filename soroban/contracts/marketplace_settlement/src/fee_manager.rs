@@ -105,6 +105,21 @@ impl FeeManager {
         Ok(())
     }
 
+    /// Record a user's trade volume for dynamic fee tiers without changing the
+    /// withdrawable fee balance.
+    ///
+    /// Used when the platform's share of a sale was already paid out directly
+    /// by the royalty distribution. Adding it to the accumulated balance as
+    /// well would let `withdraw_platform_fees` pay the platform twice for the
+    /// same trade, out of funds escrowed for other transactions.
+    pub fn record_platform_volume(
+        env: &Env,
+        user: &Address,
+        amount: i128,
+    ) -> Result<(), SettlementError> {
+        Self::update_user_volume(env, user, amount)
+    }
+
     /// Withdraw accumulated platform fees
     pub fn withdraw_platform_fees(
         env: &Env,
