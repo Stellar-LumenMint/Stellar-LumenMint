@@ -87,6 +87,17 @@ jobs:
             npx prettier --check "**/*.{ts,tsx,js,jsx}"
           fi
 
+      - name: Check GraphQL codegen is up to date
+        run: |
+          if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
+            pnpm run graphql:codegen
+          else
+            npm run graphql:codegen
+          fi
+          # The generated hooks are committed; if regenerating them produces a
+          # diff, the schema and the checked-in client have drifted apart.
+          git diff --exit-code hooks/graphql/generated.ts
+
       - name: Validate translations
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
