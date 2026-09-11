@@ -16,7 +16,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { StellarNft } from '../../nft/entities/stellar-nft.entity';
 import { clampLimit, clampPage } from '../../common/pagination/pagination';
 import { MarketplaceSettlementClient } from '../stellar/marketplace-settlement.client';
-import { CreateSaleParams } from '../shared/contracts/marketplace-settlement.types';
+import { CreateSaleParams } from '../../shared/contracts/marketplace-settlement.types';
 import { TransactionService } from '../transaction/transaction.service';
 import { TransactionState } from '../transaction/enums/transaction-state.enum';
 import { Transaction } from '../transaction/entities/transaction.entity';

@@ -1,4 +1,10 @@
-// Types for marketplace settlement contract integration
+// Canonical types for Marketplace Settlement contract integration.
+//
+// This is the single source of truth for the shapes exchanged with the
+// `marketplace_settlement` Soroban contract. It previously lived in two
+// files (`src/shared/contracts` and `src/modules/shared/contracts`) that had
+// already drifted apart, so a change to one silently missed the other.
+// Consumers must import from here.
 
 export type AuctionType = 'english' | 'dutch';
 
@@ -48,4 +54,40 @@ export interface AcceptOfferParams {
   /** XLM amount as a string (i128) */
   amount: string;
   currency: string;
+}
+
+/** Outcome of submitting a settlement transaction. */
+export interface ExecutionResult {
+  success: boolean;
+  txHash: string;
+  error?: string;
+}
+
+export interface SaleTransaction {
+  id: number;
+  seller: string;
+  nftContract: string;
+  tokenId: string;
+  price: string;
+  currency: string;
+  buyer?: string;
+  status: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface AuctionTransaction {
+  id: number;
+  seller: string;
+  nftContract: string;
+  tokenId: string;
+  startPrice: string;
+  reservePrice: string;
+  currency: string;
+  auctionType: string;
+  status: string;
+  highestBid?: string;
+  winner?: string;
+  createdAt: string;
+  endsAt: string;
 }
