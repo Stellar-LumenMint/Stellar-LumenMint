@@ -187,6 +187,45 @@ fn test_execute_sale_wrong_payment_fails() {
 }
 
 #[test]
+fn test_execute_sale_requires_buyer_authorization() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+    let id = client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+
+    // Drop every mocked credential so the buyer's require_auth() has nothing
+    // to satisfy it. The payment amount is correct, so the only reason this
+    // can fail is the missing authorization.
+    env.mock_auths(&[]);
+
+    assert!(client
+        .try_execute_sale(&id, &buyer, &1_000_000i128)
+        .is_err());
+}
+
+#[test]
+fn test_create_sale_requires_seller_authorization() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    env.mock_auths(&[]);
+
+    assert!(client
+        .try_create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64)
+        .is_err());
+}
+
+#[test]
 fn test_get_nonexistent_sale_fails() {
     let (_env, _cid, client, _admin) = new_env();
     let _asset = mk_asset(&_env);
