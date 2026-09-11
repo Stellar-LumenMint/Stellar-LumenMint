@@ -1,7 +1,11 @@
 module.exports = {
   testEnvironment: "jsdom",
+  // Babel is only used by Jest. Next.js needs its own SWC pipeline, and the
+  // presence of a root `babel.config.js` disables SWC entirely — which breaks
+  // `next/font` and therefore `next build`. Keep the config in a
+  // Jest-specific file and point `babel-jest` at it explicitly.
   transform: {
-    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
+    "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { configFile: "./babel.jest.config.js" }],
   },
   transformIgnorePatterns: [
     "node_modules/(?!(eventemitter3)/)",
