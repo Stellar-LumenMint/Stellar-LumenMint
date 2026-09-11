@@ -1,0 +1,27 @@
+{
+  "name": "stellar-lumenmint",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stellar LumenMint — Stellar-native NFT marketplace monorepo tooling",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck:backend": "cd backend && npx tsc --noEmit",
+    "typecheck:frontend": "cd frontend && npx tsc --noEmit",
+    "typecheck:admin": "cd admin && npx tsc --noEmit",
+    "typecheck:packages": "cd packages/shared-types && npx tsc --noEmit && cd ../sdk && npx tsc --noEmit && cd ../cli && npx tsc --noEmit && cd ../ai && npx tsc --noEmit",
+    "typecheck": "npm run typecheck:backend && npm run typecheck:frontend && npm run typecheck:admin && npm run typecheck:packages",
+    "test:backend": "npm --prefix backend test",
+    "test:frontend": "npm --prefix frontend test",
+    "test:admin": "npm --prefix admin test",
+    "test:mobile": "npm --prefix mobile-app test",
+    "test:soroban": "cd soroban && cargo test --workspace",
+    "test": "npm run test:backend && npm run test:frontend && npm run test:admin && npm run test:mobile",
+    "lint": "cd backend && npx eslint \"{src,test}/**/*.ts\" && cd ../frontend && npx eslint .",
+    "format:check": "cd backend && npx prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "contracts:build": "cd soroban && cargo build --workspace --release",
+    "contracts:test": "cd soroban && cargo test --workspace"
+  }
+}
