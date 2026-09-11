@@ -1,0 +1,37 @@
+# Pre-commit hooks for Stellar LumenMint.
+#
+# Install once with `pipx install pre-commit && pre-commit install`.
+# Hooks run on staged files before every commit; `pre-commit run --all-files`
+# runs them across the whole tree. CI (.github/workflows/stellar-lumenmint-
+# security.yml) enforces the same secret scan on every push.
+repos:
+  # ── Secrets ─────────────────────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  # ── Hygiene ─────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: check-yaml
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # ── Rust formatting ─────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: rustfmt
+        name: rustfmt (soroban)
+        entry: bash -c 'cd soroban && cargo fmt --all -- --check'
+        language: system
+        files: ^soroban/.*\.rs$
+        pass_filenames: false
