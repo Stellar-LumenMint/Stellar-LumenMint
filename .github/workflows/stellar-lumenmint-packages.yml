@@ -43,9 +43,14 @@ jobs:
         working-directory: ./packages
         run: npm install
 
+      # `npm run typecheck` rather than a bare `tsc --noEmit`: the sdk and ai
+      # packages reference `shared-types` through TypeScript project
+      # references, and only build mode (`tsc -b`) compiles the referenced
+      # project first. A bare `tsc --noEmit` cannot resolve the workspace
+      # types and fails.
       - name: Type check
         working-directory: ./packages/${{ matrix.package }}
-        run: npx tsc --noEmit
+        run: npm run typecheck --if-present
 
       - name: Run tests
         working-directory: ./packages/${{ matrix.package }}

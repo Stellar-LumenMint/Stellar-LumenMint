@@ -12,6 +12,7 @@
     "forceConsistentCasingInFileNames": true,
     "composite": true
   },
+  "references": [{ "path": "../shared-types" }],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

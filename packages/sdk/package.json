@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "@stellar-lumenmint/shared-types": "*",
@@ -23,6 +23,7 @@
     }
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "typescript": "^5.0.0"
   }
 }
