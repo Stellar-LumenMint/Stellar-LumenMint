@@ -27,7 +27,10 @@ jest.mock("next/navigation", () => ({
 jest.mock("next/link", () => {
   const React = require("react");
 
-  return React.forwardRef(({ href, children, legacyBehavior, ...props }, ref) => {
+  return React.forwardRef(function MockNextLink(
+    { href, children, legacyBehavior, ...props },
+    ref,
+  ) {
     const mergeHandlers = (childProps) => {
       return (e) => {
         if (props.onClick) props.onClick(e);

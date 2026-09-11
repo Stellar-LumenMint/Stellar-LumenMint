@@ -1,0 +1,22 @@
+{
+  "root": true,
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-console": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "ignorePatterns": [
+    ".next/",
+    "node_modules/",
+    "out/",
+    "coverage/",
+    "test-results/",
+    "playwright-report/",
+    "public/sw.js",
+    "public/workbox-*.js",
+    "public/fallback-*.js",
+    "__mocks__/",
+    "next-env.d.ts"
+  ]
+}
