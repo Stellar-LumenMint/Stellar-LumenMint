@@ -1,5 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-import { assertScValNumericRange } from './soroban.service';
+import { Keypair } from 'stellar-sdk';
+import {
+  assertScValNumericRange,
+  describeOperatorKeyMismatch,
+} from './soroban.service';
 
 describe('assertScValNumericRange', () => {
   it('accepts valid values', () => {
@@ -28,5 +32,38 @@ describe('assertScValNumericRange', () => {
     expect(() =>
       assertScValNumericRange('i128', (-(2n ** 127n) - 1n).toString()),
     ).toThrow(BadRequestException);
+  });
+});
+
+describe('describeOperatorKeyMismatch', () => {
+  it('returns null when the pair matches', () => {
+    const keypair = Keypair.random();
+    expect(
+      describeOperatorKeyMismatch(keypair.publicKey(), keypair.secret()),
+    ).toBeNull();
+  });
+
+  it('reports a mismatch between public key and secret', () => {
+    const configured = Keypair.random();
+    const signer = Keypair.random();
+
+    const problem = describeOperatorKeyMismatch(
+      configured.publicKey(),
+      signer.secret(),
+    );
+
+    expect(problem).toContain('does not match');
+  });
+
+  it('reports a malformed secret', () => {
+    expect(
+      describeOperatorKeyMismatch(Keypair.random().publicKey(), 'not-a-secret'),
+    ).toContain('not a valid Stellar secret key');
+  });
+
+  it('skips the check when either value is absent', () => {
+    const keypair = Keypair.random();
+    expect(describeOperatorKeyMismatch(keypair.publicKey(), undefined)).toBeNull();
+    expect(describeOperatorKeyMismatch(undefined, keypair.secret())).toBeNull();
   });
 });

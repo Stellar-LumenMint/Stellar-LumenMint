@@ -82,6 +82,45 @@ export function assertScValNumericRange(
   }
 }
 
+/**
+ * Compare a configured operator public key with the key derived from the
+ * operator secret.
+ *
+ * Transactions are built with the public key as source account but signed
+ * with the secret. If the two belong to different keypairs, every submission
+ * is rejected by the network with a signature error that looks like a
+ * transient failure — a mismatch is therefore worth catching at boot.
+ *
+ * Returns a human-readable problem description, or null when the pair is
+ * consistent (or when either value is absent, in which case there is nothing
+ * to cross-check).
+ */
+export function describeOperatorKeyMismatch(
+  publicKey?: string | null,
+  secret?: string | null,
+): string | null {
+  if (!publicKey || !secret) {
+    return null;
+  }
+
+  let derived: string;
+  try {
+    derived = Keypair.fromSecret(secret).publicKey();
+  } catch {
+    return 'STELLAR_OPERATOR_SECRET is not a valid Stellar secret key';
+  }
+
+  if (derived !== publicKey) {
+    return (
+      'STELLAR_OPERATOR_PUBLIC_KEY does not match the key derived from ' +
+      'STELLAR_OPERATOR_SECRET; transactions would be signed by a different ' +
+      'account than the one used as the transaction source'
+    );
+  }
+
+  return null;
+}
+
 export type BuildTransactionResult = {
   transactionXdr: string;
   simulationResult: unknown;
@@ -134,6 +173,18 @@ export class SorobanService implements OnModuleInit {
     );
 
     const nodeEnv = this.resolveNodeEnv();
+
+    const operatorKeyProblem = describeOperatorKeyMismatch(
+      this.configService.get<string>('STELLAR_OPERATOR_PUBLIC_KEY'),
+      this.configService.get<string>('STELLAR_OPERATOR_SECRET'),
+    );
+    if (operatorKeyProblem) {
+      this.logger.error(operatorKeyProblem);
+      if (nodeEnv === 'production') {
+        throw new ServiceUnavailableException(operatorKeyProblem);
+      }
+    }
+
     const looksLikeTestnet = config.sorobanRpcUrl.includes('testnet');
 
     if (nodeEnv === 'production' && looksLikeTestnet) {
