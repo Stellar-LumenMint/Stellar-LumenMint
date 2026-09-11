@@ -15,6 +15,81 @@ export interface CorsEnvironment {
   corsOriginDev?: string;
 }
 
+const DEFAULT_DEV_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5000',
+];
+
+const SUBDOMAIN_WILDCARD_PREFIX = '*.';
+
+/** Split a comma-separated origin list into trimmed, non-empty entries. */
+function parseOrigins(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+}
+
+/**
+ * Validate a single allowed-origin entry.
+ *
+ * Accepts an absolute http(s) origin, or a `*.example.com` subdomain
+ * wildcard (which is not a valid URL, so it is handled before the URL
+ * parse). Paths, queries, and fragments are rejected because a browser's
+ * Origin header never carries them, so such an entry can never match.
+ */
+export function validateCorsOrigin(
+  origin: string,
+  requireHttps: boolean,
+): void {
+  if (origin === '*') {
+    throw new BadRequestException(
+      'Wildcard "*" is not a valid CORS origin; list explicit origins',
+    );
+  }
+
+  if (origin.startsWith(SUBDOMAIN_WILDCARD_PREFIX)) {
+    const domain = origin.slice(SUBDOMAIN_WILDCARD_PREFIX.length);
+    if (!domain || domain.includes('/') || domain.includes(':')) {
+      throw new BadRequestException(
+        `Invalid CORS origin wildcard: ${origin}`,
+      );
+    }
+    return;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    throw new BadRequestException(
+      `Invalid CORS origin: ${origin}. Must be an absolute URL`,
+    );
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new BadRequestException(
+      `Invalid CORS origin: ${origin}. Must use http or https`,
+    );
+  }
+
+  if (url.pathname !== '/' || url.search || url.hash) {
+    throw new BadRequestException(
+      `Invalid CORS origin: ${origin}. Must not include a path, query, or fragment`,
+    );
+  }
+
+  const isLoopback =
+    url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+
+  if (requireHttps && url.protocol !== 'https:' && !isLoopback) {
+    throw new BadRequestException(
+      `CORS origin ${origin} must use HTTPS in production`,
+    );
+  }
+}
+
 /**
  * Get the list of allowed origins based on environment
  */
@@ -29,11 +104,7 @@ export function getAllowedOrigins(env: CorsEnvironment): string[] {
       );
     }
 
-    // Parse comma-separated list and trim whitespace
-    const origins = corsAllowedOrigins
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter((origin) => origin.length > 0);
+    const origins = parseOrigins(corsAllowedOrigins);
 
     if (origins.length === 0) {
       throw new BadRequestException(
@@ -41,43 +112,25 @@ export function getAllowedOrigins(env: CorsEnvironment): string[] {
       );
     }
 
-    // Validate each origin is a valid URL
+    // Validate every entry up front. Throwing here (rather than swallowing
+    // the error) means a typo surfaces at boot instead of silently dropping
+    // an origin and breaking a client in production.
     for (const origin of origins) {
-      try {
-        const url = new URL(origin);
-        // Ensure it's https in production (except localhost for testing)
-        if (url.protocol !== 'https:' && !url.hostname.includes('localhost')) {
-          throw new BadRequestException(
-            `CORS origin ${origin} must use HTTPS in production`,
-          );
-        }
-      } catch {
-        throw new BadRequestException(
-          `Invalid CORS origin: ${origin}. Must be a valid URL`,
-        );
-      }
+      validateCorsOrigin(origin, true);
     }
 
     return origins;
   }
 
-  // Development environment - permissive
-  const devOrigins = [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:5000',
-  ];
+  // Development environment - permissive defaults plus opt-in extras
+  const devOrigins = [...DEFAULT_DEV_ORIGINS];
 
   if (corsOriginDev && corsOriginDev.trim() !== '') {
-    try {
-      const customOrigins = corsOriginDev
-        .split(',')
-        .map((o) => o.trim())
-        .filter((o) => o.length > 0);
-      devOrigins.push(...customOrigins);
-    } catch {
-      // Ignore invalid custom origins in dev
+    const customOrigins = parseOrigins(corsOriginDev);
+    for (const origin of customOrigins) {
+      validateCorsOrigin(origin, false);
     }
+    devOrigins.push(...customOrigins);
   }
 
   return devOrigins;
@@ -107,12 +160,11 @@ export function createCorsConfig(env: CorsEnvironment): CorsConfig {
       'Cache-Control',
       'Pragma',
     ],
-    exposedHeaders: [
-      'Content-Length',
-      'X-Content-Type-Options',
-      'X-Frame-Options',
-      'X-XSS-Protection',
-    ],
+    // Only headers the browser actually needs to read via JavaScript.
+    // X-Content-Type-Options / X-Frame-Options are security response
+    // headers set by the server; exposing them to CORS adds attack surface
+    // and tells clients nothing they can act on.
+    exposedHeaders: ['Content-Length'],
     maxAge: 86400, // 24 hours
   };
 }
