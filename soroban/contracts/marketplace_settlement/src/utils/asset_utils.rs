@@ -1,15 +1,7 @@
 use crate::error::SettlementError;
 use crate::storage::allowlist_store::AllowlistStore;
 use crate::types::Asset;
-use soroban_sdk::{token, Address, Bytes, Env, IntoVal, Symbol, Vec};
-
-/// Create a native XLM asset
-pub fn native_asset() -> Asset {
-    // This function is primarily for testing - in production,
-    // native XLM assets are handled differently by the Soroban runtime
-    // Return a dummy asset for now
-    panic!("Native asset handling not implemented in this test version")
-}
+use soroban_sdk::{token, Address, Env, IntoVal, Symbol, Vec};
 
 /// Validate that an asset is supported
 pub fn validate_asset(
@@ -84,35 +76,9 @@ pub fn transfer_tokens(
     Ok(())
 }
 
-/// Approve token spending
-pub fn approve_token_spending(
-    _token_contract: &Address,
-    _owner: &Address,
-    _spender: &Address,
-    _amount: i128,
-    _env: &Env,
-) -> Result<(), SettlementError> {
-    Ok(())
-}
-
-/// Check token allowance
-pub fn check_token_allowance(
-    _token_contract: &Address,
-    _owner: &Address,
-    _spender: &Address,
-    _env: &Env,
-) -> Result<i128, SettlementError> {
-    Ok(0) // Placeholder
-}
-
 /// Get token decimals
 pub fn get_token_decimals(_token_contract: &Address, _env: &Env) -> Result<u32, SettlementError> {
     Ok(7) // Default for Stellar assets
-}
-
-/// Format amount with proper decimals
-pub fn format_amount_with_decimals(_amount: i128, _decimals: u64) -> Bytes {
-    Bytes::new(&Env::default()) // Placeholder
 }
 
 /// Validate that an NFT contract supports the required interface
@@ -158,13 +124,4 @@ pub fn transfer_nft(
         ],
     );
     Ok(())
-}
-
-/// Get NFT metadata URI
-pub fn get_nft_metadata_uri(
-    _nft_contract: &Address,
-    _token_id: u64,
-    env: &Env,
-) -> Result<Bytes, SettlementError> {
-    Ok(Bytes::new(env)) // Placeholder
 }
