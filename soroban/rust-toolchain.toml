@@ -1,0 +1,11 @@
+# Rust toolchain for the Soroban contract workspace.
+#
+# Committing this file makes `cargo`/`rustc` resolve through rustup to the
+# declared channel for every contributor and CI runner, and guarantees the
+# formatting and lint components the pipeline relies on are installed.
+# The channel tracks stable; bump it deliberately when the SDK supports it.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"
