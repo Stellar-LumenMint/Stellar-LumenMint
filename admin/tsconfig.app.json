@@ -24,5 +24,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Test files pull in test-runner and DOM-testing types that are not part of
+  // the shipped bundle, and `npm run build` runs `tsc -b` over this project.
+  // Keeping them out means a test-only type error can never break a
+  // production build.
+  "exclude": ["src/**/__tests__/**"]
 }

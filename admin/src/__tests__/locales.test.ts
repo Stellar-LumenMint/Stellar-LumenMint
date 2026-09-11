@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import en from '../locales/en.json';
 import es from '../locales/es.json';
 
-function getAllKeys(obj: any, prefix = ''): string[] {
+function getAllKeys(obj: unknown, prefix = ''): string[] {
   if (typeof obj !== 'object' || obj === null) return [prefix];
-  return Object.entries(obj).flatMap(([k, v]) =>
+  return Object.entries(obj as Record<string, unknown>).flatMap(([k, v]) =>
     getAllKeys(v, prefix ? `${prefix}.${k}` : k),
   );
 }

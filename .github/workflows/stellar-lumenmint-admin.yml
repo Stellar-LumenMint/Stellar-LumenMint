@@ -62,12 +62,16 @@ jobs:
       - name: Install dependencies
         run: ${{ steps.detect.outputs.install_cmd }}
 
+      # `tsc --noEmit` against the root `tsconfig.json` is a no-op: that file is
+      # a solution file with `files: []` and project references, so it
+      # type-checks nothing. Run the project's own script, which builds the
+      # referenced projects (`tsc -b`).
       - name: Type check
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
-            pnpm exec tsc --noEmit
+            pnpm run typecheck
           else
-            npx tsc --noEmit
+            npm run typecheck
           fi
 
       - name: Lint (if available)

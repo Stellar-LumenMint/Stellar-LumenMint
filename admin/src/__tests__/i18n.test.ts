@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import i18next from 'i18next';
 
 // We import after mocking
 describe('Admin i18n', () => {

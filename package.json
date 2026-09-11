@@ -10,7 +10,7 @@
   "scripts": {
     "typecheck:backend": "cd backend && npx tsc --noEmit",
     "typecheck:frontend": "cd frontend && npx tsc --noEmit",
-    "typecheck:admin": "cd admin && npx tsc --noEmit",
+    "typecheck:admin": "cd admin && npm run typecheck",
     "typecheck:packages": "cd packages/shared-types && npx tsc --noEmit && cd ../sdk && npx tsc -b && cd ../cli && npx tsc --noEmit && cd ../ai && npx tsc -b",
     "typecheck": "npm run typecheck:backend && npm run typecheck:frontend && npm run typecheck:admin && npm run typecheck:packages",
     "test:backend": "npm --prefix backend test",
