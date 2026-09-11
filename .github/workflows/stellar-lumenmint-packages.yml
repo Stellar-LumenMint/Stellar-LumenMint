@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "packages/**"
+      - ".github/workflows/stellar-lumenmint-packages.yml"
     branches: [main, develop]
   pull_request:
     paths:
       - "packages/**"
+      - ".github/workflows/stellar-lumenmint-packages.yml"
     branches: [main, develop]
   workflow_dispatch:
 
@@ -43,12 +45,12 @@ jobs:
 
       - name: Type check
         working-directory: ./packages/${{ matrix.package }}
-        run: npx tsc --noEmit || echo "::warning::Type check issues found (non-blocking)"
+        run: npx tsc --noEmit
 
       - name: Run tests
         working-directory: ./packages/${{ matrix.package }}
-        run: npm run test --if-present || echo "::warning::No tests configured for ${{ matrix.package }}"
+        run: npm run test --if-present
 
       - name: Build
         working-directory: ./packages/${{ matrix.package }}
-        run: npm run build --if-present || echo "::warning::No build configured for ${{ matrix.package }}"
+        run: npm run build --if-present
