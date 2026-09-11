@@ -65,9 +65,9 @@ jobs:
       - name: Type check
         run: |
           if [ "${{ steps.detect.outputs.manager }}" = "pnpm" ]; then
-            pnpm exec tsc --noEmit
+            pnpm run typecheck
           else
-            npx tsc --noEmit
+            npm run typecheck
           fi
 
       - name: Lint (if available)

@@ -2,29 +2,6 @@ import { Keypair } from 'stellar-sdk';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-const asyncStorageStore: Record<string, string> = {};
-
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn((key: string) => Promise.resolve(asyncStorageStore[key] ?? null)),
-  setItem: jest.fn((key: string, value: string) => {
-    asyncStorageStore[key] = value;
-    return Promise.resolve();
-  }),
-  removeItem: jest.fn((key: string) => {
-    delete asyncStorageStore[key];
-    return Promise.resolve();
-  }),
-  mergeItem: jest.fn(),
-  clear: jest.fn(() => {
-    Object.keys(asyncStorageStore).forEach((k) => delete asyncStorageStore[k]);
-    return Promise.resolve();
-  }),
-  getAllKeys: jest.fn(() => Promise.resolve(Object.keys(asyncStorageStore))),
-  multiGet: jest.fn(),
-  multiSet: jest.fn(),
-  multiRemove: jest.fn(),
-}));
-
 const secureStoreData: Record<string, string> = {};
 
 jest.mock('expo-secure-store', () => ({
@@ -98,7 +75,23 @@ describe('useAuthStore', () => {
       error: null,
     });
     Object.keys(secureStoreData).forEach((k) => delete secureStoreData[k]);
-    Object.keys(asyncStorageStore).forEach((k) => delete asyncStorageStore[k]);
+    // Restore the keychain mock's default behaviour so a rejection installed by
+    // one test cannot leak into the next one.
+    const SecureStore = require('expo-secure-store');
+    SecureStore.setItemAsync.mockReset();
+    SecureStore.setItemAsync.mockImplementation((key: string, value: string) => {
+      secureStoreData[key] = value;
+      return Promise.resolve();
+    });
+    SecureStore.getItemAsync.mockReset();
+    SecureStore.getItemAsync.mockImplementation((key: string) =>
+      Promise.resolve(secureStoreData[key] ?? null),
+    );
+    SecureStore.deleteItemAsync.mockReset();
+    SecureStore.deleteItemAsync.mockImplementation((key: string) => {
+      delete secureStoreData[key];
+      return Promise.resolve();
+    });
     mockEmailLogin.mockReset();
     mockEmailRegister.mockReset();
     mockRefreshToken.mockReset();
@@ -195,7 +188,16 @@ describe('useAuthStore', () => {
 
     it('sets error when storage fails', async () => {
       const SecureStore = require('expo-secure-store');
-      SecureStore.setItemAsync.mockRejectedValueOnce(new Error('storage failure'));
+      // Fail only the wallet write. The persist middleware also writes through
+      // this mock, and a blanket rejection there would consume the failure
+      // before `saveWallet` ever runs.
+      SecureStore.setItemAsync.mockImplementation((key: string, value: string) => {
+        if (key === 'stellar_lumenmint_wallet') {
+          return Promise.reject(new Error('storage failure'));
+        }
+        secureStoreData[key] = value;
+        return Promise.resolve();
+      });
 
       const wallet = makeWallet();
       await getStore().loginWithWallet(wallet);
@@ -210,8 +212,16 @@ describe('useAuthStore', () => {
       SecureStore.setItemAsync.mockClear();
       useAuthStore.setState({ isLoading: true });
 
-      await getStore().loginWithWallet(makeWallet());
-      expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
+      const wallet = makeWallet();
+      await getStore().loginWithWallet(wallet);
+
+      // The store itself also writes through the persist middleware, so assert
+      // on the wallet entry rather than on the mock as a whole.
+      expect(SecureStore.setItemAsync).not.toHaveBeenCalledWith(
+        'stellar_lumenmint_wallet',
+        expect.anything(),
+      );
+      expect(getStore().wallet).toBeNull();
     });
   });
 
