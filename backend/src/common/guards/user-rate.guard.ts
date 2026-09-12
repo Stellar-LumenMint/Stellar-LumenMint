@@ -136,10 +136,13 @@ export class UserRateGuard implements CanActivate {
     if (userId) {
       return `rate:user:${userId}:${request.method}:${request.path}`;
     }
-    const ip =
-      (request.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
-      request.ip ??
-      'unknown';
+    // Use `req.ip`, not the raw header. Express derives `req.ip` through the
+    // configured `trust proxy` setting, so it is the peer address when the API
+    // is directly reachable and the first untrusted hop when it sits behind a
+    // proxy. Reading `x-forwarded-for` here bypassed that sanitization
+    // entirely: a directly-reachable client could send a different value on
+    // every request and land in a fresh bucket each time, defeating the limit.
+    const ip = request.ip ?? 'unknown';
     return `rate:ip:${ip}:${request.method}:${request.path}`;
   }
 
