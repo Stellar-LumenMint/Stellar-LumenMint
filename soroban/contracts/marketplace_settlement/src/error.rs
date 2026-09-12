@@ -115,7 +115,6 @@ pub enum SettlementError {
     PauseTimelockActive = 606,
     PauseAlreadyScheduled = 607,
     PauseNotScheduled = 608,
-    PauseCancellationNotAllowed = 609,
     NotPaused = 610,
 
     // Fee errors

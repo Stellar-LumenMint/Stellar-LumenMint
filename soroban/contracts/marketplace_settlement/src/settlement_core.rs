@@ -1298,6 +1298,13 @@ impl MarketplaceSettlement {
                 AtomicSwapEngine::cancel_swap(&env, transaction_id, &canceller)?;
                 sale.state = crate::types::TransactionState::Cancelled;
                 SaleTransactionStore::update(&env, &sale)?;
+            } else if transaction_type == Symbol::new(&env, "auction") {
+                // `"auction"` used to fall through to `NotFound` even though
+                // the parameter documents it, and `AuctionEngine::cancel_auction`
+                // had no caller at all. An auction that has already taken a bid
+                // cannot be cancelled outright — its escrowed deposits have to
+                // be repaid — so the caller is told to use the refund path.
+                AuctionEngine::cancel_auction(&env, transaction_id, &canceller)?;
             } else if transaction_type == Symbol::new(&env, "trade") {
                 Self::cancel_trade_inner(&env, transaction_id, &canceller)?;
             } else if transaction_type == Symbol::new(&env, "bundle") {

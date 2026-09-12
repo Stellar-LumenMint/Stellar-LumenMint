@@ -2,6 +2,7 @@
 
 // Gas benchmarks for the settlement flows.
 mod benchmarks;
+mod error_codes;
 
 use crate::{
     error::SettlementError,

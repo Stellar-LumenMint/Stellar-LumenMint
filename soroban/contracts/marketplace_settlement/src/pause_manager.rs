@@ -227,8 +227,13 @@ impl PauseManager {
     pub fn cancel_scheduled_pause(env: &Env, admin: &Address) -> Result<(), SettlementError> {
         let scheduled = Self::get_scheduled_pause(env).ok_or(SettlementError::PauseNotScheduled)?;
 
+        // Only the admin that scheduled the pause may cancel it. Kept as a
+        // defensive check even though `schedule_pause` and this entrypoint are
+        // both gated on the single configured admin, so with the admin axis
+        // fixed the two can only differ if an admin-rotation path is added.
+        // Reporting `Unauthorized` keeps that accurate either way.
         if scheduled.scheduled_by != *admin {
-            return Err(SettlementError::PauseCancellationNotAllowed);
+            return Err(SettlementError::Unauthorized);
         }
 
         env.storage().instance().remove(&Self::schedule_key(env));
