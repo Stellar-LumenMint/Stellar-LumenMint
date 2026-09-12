@@ -13,6 +13,7 @@ Push/PR → .github/workflows/
 ├── stellar-lumenmint-security.yml   (CodeQL, audit, cargo-audit)
 ├── stellar-lumenmint-release.yml    (semver, changelog, Docker publish)
 ├── stellar-lumenmint-vercel.yml     (frontend production + preview deploy)
+├── stellar-lumenmint-video.yml      (verify the committed pitch artifacts)
 └── stellar-lumenmint-deploy.yml     (env deploy, health check, rollback)
 ```
 
@@ -29,6 +30,7 @@ Push/PR → .github/workflows/
 | Security | `main`, `develop` | ✅ | Weekly | — |
 | Release | Tag `v*` | — | — | ✅ |
 | Vercel | `frontend/**` | ✅ | — | ✅ |
+| Video | `video/**`, `README.md` | ✅ | — | ✅ |
 | Deploy | — | — | — | ✅ |
 
 ## Required Repository Setup

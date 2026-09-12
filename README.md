@@ -9,7 +9,14 @@
 [![Watch the pitch](https://img.shields.io/badge/%E2%96%B6_watch_the_pitch-5_min-00D4FF.svg)](./video/out/stellar-lumenmint-pitch.mp4)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
-<!-- CI/CD Status Badges -->
+<!-- Repository Status Badges -->
+[![Stars](https://img.shields.io/github/stars/Stellar-LumenMint/Stellar-LumenMint?style=flat&logo=github&label=stars)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/stargazers)
+[![Forks](https://img.shields.io/github/forks/Stellar-LumenMint/Stellar-LumenMint?style=flat&logo=github&label=forks)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/forks)
+[![Issues](https://img.shields.io/github/issues/Stellar-LumenMint/Stellar-LumenMint?style=flat&logo=github&label=issues)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues)
+[![Last commit](https://img.shields.io/github/last-commit/Stellar-LumenMint/Stellar-LumenMint?style=flat&logo=github&label=last%20commit)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/commits/main)
+[![Contributors](https://img.shields.io/github/contributors/Stellar-LumenMint/Stellar-LumenMint?style=flat&logo=github&label=contributors)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/graphs/contributors)
+
+<!-- CI/CD Status Badges — one badge per workflow, all in a single row -->
 [![Backend CI](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-backend.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-backend.yml)
 [![Frontend CI](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-frontend.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-frontend.yml)
 [![Mobile App CI](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-mobile-app.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-mobile-app.yml)
@@ -33,6 +40,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)](https://redis.io)
 [![pnpm](https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm&logoColor=white)](https://pnpm.io)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 
 </div>
 
@@ -41,8 +49,6 @@
 ## ▶ Watch the pitch
 
 [![Watch the LumenMint product pitch — five minutes, captioned](./video/out/thumbnail.png)](./video/out/stellar-lumenmint-pitch.mp4)
-
-**[▶ Watch the 5-minute product pitch](./video/out/stellar-lumenmint-pitch.mp4)** — 1080p, captioned, with a [timestamped transcript](./video/out/TRANSCRIPT.md).
 
 A five-minute walkthrough of the problem, the product, the architecture, the live deployment and the engineering behind it. Every figure on screen — the gas benchmarks, the test counts, the error-code registry, the contract addresses — is read from this repository when the video is rendered, and the whole thing is produced by a [scripted pipeline](./video/README.md) rather than edited by hand, so it cannot drift from the code it describes.
 
@@ -261,26 +267,30 @@ Contract source: [`soroban/contracts/`](./soroban/contracts) · [Contract Invari
 | [docs/ERROR_CODES.md](./docs/ERROR_CODES.md) | Every error code across the contracts, API and frontend (generated) |
 | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Contributor Covenant and how to report a problem |
 | [.github/workflows/README.md](./.github/workflows/README.md) | CI/CD pipeline architecture |
+| [video/README.md](./video/README.md) | How the pitch video is generated, verified and reproduced |
+| [video/out/TRANSCRIPT.md](./video/out/TRANSCRIPT.md) | Timestamped transcript of the pitch video |
+| [SECURITY.md](./SECURITY.md) | Supported versions and how to report a vulnerability |
+| [CRITICAL-ANALYSIS.md](./CRITICAL-ANALYSIS.md) | Production-readiness review and its open items |
 
 ---
 
 ## CI/CD Pipeline
 
-Every workspace has automated CI triggered on push/PR:
+Every workspace has automated CI triggered on push/PR. Live status for each pipeline is in the badge row at the top of this README:
 
-| Pipeline | Steps | Badge |
-|----------|-------|-------|
-| **Backend** | lint, format, typecheck, test, build | [![Backend](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-backend.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-backend.yml) |
-| **Frontend** | lint, format, typecheck, test, Next.js build | [![Frontend](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-frontend.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-frontend.yml) |
-| **Mobile App** | typecheck, test, Expo config validate | [![Mobile](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-mobile-app.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-mobile-app.yml) |
-| **Admin** | lint, typecheck, test, Vite build | [![Admin](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-admin.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-admin.yml) |
-| **Soroban** | fmt, clippy, WASM build, cargo test | [![Soroban](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-soroban.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-soroban.yml) |
-| **Packages** | typecheck, test, build (matrix) | [![Packages](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-packages.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-packages.yml) |
-| **Security** | CodeQL, npm dependency audit, cargo-audit (weekly) | [![Security](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml) |
-| **Release** | Semver, changelog, Docker publish to GHCR | [![Release](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml) |
-| **Vercel** | Automatic production deploy on `main`, preview per PR | [![Vercel](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml) |
-| **Deploy** | Manual deploy/rollback with health checks | Manual |
-| **Video** | Verifies the pitch video, thumbnail, transcript and README links | [![Video](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-video.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-video.yml) |
+| Pipeline | Steps |
+|----------|-------|
+| **Backend** | lint, format, typecheck, test, build |
+| **Frontend** | lint, format, typecheck, test, Next.js build |
+| **Mobile App** | typecheck, test, Expo config validate |
+| **Admin** | lint, typecheck, test, Vite build |
+| **Soroban** | fmt, clippy, WASM build, cargo test |
+| **Packages** | typecheck, test, build (matrix) |
+| **Security** | CodeQL, npm dependency audit, cargo-audit (weekly) |
+| **Release** | Semver, changelog, Docker publish to GHCR |
+| **Vercel** | Automatic production deploy on `main`, preview per PR |
+| **Deploy** | Manual deploy/rollback with health checks (`workflow_dispatch`) |
+| **Video** | Verifies the pitch video, thumbnail, transcript and README links |
 
 ---
 
