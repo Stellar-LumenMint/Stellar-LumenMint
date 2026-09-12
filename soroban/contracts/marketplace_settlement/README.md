@@ -34,38 +34,72 @@ This contract implements a secure, efficient marketplace settlement system with 
 - `utils/asset_utils.rs`: Asset handling and validation
 
 ### Storage
-- `storage/transaction_store.rs`: Transaction data management
-- `storage/auction_store.rs`: Auction data management
-- `storage/dispute_store.rs`: Dispute data management
+- `storage/transaction_store.rs`: Sale, trade and bundle records (one persistent entry per id)
+- `storage/auction_store.rs`: Auction, bid-book and Dutch-price records (one persistent entry per auction)
+- `storage/dispute_store.rs`: Dispute records
+- `storage/allowlist_store.rs`, `storage/blocklist_store.rs`: Contract and address allow/deny lists
+- `ttl.rs`: TTL extension for instance and persistent entries
+
+Each transaction, auction and escrow is stored under its own key rather than in
+one shared map, so the cost of a write does not grow with the number of open
+listings and a single ledger entry cannot be outgrown.
 
 ## Public Functions
 
+### Lifecycle
+- `initialize(admin, fee_config)`: Set the admin and fee configuration (once)
+- `version()`, `get_version()`: Build metadata for incident response
+
 ### Sales
-- `create_sale()`: Create a fixed-price NFT sale
-- `execute_sale()`: Execute a sale transaction
-- `cancel_transaction()`: Cancel a pending transaction
+- `create_sale(seller, nft_address, token_id, price, currency, duration_seconds)`: List an NFT; the token is escrowed by this call
+- `execute_sale(transaction_id, buyer, payment_amount)`: Buy at the listed price, releasing the NFT and splitting the payment
+- `get_sale(transaction_id)`: Read a sale record
+- `cancel_transaction(transaction_id, transaction_type, canceller)`: Cancel a `"sale"`, `"trade"` or `"bundle"`, returning every escrowed asset
 
 ### Auctions
-- `create_auction()`: Create an auction (English or Dutch)
-- `place_bid()`: Place a bid on an auction
-- `reveal_bid()`: Reveal a committed bid
-- `end_auction()`: End an auction and determine winner
+- `create_auction(seller, nft_address, token_id, starting_price, reserve_price, duration_seconds, bid_increment, auction_type, currency)`: Start an English or Dutch auction
+- `place_bid(auction_id, bidder, bid_amount, commitment_hash)`: Bid (a commitment hash enables sealed bidding)
+- `reveal_bid(auction_id, bidder, bid_amount, salt)`: Reveal a sealed bid
+- `end_auction(auction_id, caller)`: Settle to the highest bidder
+- `cancel_auction_with_refund(auction_id, canceller)`: Cancel and refund bidders
+- `withdraw_losing_bid(auction_id, bidder)`: Reclaim a bid on a settled auction
+- `get_auction(auction_id)`, `get_dutch_auction_price(auction_id)`
+- `cleanup_expired_commitments()`: Prune expired sealed-bid commitments
 
-### Trades
-- `create_trade()`: Create an NFT-for-NFT trade
-- `accept_trade()`: Accept a trade offer
-- `execute_trade()`: Execute a trade
+### Trades (NFT-for-NFT)
+- `create_trade(initiator, counterparty, initiator_nfts, counterparty_nfts, duration_seconds)`: Offer items; the initiator's items are escrowed immediately
+- `accept_trade(trade_id, acceptor)`: Accept, escrowing the acceptor's items
+- `execute_trade(trade_id, executor)`: Move both sides in one call
+- `cancel_trade(trade_id, canceller)`: Unwind and refund each side
+- `get_trade(trade_id)`
+
+### Bundles (multi-item sales)
+- `create_bundle(seller, items, total_price, currency, duration_seconds)`: List several NFTs; all of them are escrowed by this call
+- `execute_bundle(bundle_id, buyer, payment_amount)`: Buy the bundle, releasing every item
+- `cancel_bundle(bundle_id, seller)`: Return every item to the seller
+- `get_bundle(bundle_id)`
+
+### Royalties
+- `set_royalty_info(setter, nft_contract, token_id, creator, royalty_percentage)`: Configure a royalty. Authorized for the token's current owner or the marketplace admin
+- `update_royalty_percentage(updater, nft_contract, token_id, new_percentage)`: Change the percentage; only the recorded creator
+- `get_royalty_info(nft_contract, token_id)`
 
 ### Disputes
-- `initiate_dispute()`: Start a dispute for a transaction
-- `vote_on_dispute()`: Vote on an active dispute
-- `execute_dispute_resolution()`: Execute dispute resolution
+- `initiate_dispute(transaction_id, reason, evidence_uri, initiator)`
+- `vote_on_dispute(dispute_id, arbitrator, vote)`
+- `execute_dispute_resolution(dispute_id, executor)`
 
 ### Administration
-- `initialize()`: Initialize the contract
-- `update_fee_config()`: Update fee configuration
-- `emergency_withdraw()`: Emergency withdrawal (admin only)
-- `withdraw_platform_fees()`: Withdraw accumulated platform fees
+- `pause_contract` / `unpause_contract` / `schedule_pause` / `cancel_scheduled_pause` / `execute_scheduled_pause`
+- `is_paused` / `is_module_paused` / `get_pause_state` / `get_scheduled_pause_info` / `is_timelock_active` / `get_timelock_remaining` / `get_paused_modules`
+- `update_fee_config(new_config, admin)` / `withdraw_platform_fees(asset, recipient, admin)`
+- `update_dispute_config(config, admin)`
+- `update_rate_limit(function, limit, window_seconds, admin)` / `get_rate_limit_config(function)`
+- `add_supported_asset` / `remove_supported_asset` / `get_supported_assets`
+- `add_allowed_nft_contract` / `remove_allowed_nft_contract` / `add_allowed_token_contract` / `remove_allowed_token_contract`
+- `block_address` / `unblock_address` / `update_block_reason` / `is_blocked` / `get_blocked_addresses` / `get_block_record`
+- `set_emergency_withdrawal(admin, enabled)` / `emergency_withdraw(transaction_id, reason, admin)`
+- `get_accumulated_fees(asset)` / `get_user_volume(user)`
 
 ## Data Structures
 

@@ -46,19 +46,33 @@ marketplace_settlement/
 
 The main contract struct. Entry points:
 
-| Function | Description |
+| Category | Functions |
 |---|---|
-| `initialize` | Set admin + initial fee config (once) |
-| `create_sale` | List an NFT for direct sale |
-| `execute_sale` | Buyer purchases at listed price |
-| `cancel_transaction` | Seller cancels a pending listing |
-| `create_auction` | Start an English or Dutch auction |
-| `place_bid` | Submit a bid (supports commit-reveal) |
-| `reveal_bid` | Reveal a sealed bid |
-| `end_auction` | Conclude auction, settle to highest bidder |
-| `create_trade` | Initiate an NFT-for-NFT swap |
-| `create_bundle` | List multiple NFTs as a bundle |
-| `emergency_withdraw` | Admin withdrawal (guarded) |
+| Lifecycle | `initialize`, `version`, `get_version` |
+| Sales | `create_sale`, `execute_sale`, `get_sale`, `cancel_transaction` |
+| Auctions | `create_auction`, `place_bid`, `reveal_bid`, `end_auction`, `cancel_auction_with_refund`, `withdraw_losing_bid`, `get_auction`, `get_dutch_auction_price`, `cleanup_expired_commitments` |
+| Trades | `create_trade`, `accept_trade`, `execute_trade`, `cancel_trade`, `get_trade` |
+| Bundles | `create_bundle`, `execute_bundle`, `cancel_bundle`, `get_bundle` |
+| Royalties | `set_royalty_info`, `update_royalty_percentage`, `get_royalty_info` |
+| Disputes | `initiate_dispute`, `vote_on_dispute`, `execute_dispute_resolution` |
+| Pause | `pause_contract`, `unpause_contract`, `schedule_pause`, `cancel_scheduled_pause`, `execute_scheduled_pause`, `is_paused`, `is_module_paused`, `get_pause_state`, `get_scheduled_pause_info`, `is_timelock_active`, `get_timelock_remaining`, `get_paused_modules` |
+| Fees | `update_fee_config`, `withdraw_platform_fees`, `get_accumulated_fees`, `get_user_volume`, `update_rate_limit`, `get_rate_limit_config` |
+| Dispute config | `update_dispute_config` |
+| Allow/deny lists | `add_supported_asset`, `remove_supported_asset`, `get_supported_assets`, `add_allowed_nft_contract`, `remove_allowed_nft_contract`, `add_allowed_token_contract`, `remove_allowed_token_contract`, `block_address`, `unblock_address`, `update_block_reason`, `is_blocked`, `get_blocked_addresses`, `get_block_record` |
+| Emergency | `set_emergency_withdrawal`, `emergency_withdraw` |
+
+**Custody model.** Listings, trades and bundles escrow their tokens into the
+marketplace at creation time. Settlement therefore does not depend on the
+seller still holding the token, or on an approval that has not been revoked,
+when a buyer appears. `create_trade` escrows the initiator's items and
+`accept_trade` escrows the acceptor's, so `execute_trade` moves both sides in
+one call.
+
+**Authorization.** Every privileged entry point calls `require_auth()` on the
+acting address and then checks it against the stored admin, allowlist or token
+ownership. A caller-supplied address is never sufficient on its own —
+`update_rate_limit` previously compared `admin_config.admin != admin` without
+authorizing, which any caller could satisfy by naming the admin.
 
 ### 2. Auction Engine (`auction_engine.rs`)
 
@@ -107,10 +121,14 @@ fn guarded_function(env: &Env) {
 }
 ```
 
-**Rate Limiter** — Per-user, per-function windows:
+**Rate Limiter** — Per-user, per-function windows, configured per function and
+consulted before the work is done:
+```rust
+RateLimiter::check_rate_limit(env, &user, &Symbol::new(env, "create_sale"))?;
 ```
-RateLimiter::check_and_increment(env, user, "create_sale", limit, window_seconds)
-```
+Defaults are 10 calls / 60s for listings, bundles and trades, and 5 / 60s for
+bids. Only an authenticated admin may change them, and a zero-length window is
+rejected because it would silently disable the limiter.
 
 **Commit-Reveal** — For sealed-bid auctions:
 1. Bidder submits `hash(amount, salt)` as commitment
@@ -222,18 +240,42 @@ cargo test -- --nocapture
 cargo test test_create_sale
 ```
 
-Test coverage: 40+ tests across sales, auctions, trades, bundles, fees,
-royalties, disputes, rate limiting, reentrancy guards, and edge cases.
+Coverage spans sales, auctions, trades, bundles, fees, royalties, disputes,
+rate limiting, reentrancy guards, storage layout and authorization negatives.
 
 ---
 
-## Gas Optimization Notes
+## Storage Model
 
-1. **Storage reads are cached** — Read once, use multiple times.
-2. **Batch operations** — Use `batch_mint`, `batch_transfer` for multi-item ops.
-3. **Instance storage** — Use `instance()` storage for frequently accessed data (lower gas).
-4. **Persistent storage** — Use `persistent()` for large, infrequently accessed data (higher gas).
-5. **Minimize storage writes** — Each write incurs ledger entry costs; batch writes when possible.
+Soroban gives a contract two kinds of storage, and mixing them up is the most
+expensive mistake available here.
+
+* **Instance storage** is one ledger entry shared by everything stored in it,
+  with a hard size ceiling and a single TTL. It is the right place for a small,
+  fixed set of values: the admin configuration, the pause state, the id
+  counters, the allow/deny lists and the fee configuration.
+* **Persistent storage** is one ledger entry per key. Everything that grows —
+  transactions, auctions, bid books, escrows, royalties and per-user volume —
+  lives here, addressed by id, so a write touches a constant amount of state
+  regardless of how much business the contract has done.
+
+Reading a persistent entry through `ttl::get` refreshes its TTL, and `ttl::set`
+writes with a full extension window, so a record cannot age out while the
+marketplace is in use. The instance TTL — shared by the admin configuration,
+the pause state, the id counters and the allow/deny lists — is refreshed on
+every state-changing entry point, because they all pass through
+`ReentrancyGuard::execute`. Read-only entry points do not extend it; if an entry
+has been archived, the protocol restores it automatically from the transaction's
+restore list before the call runs.
+
+---
+
+## Cost Notes
+
+1. **Read once** — a storage read is deserialization; keep locals for values used repeatedly.
+2. **One entry per record** — never accumulate records in a single `Map`; the cost and the size ceiling both grow with the map.
+3. **Bounded collections only in instance storage** — a counter or an allowlist is fine; a list of transactions is not.
+4. **Prefer per-key writes** — each write is priced by the entry it touches.
 
 ---
 
