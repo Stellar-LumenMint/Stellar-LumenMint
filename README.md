@@ -16,6 +16,7 @@
 [![Soroban CI](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-soroban.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-soroban.yml)
 [![Packages CI](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-packages.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-packages.yml)
 [![Security Scan](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml)
+[![Vercel Deploy](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml)
 [![Release](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml)
 
 <!-- Tech Stack Badges -->
@@ -38,6 +39,34 @@
 ## What is Stellar LumenMint?
 
 Stellar LumenMint is a **production-grade Web3 NFT marketplace and creator platform** built natively on the **Stellar** blockchain and **Soroban** smart contract platform. It provides a complete ecosystem for minting, trading, auctioning, and managing NFTs — with a web marketplace, iOS/Android mobile app, admin dashboard, and a developer SDK/CLI.
+
+---
+
+## Live Deployments
+
+### Web marketplace
+
+| Environment | URL | Source |
+|-------------|-----|--------|
+| **Production** | **[https://stellar-indigo-pay.vercel.app](https://stellar-indigo-pay.vercel.app)** | `main` — deployed automatically by [Vercel Deploy](.github/workflows/stellar-lumenmint-vercel.yml) on every push |
+| Preview | per pull request | Same workflow, preview target |
+
+The production site is hosted on Vercel (project `stellar-indigo-pay`, Root Directory `frontend`) and redeploys on every push to `main`. Pull requests get an isolated preview build.
+
+### Soroban contracts (Stellar Testnet)
+
+All four contracts are deployed and initialised on **Testnet**, built from commit `ed2bf67`:
+
+| Contract | Testnet Contract ID | Explorer |
+|----------|---------------------|----------|
+| `nft_contract` | `CDJB7TJ4FKYDHRMBQ2ZQKLL6MPHFIRZA2RNP2ENUE3D7CQR3I4IRMPQ2` | [view](https://stellar.expert/explorer/testnet/contract/CDJB7TJ4FKYDHRMBQ2ZQKLL6MPHFIRZA2RNP2ENUE3D7CQR3I4IRMPQ2) |
+| `marketplace_settlement` | `CC3S7SSYEMRKD4Y6SUFC3ENHN3D3TJAPVT557R22K6IN36BXHH2X2GCU` | [view](https://stellar.expert/explorer/testnet/contract/CC3S7SSYEMRKD4Y6SUFC3ENHN3D3TJAPVT557R22K6IN36BXHH2X2GCU) |
+| `collection_factory` | `CDSNB4N3YHEAHWHQT7XZB6HAEQEFRPRIZWUCEEYGJRPIRBBBOO3NS4CS` | [view](https://stellar.expert/explorer/testnet/contract/CDSNB4N3YHEAHWHQT7XZB6HAEQEFRPRIZWUCEEYGJRPIRBBBOO3NS4CS) |
+| `transaction_contract` | `CAEMECNI3D34TESV36PCUBKORP3PPY4MHRDJJCQNB4D2LK4TOBDOKCJ5` | [view](https://stellar.expert/explorer/testnet/contract/CAEMECNI3D34TESV36PCUBKORP3PPY4MHRDJJCQNB4D2LK4TOBDOKCJ5) |
+
+Each contract is initialised, its role allowlists are set, and its version is readable on-chain. The machine-readable record lives in [`soroban/deployments/manifest.json`](./soroban/deployments/manifest.json); see [`soroban/deployments/README.md`](./soroban/deployments/README.md) for how to redeploy and how to point a local backend at these IDs.
+
+> **Mainnet has not been deployed.** These identifiers are Testnet-only and are not intended for real value.
 
 ---
 
@@ -188,7 +217,9 @@ cd soroban && cargo test --workspace
 | `collection_factory` | Collection creation, management, and configuration |
 | `transaction_contract` | On-chain transaction logging and history |
 
-Contract source: [`soroban/contracts/`](./soroban/contracts) · [Contract Invariants](./soroban/CONTRACT_INVARIANTS.md) · [Security](./soroban/SECURITY.md)
+All four are **live on Testnet** — see [Live Deployments](#soroban-contracts-stellar-testnet) for contract IDs and explorer links.
+
+Contract source: [`soroban/contracts/`](./soroban/contracts) · [Contract Invariants](./soroban/CONTRACT_INVARIANTS.md) · [Security](./soroban/SECURITY.md) · [Deployment record](./soroban/deployments/README.md)
 
 ---
 
@@ -223,6 +254,7 @@ Every workspace has automated CI triggered on push/PR:
 | **Packages** | typecheck, test, build (matrix) | [![Packages](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-packages.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-packages.yml) |
 | **Security** | CodeQL, npm dependency audit, cargo-audit (weekly) | [![Security](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml) |
 | **Release** | Semver, changelog, Docker publish to GHCR | [![Release](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml) |
+| **Vercel** | Automatic production deploy on `main`, preview per PR | [![Vercel](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml) |
 | **Deploy** | Manual deploy/rollback with health checks | Manual |
 
 ---
