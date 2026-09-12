@@ -39,6 +39,46 @@
       "git_commit": "ed2bf67",
       "deployed_at": "2026-09-12T10:17:33Z",
       "rustc_version": "rustc 1.98.1 (48a229cea 2026-09-01)"
+    },
+    {
+      "contract": "collection_factory",
+      "contract_id": "CBRL37EZ5KR2O4J3ECM5RQCREHMYKCZV4QJTUHI6JCGXWJ5BIRXAV6LQ",
+      "wasm_hash": "efdc59631015aa2ba179ac0fbf63417639630d48148eb2345704b44c9b5e7a71",
+      "network": "testnet",
+      "version": "0.1.0",
+      "git_commit": "bfd6e80",
+      "deployed_at": "2026-09-12T15:05:53Z",
+      "rustc_version": "rustc 1.98.1 (48a229cea 2026-09-01)"
+    },
+    {
+      "contract": "nft_contract",
+      "contract_id": "CDQN2A5U6SQLL4NZAMV4SL6BAOK6EXDG4G6HHRDJOOH6XK4LPUPZLHJC",
+      "wasm_hash": "4edb3d7dcdce38e9f32c09c55b585ad85d613be753e1cfe7df0ce07daaaccc09",
+      "network": "testnet",
+      "version": "0.1.0",
+      "git_commit": "bfd6e80",
+      "deployed_at": "2026-09-12T15:06:04Z",
+      "rustc_version": "rustc 1.98.1 (48a229cea 2026-09-01)"
+    },
+    {
+      "contract": "marketplace_settlement",
+      "contract_id": "CCCUOZVZDUYF3Z42PQYAM2AGNCZSSF6J4IUC2J6ANF4Q5C3F5G4CJKUN",
+      "wasm_hash": "6ac601519939a438c8a2720d140aa455a3f2bb1c8237dada119ef19e0fd573b6",
+      "network": "testnet",
+      "version": "0.1.0",
+      "git_commit": "bfd6e80",
+      "deployed_at": "2026-09-12T15:06:14Z",
+      "rustc_version": "rustc 1.98.1 (48a229cea 2026-09-01)"
+    },
+    {
+      "contract": "transaction_contract",
+      "contract_id": "CCM4HGRU7CGLFAHHMTTBAQN6C2LEOJLWTTRMKAQX2W2T5EE7LNMW37FQ",
+      "wasm_hash": "7a12d87ddf375b5215cd78f12467b2e006297fd7b295dd93e6fdcbba45b08009",
+      "network": "testnet",
+      "version": "0.1.0",
+      "git_commit": "bfd6e80",
+      "deployed_at": "2026-09-12T15:06:22Z",
+      "rustc_version": "rustc 1.98.1 (48a229cea 2026-09-01)"
     }
   ]
 }

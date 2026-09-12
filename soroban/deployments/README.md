@@ -29,21 +29,24 @@ the live one, and earlier entries record what it replaced.
 
 ## Live testnet deployment
 
-Deployed from commit `ed2bf67` with the `stellar` CLI (v28.0.0). Deployer account:
+Deployed from commit `bfd6e80` with the `stellar` CLI (v28.0.0). Deployer account:
 `GDAWVGP2YPZ3UZJQDKAOPRTO7C2HEAS2U7CHKBZOOURYPTDJL6DMEBNT` (funded via Friendbot).
 
 | Contract | Contract ID | Explorer |
 | --- | --- | --- |
-| `collection_factory` | `CDSNB4N3YHEAHWHQT7XZB6HAEQEFRPRIZWUCEEYGJRPIRBBBOO3NS4CS` | [view](https://stellar.expert/explorer/testnet/contract/CDSNB4N3YHEAHWHQT7XZB6HAEQEFRPRIZWUCEEYGJRPIRBBBOO3NS4CS) |
-| `nft_contract` | `CDJB7TJ4FKYDHRMBQ2ZQKLL6MPHFIRZA2RNP2ENUE3D7CQR3I4IRMPQ2` | [view](https://stellar.expert/explorer/testnet/contract/CDJB7TJ4FKYDHRMBQ2ZQKLL6MPHFIRZA2RNP2ENUE3D7CQR3I4IRMPQ2) |
-| `marketplace_settlement` | `CC3S7SSYEMRKD4Y6SUFC3ENHN3D3TJAPVT557R22K6IN36BXHH2X2GCU` | [view](https://stellar.expert/explorer/testnet/contract/CC3S7SSYEMRKD4Y6SUFC3ENHN3D3TJAPVT557R22K6IN36BXHH2X2GCU) |
-| `transaction_contract` | `CAEMECNI3D34TESV36PCUBKORP3PPY4MHRDJJCQNB4D2LK4TOBDOKCJ5` | [view](https://stellar.expert/explorer/testnet/contract/CAEMECNI3D34TESV36PCUBKORP3PPY4MHRDJJCQNB4D2LK4TOBDOKCJ5) |
+| `collection_factory` | `CBRL37EZ5KR2O4J3ECM5RQCREHMYKCZV4QJTUHI6JCGXWJ5BIRXAV6LQ` | [view](https://stellar.expert/explorer/testnet/contract/CBRL37EZ5KR2O4J3ECM5RQCREHMYKCZV4QJTUHI6JCGXWJ5BIRXAV6LQ) |
+| `nft_contract` | `CDQN2A5U6SQLL4NZAMV4SL6BAOK6EXDG4G6HHRDJOOH6XK4LPUPZLHJC` | [view](https://stellar.expert/explorer/testnet/contract/CDQN2A5U6SQLL4NZAMV4SL6BAOK6EXDG4G6HHRDJOOH6XK4LPUPZLHJC) |
+| `marketplace_settlement` | `CCCUOZVZDUYF3Z42PQYAM2AGNCZSSF6J4IUC2J6ANF4Q5C3F5G4CJKUN` | [view](https://stellar.expert/explorer/testnet/contract/CCCUOZVZDUYF3Z42PQYAM2AGNCZSSF6J4IUC2J6ANF4Q5C3F5G4CJKUN) |
+| `transaction_contract` | `CCM4HGRU7CGLFAHHMTTBAQN6C2LEOJLWTTRMKAQX2W2T5EE7LNMW37FQ` | [view](https://stellar.expert/explorer/testnet/contract/CCM4HGRU7CGLFAHHMTTBAQN6C2LEOJLWTTRMKAQX2W2T5EE7LNMW37FQ) |
 
 The marketplace is initialised (admin and fee configuration set) and allowlists the
 NFT contract and the XLM Stellar Asset Contract
 `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`, which is also registered
 as a supported settlement asset — so listings, auctions and trades can settle against
 it without further on-chain setup.
+
+All four contracts report version `0.1.0+bfd6e80` on-chain, which is how this record
+was checked against the source it claims to come from.
 
 ## Redeploying
 
@@ -52,8 +55,18 @@ cd soroban
 NETWORK=testnet SOURCE=<stellar-key-alias> ./scripts/deploy_all.sh
 ```
 
-The script builds each contract, uploads the wasm, deploys an instance and appends the
-result here. Mainnet requires `MAINNET_CONFIRM=yes`.
+The script builds each contract, uploads the wasm, deploys an instance, runs
+[`scripts/initialize_all.sh`](./scripts/initialize_all.sh) to write the admin, fee
+configuration, settlement asset and allowlists, verifies the state reads back, and
+appends the result here. Mainnet requires `MAINNET_CONFIRM=yes`.
+
+Initialisation is a separate script so it can be re-run on its own against an existing
+manifest after a partial failure:
+
+```bash
+cd soroban
+NETWORK=testnet SOURCE=<stellar-key-alias> ./scripts/initialize_all.sh
+```
 
 ## Consuming the addresses
 

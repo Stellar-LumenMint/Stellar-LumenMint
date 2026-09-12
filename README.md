@@ -55,16 +55,16 @@ The production site is hosted on Vercel (project `stellar-lumenmint`, Root Direc
 
 ### Soroban contracts (Stellar Testnet)
 
-All four contracts are deployed and initialised on **Testnet**, built from commit `ed2bf67`:
+All four contracts are deployed and initialised on **Testnet**, built from commit `bfd6e80`:
 
 | Contract | Testnet Contract ID | Explorer |
 |----------|---------------------|----------|
-| `nft_contract` | `CDJB7TJ4FKYDHRMBQ2ZQKLL6MPHFIRZA2RNP2ENUE3D7CQR3I4IRMPQ2` | [view](https://stellar.expert/explorer/testnet/contract/CDJB7TJ4FKYDHRMBQ2ZQKLL6MPHFIRZA2RNP2ENUE3D7CQR3I4IRMPQ2) |
-| `marketplace_settlement` | `CC3S7SSYEMRKD4Y6SUFC3ENHN3D3TJAPVT557R22K6IN36BXHH2X2GCU` | [view](https://stellar.expert/explorer/testnet/contract/CC3S7SSYEMRKD4Y6SUFC3ENHN3D3TJAPVT557R22K6IN36BXHH2X2GCU) |
-| `collection_factory` | `CDSNB4N3YHEAHWHQT7XZB6HAEQEFRPRIZWUCEEYGJRPIRBBBOO3NS4CS` | [view](https://stellar.expert/explorer/testnet/contract/CDSNB4N3YHEAHWHQT7XZB6HAEQEFRPRIZWUCEEYGJRPIRBBBOO3NS4CS) |
-| `transaction_contract` | `CAEMECNI3D34TESV36PCUBKORP3PPY4MHRDJJCQNB4D2LK4TOBDOKCJ5` | [view](https://stellar.expert/explorer/testnet/contract/CAEMECNI3D34TESV36PCUBKORP3PPY4MHRDJJCQNB4D2LK4TOBDOKCJ5) |
+| `nft_contract` | `CDQN2A5U6SQLL4NZAMV4SL6BAOK6EXDG4G6HHRDJOOH6XK4LPUPZLHJC` | [view](https://stellar.expert/explorer/testnet/contract/CDQN2A5U6SQLL4NZAMV4SL6BAOK6EXDG4G6HHRDJOOH6XK4LPUPZLHJC) |
+| `marketplace_settlement` | `CCCUOZVZDUYF3Z42PQYAM2AGNCZSSF6J4IUC2J6ANF4Q5C3F5G4CJKUN` | [view](https://stellar.expert/explorer/testnet/contract/CCCUOZVZDUYF3Z42PQYAM2AGNCZSSF6J4IUC2J6ANF4Q5C3F5G4CJKUN) |
+| `collection_factory` | `CBRL37EZ5KR2O4J3ECM5RQCREHMYKCZV4QJTUHI6JCGXWJ5BIRXAV6LQ` | [view](https://stellar.expert/explorer/testnet/contract/CBRL37EZ5KR2O4J3ECM5RQCREHMYKCZV4QJTUHI6JCGXWJ5BIRXAV6LQ) |
+| `transaction_contract` | `CCM4HGRU7CGLFAHHMTTBAQN6C2LEOJLWTTRMKAQX2W2T5EE7LNMW37FQ` | [view](https://stellar.expert/explorer/testnet/contract/CCM4HGRU7CGLFAHHMTTBAQN6C2LEOJLWTTRMKAQX2W2T5EE7LNMW37FQ) |
 
-Each contract is initialised, its role allowlists are set, and its version is readable on-chain. The machine-readable record lives in [`soroban/deployments/manifest.json`](./soroban/deployments/manifest.json); see [`soroban/deployments/README.md`](./soroban/deployments/README.md) for how to redeploy and how to point a local backend at these IDs.
+Each contract is initialised, its role allowlists are set, and its version is readable on-chain — `0.1.0+bfd6e80` on all four. The machine-readable record lives in [`soroban/deployments/manifest.json`](./soroban/deployments/manifest.json); see [`soroban/deployments/README.md`](./soroban/deployments/README.md) for how to redeploy and how to point a local backend at these IDs.
 
 > **Mainnet has not been deployed.** These identifiers are Testnet-only and are not intended for real value.
 
