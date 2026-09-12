@@ -219,7 +219,7 @@ cd soroban && cargo test --workspace
 
 All four are **live on Testnet** — see [Live Deployments](#soroban-contracts-stellar-testnet) for contract IDs and explorer links.
 
-Contract source: [`soroban/contracts/`](./soroban/contracts) · [Contract Invariants](./soroban/CONTRACT_INVARIANTS.md) · [Security](./soroban/SECURITY.md) · [Deployment record](./soroban/deployments/README.md)
+Contract source: [`soroban/contracts/`](./soroban/contracts) · [Contract Invariants](./soroban/CONTRACT_INVARIANTS.md) · [Security](./soroban/SECURITY.md) · [Gas Benchmarks](./soroban/GAS.md) · [Deployment record](./soroban/deployments/README.md)
 
 ---
 
@@ -236,6 +236,7 @@ Contract source: [`soroban/contracts/`](./soroban/contracts) · [Contract Invari
 | [mobile-app/NAVIGATION-README.md](./mobile-app/NAVIGATION-README.md) | Mobile app navigation architecture |
 | [soroban/CONTRACT_INVARIANTS.md](./soroban/CONTRACT_INVARIANTS.md) | Smart contract safety invariants |
 | [soroban/SECURITY.md](./soroban/SECURITY.md) | Smart contract security considerations |
+| [soroban/GAS.md](./soroban/GAS.md) | Gas benchmarks, regression ceilings and Testnet fee measurements |
 | [.github/workflows/README.md](./.github/workflows/README.md) | CI/CD pipeline architecture |
 
 ---
