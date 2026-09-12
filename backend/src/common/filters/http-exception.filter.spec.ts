@@ -63,7 +63,10 @@ describe('HttpExceptionFilter', () => {
 
     const body = run(
       new BadRequestException({
-        message: ['name should not be empty', 'price must be a positive number'],
+        message: [
+          'name should not be empty',
+          'price must be a positive number',
+        ],
       }),
     );
 
@@ -79,9 +82,9 @@ describe('HttpExceptionFilter', () => {
     const { run } = makeFilter();
 
     expect(run(new NotFoundException()).code).toBe(AppErrorCode.NOT_FOUND);
-    expect(
-      run(new HttpException('nope', HttpStatus.CONFLICT)).code,
-    ).toBe(AppErrorCode.CONFLICT);
+    expect(run(new HttpException('nope', HttpStatus.CONFLICT)).code).toBe(
+      AppErrorCode.CONFLICT,
+    );
   });
 
   it('prefers the code the throw site attached', () => {
@@ -112,7 +115,8 @@ describe('HttpExceptionFilter', () => {
             message: 'RPC unavailable',
             stellar: {
               transactionHash: 'abc123',
-              contractId: 'CDQN2A5U6SQLL4NZAMV4SL6BAOK6EXDG4G6HHRDJOOH6XK4LPUPZLHJC',
+              contractId:
+                'CDQN2A5U6SQLL4NZAMV4SL6BAOK6EXDG4G6HHRDJOOH6XK4LPUPZLHJC',
               network: 'testnet',
             },
           },

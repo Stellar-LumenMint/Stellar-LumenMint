@@ -2,6 +2,23 @@ import { HttpStatus } from '@nestjs/common';
 import { AppErrorCode } from '../enums/app-error-code.enum';
 
 /**
+ * Every valid code, as plain strings.
+ *
+ * `AppErrorCode` is a string enum, so its values are the wire format. Keeping
+ * them in a set lets a value of unknown provenance be validated with a `has`
+ * check rather than an enum comparison, which is both narrower and free of the
+ * enum-comparison lint rule.
+ */
+const VALID_CODES: ReadonlySet<string> = new Set<string>(
+  Object.values(AppErrorCode),
+);
+
+/** Whether an unknown value is one of the declared error codes. */
+export function isAppErrorCode(value: unknown): value is AppErrorCode {
+  return typeof value === 'string' && VALID_CODES.has(value);
+}
+
+/**
  * The code reported for an HTTP status when the thrown exception does not carry
  * a more specific one.
  *
@@ -66,7 +83,9 @@ export function withErrorCode(
  * string smuggled into the payload must not become a client-visible code, or
  * the set of codes a client can receive stops being enumerable.
  */
-export function errorCodeFrom(exceptionResponse: unknown): AppErrorCode | undefined {
+export function errorCodeFrom(
+  exceptionResponse: unknown,
+): AppErrorCode | undefined {
   if (typeof exceptionResponse !== 'object' || exceptionResponse === null) {
     return undefined;
   }
@@ -78,17 +97,7 @@ export function errorCodeFrom(exceptionResponse: unknown): AppErrorCode | undefi
     candidates.push((body.error as { code?: unknown }).code);
   }
 
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') {
-      continue;
-    }
-    const resolved = AppErrorCode[candidate as keyof typeof AppErrorCode];
-    if (resolved !== undefined) {
-      return resolved;
-    }
-  }
-
-  return undefined;
+  return candidates.find(isAppErrorCode);
 }
 
 /**
@@ -99,11 +108,14 @@ export function errorCodeFrom(exceptionResponse: unknown): AppErrorCode | undefi
  * distinction a client actually acts on: one means "resubmit with fixed input",
  * the other means "the request was rejected".
  */
+/** `400` as a plain number, for comparison against the numeric `status` argument. */
+const BAD_REQUEST_STATUS = Number(HttpStatus.BAD_REQUEST);
+
 export function resolveErrorCode(
   status: number,
   options: { hasValidationErrors?: boolean } = {},
 ): AppErrorCode {
-  if (options.hasValidationErrors && status === HttpStatus.BAD_REQUEST) {
+  if (options.hasValidationErrors && status === BAD_REQUEST_STATUS) {
     return AppErrorCode.VALIDATION_ERROR;
   }
 

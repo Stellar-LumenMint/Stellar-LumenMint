@@ -9,6 +9,7 @@ import {
 import { catchError, throwError, type Observable } from 'rxjs';
 import { getStellarConfig } from '../config/stellar.config';
 import { AppErrorCode } from '../common/enums/app-error-code.enum';
+import { isAppErrorCode } from '../common/errors/error-code.resolver';
 import { SorobanRpcService } from '../services/soroban-rpc.service';
 import {
   asHttpRequest,
@@ -135,17 +136,14 @@ export class StellarErrorInterceptor implements NestInterceptor {
     // An error that already carries a member of the enum keeps it; anything
     // else — including a free-text code a driver happened to set — becomes the
     // catch-all, so the set of codes a client can observe stays closed.
-    const explicit =
-      typeof error.code === 'string'
-        ? AppErrorCode[error.code as keyof typeof AppErrorCode]
-        : undefined;
-
     return {
       status:
         typeof error.status === 'number'
           ? error.status
           : HttpStatus.INTERNAL_SERVER_ERROR,
-      code: explicit ?? AppErrorCode.STELLAR_UNKNOWN_ERROR,
+      code: isAppErrorCode(error.code)
+        ? error.code
+        : AppErrorCode.STELLAR_UNKNOWN_ERROR,
     };
   }
 

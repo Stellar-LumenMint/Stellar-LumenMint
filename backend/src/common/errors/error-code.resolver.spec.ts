@@ -8,8 +8,12 @@ import {
 
 describe('resolveErrorCode', () => {
   it('maps every documented status to its default code', () => {
-    expect(resolveErrorCode(HttpStatus.BAD_REQUEST)).toBe(AppErrorCode.BAD_REQUEST);
-    expect(resolveErrorCode(HttpStatus.UNAUTHORIZED)).toBe(AppErrorCode.UNAUTHORIZED);
+    expect(resolveErrorCode(HttpStatus.BAD_REQUEST)).toBe(
+      AppErrorCode.BAD_REQUEST,
+    );
+    expect(resolveErrorCode(HttpStatus.UNAUTHORIZED)).toBe(
+      AppErrorCode.UNAUTHORIZED,
+    );
     expect(resolveErrorCode(HttpStatus.PAYMENT_REQUIRED)).toBe(
       AppErrorCode.INSUFFICIENT_BALANCE,
     );
@@ -37,10 +41,12 @@ describe('resolveErrorCode', () => {
   });
 
   it('distinguishes a validation failure from a plain bad request', () => {
-    expect(resolveErrorCode(HttpStatus.BAD_REQUEST, { hasValidationErrors: true })).toBe(
-      AppErrorCode.VALIDATION_ERROR,
+    expect(
+      resolveErrorCode(HttpStatus.BAD_REQUEST, { hasValidationErrors: true }),
+    ).toBe(AppErrorCode.VALIDATION_ERROR);
+    expect(resolveErrorCode(HttpStatus.BAD_REQUEST)).toBe(
+      AppErrorCode.BAD_REQUEST,
     );
-    expect(resolveErrorCode(HttpStatus.BAD_REQUEST)).toBe(AppErrorCode.BAD_REQUEST);
   });
 
   it('falls back to INTERNAL_SERVER_ERROR for a status with no mapping', () => {
@@ -75,7 +81,9 @@ describe('errorCodeFrom', () => {
     // A driver's free-text code must not become a client-visible code, or the
     // set of codes a client can receive stops being enumerable.
     expect(errorCodeFrom({ code: 'ECONNREFUSED' })).toBeUndefined();
-    expect(errorCodeFrom({ error: { code: 'something_internal' } })).toBeUndefined();
+    expect(
+      errorCodeFrom({ error: { code: 'something_internal' } }),
+    ).toBeUndefined();
     expect(errorCodeFrom({ code: 42 })).toBeUndefined();
     expect(errorCodeFrom(null)).toBeUndefined();
     expect(errorCodeFrom('NOT_FOUND')).toBeUndefined();
