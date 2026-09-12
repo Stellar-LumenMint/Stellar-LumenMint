@@ -139,8 +139,10 @@ impl FeeManager {
 
         let amount = Self::get_accumulated_fees(env, asset);
 
+        // Nothing has accrued for this asset, so there is no valid amount to
+        // withdraw.
         if amount <= 0 {
-            return Err(SettlementError::InsufficientFunds);
+            return Err(SettlementError::InvalidAmount);
         }
 
         // Transfer fees to recipient

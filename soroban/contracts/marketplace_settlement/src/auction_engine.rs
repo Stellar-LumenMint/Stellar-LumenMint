@@ -285,7 +285,7 @@ impl AuctionEngine {
     ) -> Result<(), SettlementError> {
         let config = Self::get_auction_config(env)?;
         if config.commit_reveal_enabled == 0 {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::CommitRevealDisabled);
         }
 
         // Verify commitment
@@ -362,7 +362,7 @@ impl AuctionEngine {
 
         // Check if auction can be ended
         if !Self::can_end_auction(&auction, env)? {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::AuctionNotEndable);
         }
 
         let timestamp = env.ledger().timestamp();
@@ -532,7 +532,7 @@ impl AuctionEngine {
 
         // Can only cancel if no bids placed
         if auction.highest_bid > 0 {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::AuctionHasBids);
         }
 
         // The lot was escrowed at creation, so it has to go home.
@@ -563,7 +563,7 @@ impl AuctionEngine {
         }
 
         if auction.state != TransactionState::Pending {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::InvalidTransactionState);
         }
 
         let timestamp = env.ledger().timestamp();
@@ -635,14 +635,14 @@ impl AuctionEngine {
 
         // Auction must be in a terminal state
         if auction.state == TransactionState::Pending {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::AuctionStillPending);
         }
 
         // Bidder must not be the winner
         if auction.highest_bidder.as_ref() == Some(bidder)
             && auction.state == TransactionState::Executed
         {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::WinningBidderCannotWithdraw);
         }
 
         let timestamp = env.ledger().timestamp();

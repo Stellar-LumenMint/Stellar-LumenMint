@@ -1,4 +1,4 @@
-use crate::error::{PauseError, SettlementError};
+use crate::error::SettlementError;
 use crate::events::{
     emit_contract_paused, emit_contract_unpaused, emit_module_paused, emit_pause_cancelled,
     emit_pause_scheduled, ContractPausedEvent, ContractUnpausedEvent, ModulePausedEvent,
@@ -103,7 +103,7 @@ impl PauseManager {
 
     pub fn check_module_not_paused(env: &Env, module: ModuleType) -> Result<(), SettlementError> {
         if Self::is_module_paused(env, module) {
-            return Err(PauseError::ModulePaused.into());
+            return Err(SettlementError::ModulePaused);
         }
         Ok(())
     }
@@ -164,7 +164,7 @@ impl PauseManager {
         let current_time = env.ledger().timestamp();
 
         if !Self::is_paused(env) {
-            return Err(PauseError::NotPaused.into());
+            return Err(SettlementError::NotPaused);
         }
 
         env.storage().instance().remove(&Self::pause_key(env));
@@ -190,7 +190,7 @@ impl PauseManager {
         let current_time = env.ledger().timestamp();
 
         if Self::get_scheduled_pause(env).is_some() {
-            return Err(PauseError::PauseAlreadyScheduled.into());
+            return Err(SettlementError::PauseAlreadyScheduled);
         }
 
         // FIXED: Replaced manual boundary checks with an inclusive range pattern
@@ -225,10 +225,10 @@ impl PauseManager {
     }
 
     pub fn cancel_scheduled_pause(env: &Env, admin: &Address) -> Result<(), SettlementError> {
-        let scheduled = Self::get_scheduled_pause(env).ok_or(PauseError::PauseNotScheduled)?;
+        let scheduled = Self::get_scheduled_pause(env).ok_or(SettlementError::PauseNotScheduled)?;
 
         if scheduled.scheduled_by != *admin {
-            return Err(PauseError::PauseCancellationNotAllowed.into());
+            return Err(SettlementError::PauseCancellationNotAllowed);
         }
 
         env.storage().instance().remove(&Self::schedule_key(env));
@@ -245,12 +245,12 @@ impl PauseManager {
     }
 
     pub fn execute_scheduled_pause(env: &Env, admin: &Address) -> Result<(), SettlementError> {
-        let scheduled = Self::get_scheduled_pause(env).ok_or(PauseError::PauseNotScheduled)?;
+        let scheduled = Self::get_scheduled_pause(env).ok_or(SettlementError::PauseNotScheduled)?;
 
         let current_time = env.ledger().timestamp();
 
         if current_time < scheduled.execution_at {
-            return Err(PauseError::PauseTimelockActive.into());
+            return Err(SettlementError::PauseTimelockActive);
         }
 
         Self::pause(

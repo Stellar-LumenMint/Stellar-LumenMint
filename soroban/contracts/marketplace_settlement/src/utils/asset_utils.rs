@@ -1,7 +1,7 @@
 use crate::error::SettlementError;
 use crate::storage::allowlist_store::AllowlistStore;
 use crate::types::Asset;
-use soroban_sdk::{token, Address, Env, IntoVal, Symbol, Vec};
+use soroban_sdk::{Address, Env, IntoVal, Symbol, Vec};
 
 /// Validate that an asset is supported
 pub fn validate_asset(
@@ -30,7 +30,6 @@ pub fn validate_payment_amount(amount: i128, min_amount: i128) -> Result<(), Set
     if amount <= 0 {
         return Err(SettlementError::InvalidAmount);
     }
-
     if amount < min_amount {
         return Err(SettlementError::InsufficientPayment);
     }
@@ -59,11 +58,24 @@ pub fn get_token_balance(
     account: &Address,
     env: &Env,
 ) -> Result<i128, SettlementError> {
-    let client = token::Client::new(env, token_contract);
-    Ok(client.balance(account))
+    env.try_invoke_contract::<i128, SettlementError>(
+        token_contract,
+        &Symbol::new(env, "balance"),
+        soroban_sdk::vec![env, account.into_val(env)],
+    )
+    .map_err(|_| SettlementError::PaymentFailed)?
+    .map_err(|_| SettlementError::PaymentFailed)
 }
 
-/// Transfer tokens between accounts
+/// Transfer tokens between accounts, reporting a refused transfer as
+/// [`SettlementError::PaymentFailed`].
+///
+/// The token call is made with `try_invoke_contract` rather than through
+/// `token::Client` so a token that rejects the transfer (paused asset contract,
+/// insufficient balance, frozen trustline) surfaces as a typed error instead of
+/// aborting the invocation with the token's own error. Either way the caller's
+/// transaction is rolled back; the difference is that the failure is now
+/// attributable to the payment leg.
 pub fn transfer_tokens(
     token_contract: &Address,
     from: &Address,
@@ -71,9 +83,18 @@ pub fn transfer_tokens(
     amount: i128,
     env: &Env,
 ) -> Result<(), SettlementError> {
-    let client = token::Client::new(env, token_contract);
-    client.transfer(from, to, &amount);
-    Ok(())
+    env.try_invoke_contract::<(), SettlementError>(
+        token_contract,
+        &Symbol::new(env, "transfer"),
+        soroban_sdk::vec![
+            env,
+            from.into_val(env),
+            to.into_val(env),
+            amount.into_val(env),
+        ],
+    )
+    .map_err(|_| SettlementError::PaymentFailed)?
+    .map_err(|_| SettlementError::PaymentFailed)
 }
 
 /// Get token decimals
@@ -84,7 +105,7 @@ pub fn get_token_decimals(_token_contract: &Address, _env: &Env) -> Result<u32, 
 /// Validate that an NFT contract supports the required interface
 pub fn validate_nft_contract(nft_contract: &Address, env: &Env) -> Result<(), SettlementError> {
     if !AllowlistStore::is_nft_allowed(env, nft_contract) {
-        return Err(SettlementError::InvalidState);
+        return Err(SettlementError::NftNotSupported);
     }
     Ok(())
 }

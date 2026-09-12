@@ -149,6 +149,16 @@ impl AtomicSwapEngine {
             && amount == swap.payment_amount;
 
         if !is_seller_deposit && !is_buyer_deposit && !is_listed_payment {
+            // Report what is actually wrong. This used to be a flat
+            // `Unauthorized`, which told a caller their signature was the
+            // problem when the real fault was paying in the wrong asset, paying
+            // the wrong amount, or funding somebody else's transaction.
+            if !is_nft && asset.contract != swap.payment_asset.contract {
+                return Err(SettlementError::InvalidCurrency);
+            }
+            if !is_nft && amount != swap.payment_amount {
+                return Err(SettlementError::PaymentAmountMismatch);
+            }
             return Err(SettlementError::Unauthorized);
         }
 
@@ -186,7 +196,7 @@ impl AtomicSwapEngine {
 
         // Validate swap is ready for execution
         if swap.state != SwapState::Ready {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::InvalidTransactionState);
         }
 
         // Perform the atomic swap

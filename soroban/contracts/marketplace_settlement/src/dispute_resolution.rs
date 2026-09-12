@@ -225,7 +225,7 @@ impl DisputeResolutionManager {
         let dispute = DisputeStore::get(env, dispute_id)?;
 
         if dispute.resolved_at == 0 || dispute.resolution == 0 {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::DisputeNotResolved);
         }
 
         let resolution = dispute.resolution;
@@ -244,7 +244,7 @@ impl DisputeResolutionManager {
             DISPUTE_RESOLUTION_CANCEL_TRANSACTION => {
                 Self::execute_cancel_transaction(env, &dispute)?;
             }
-            _ => return Err(SettlementError::InvalidState),
+            _ => return Err(SettlementError::UnknownResolutionOutcome),
         }
 
         Ok(())

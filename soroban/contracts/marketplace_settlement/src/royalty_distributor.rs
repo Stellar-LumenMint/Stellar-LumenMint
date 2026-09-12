@@ -495,9 +495,11 @@ impl RoyaltyEnforcer {
             env,
         )?;
 
-        // Verify payment can cover royalties
+        // Verify payment can cover royalties. A royalty percentage that takes
+        // more than the whole sale price is a misconfiguration, so report it as
+        // the bad percentage it is rather than as a missing balance.
         if sale_price < royalty_amount {
-            return Err(SettlementError::InsufficientFunds);
+            return Err(SettlementError::InvalidRoyaltyPercentage);
         }
 
         Ok(())

@@ -90,7 +90,7 @@ impl AuctionStore {
             if let Some(mut bid) = bids.get(i) {
                 if bid.bidder == *bidder {
                     if bid.refunded {
-                        return Err(SettlementError::InvalidState);
+                        return Err(SettlementError::BidAlreadyRefunded);
                     }
                     bid.refunded = true;
                     bids.set(i, bid);

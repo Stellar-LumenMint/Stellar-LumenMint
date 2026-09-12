@@ -493,7 +493,7 @@ impl MarketplaceSettlement {
 
             // Validate sale state
             if sale.state != crate::types::TransactionState::Pending {
-                return Err(SettlementError::InvalidState);
+                return Err(SettlementError::InvalidTransactionState);
             }
 
             // Check expiration
@@ -503,7 +503,7 @@ impl MarketplaceSettlement {
 
             // Validate payment
             if payment_amount != sale.price {
-                return Err(SettlementError::InvalidAmount);
+                return Err(SettlementError::PaymentAmountMismatch);
             }
 
             // Escrow the buyer's payment before anything is paid out, so every
@@ -881,7 +881,7 @@ impl MarketplaceSettlement {
             let mut trade = TradeTransactionStore::get(&env, trade_id)?;
 
             if trade.state != crate::types::TransactionState::Pending {
-                return Err(SettlementError::InvalidState);
+                return Err(SettlementError::InvalidTransactionState);
             }
 
             if time_utils::is_expired(trade.expires_at, &env) {
@@ -896,7 +896,7 @@ impl MarketplaceSettlement {
             }
 
             if trade.initiator == acceptor {
-                return Err(SettlementError::InvalidState);
+                return Err(SettlementError::SelfTradeNotAllowed);
             }
 
             Self::escrow_items(&env, &acceptor, &trade.counterparty_nfts)?;
@@ -944,7 +944,7 @@ impl MarketplaceSettlement {
             let mut trade = TradeTransactionStore::get(&env, trade_id)?;
 
             if trade.state != crate::types::TransactionState::Funded {
-                return Err(SettlementError::InvalidState);
+                return Err(SettlementError::InvalidTransactionState);
             }
             if time_utils::is_expired(trade.expires_at, &env) {
                 return Err(SettlementError::Expired);
@@ -1037,7 +1037,7 @@ impl MarketplaceSettlement {
                 Self::release_items(env, &trade.initiator, &trade.initiator_nfts)?;
                 Self::release_items(env, &acceptor, &trade.counterparty_nfts)?;
             }
-            _ => return Err(SettlementError::InvalidState),
+            _ => return Err(SettlementError::InvalidTransactionState),
         }
 
         trade.state = crate::types::TransactionState::Cancelled;
@@ -1164,7 +1164,7 @@ impl MarketplaceSettlement {
             let mut bundle = BundleTransactionStore::get(&env, bundle_id)?;
 
             if bundle.state != crate::types::TransactionState::Pending {
-                return Err(SettlementError::InvalidState);
+                return Err(SettlementError::InvalidTransactionState);
             }
             if time_utils::is_expired(bundle.expires_at, &env) {
                 return Err(SettlementError::Expired);
@@ -1253,7 +1253,7 @@ impl MarketplaceSettlement {
             return Err(SettlementError::Unauthorized);
         }
         if bundle.state != crate::types::TransactionState::Pending {
-            return Err(SettlementError::InvalidState);
+            return Err(SettlementError::InvalidTransactionState);
         }
 
         Self::release_items(env, canceller, &bundle.items)?;
@@ -1291,7 +1291,7 @@ impl MarketplaceSettlement {
                     return Err(SettlementError::Unauthorized);
                 }
                 if sale.state != crate::types::TransactionState::Pending {
-                    return Err(SettlementError::InvalidState);
+                    return Err(SettlementError::InvalidTransactionState);
                 }
                 // Return the escrowed NFT to the seller. Cancelling must not
                 // strand it in the contract.
@@ -1388,7 +1388,7 @@ impl MarketplaceSettlement {
             }
 
             if !admin_config.emergency_withdrawal_enabled {
-                return Err(SettlementError::InvalidState);
+                return Err(SettlementError::EmergencyWithdrawalDisabled);
             }
 
             AtomicSwapEngine::emergency_withdraw(&env, transaction_id, &admin, &reason)

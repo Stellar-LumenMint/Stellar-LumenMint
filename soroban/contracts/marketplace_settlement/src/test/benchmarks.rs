@@ -23,7 +23,10 @@ extern crate std;
 use super::{default_fee_config, mk_asset, new_env, reg, MockNft, MockNftClient};
 use crate::settlement_core::{MarketplaceSettlement, MarketplaceSettlementClient};
 use crate::types::{AuctionType, NFTItem};
-use soroban_sdk::{contract, contractimpl, testutils::Address as _, testutils::Ledger as _, Address, Env, Symbol, Vec};
+use soroban_sdk::{
+    contract, contractimpl, testutils::Address as _, testutils::Ledger as _, Address, Env, Symbol,
+    Vec,
+};
 
 /// An NFT that tracks ownership per token id.
 ///
@@ -56,7 +59,6 @@ impl BenchNft {
         env.storage().persistent().set(&token_id, &to);
     }
 }
-
 
 /// Measured runs per benchmark. The first invocation is a warm up, discarded so
 /// that lazily-created storage is not charged to the measurement.
@@ -226,8 +228,14 @@ fn bench_create_sale() {
     let mut token_id = 0u64;
     let cost = bench(&f.env, "marketplace.create_sale", || {
         token_id += 1;
-        f.client
-            .create_sale(&seller, &f.nft, &token_id, &1_000_000i128, &f.asset, &86_400u64)
+        f.client.create_sale(
+            &seller,
+            &f.nft,
+            &token_id,
+            &1_000_000i128,
+            &f.asset,
+            &86_400u64,
+        )
     });
 
     assert_cpu_under("marketplace.create_sale", &cost, 1_500_000);
@@ -523,7 +531,9 @@ fn bench_reads() {
         &f.asset,
     );
 
-    let cost = bench(&f.env, "marketplace.get_sale", || f.client.get_sale(&sale_id));
+    let cost = bench(&f.env, "marketplace.get_sale", || {
+        f.client.get_sale(&sale_id)
+    });
     assert_cpu_under("marketplace.get_sale", &cost, 400_000);
 
     let cost = bench(&f.env, "marketplace.get_auction", || {
