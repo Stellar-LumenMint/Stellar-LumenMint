@@ -84,14 +84,28 @@ export class OrderService {
         this.logger.log(`Bundle order created on-chain with ID ${contractId}`);
         return { success: true, contractId };
       } else if (createOrderDto.type === OrderType.SALE) {
-        // Map to createTrade contract call
+        // Map to the createTrade contract call. The contract takes two item
+        // lists and a duration; the previous mapping sent a flat set of strings
+        // plus an `expiresAt` timestamp the contract has no parameter for.
         const params = {
-          initiator: createOrderDto.buyerId,
-          offeredNftContract: createOrderDto.nftContractId ?? '',
-          offeredTokenId: createOrderDto.nftTokenId ?? '',
-          requestedNftContract: createOrderDto.requestedNftContract ?? '',
-          requestedTokenId: createOrderDto.requestedNftTokenId ?? '',
-          expiresAt: createOrderDto.expiresAt ?? '',
+          initiator: createOrderDto.sellerId,
+          offeredItems: createOrderDto.nftContractId
+            ? [
+                {
+                  nftContract: createOrderDto.nftContractId,
+                  tokenId: createOrderDto.nftTokenId ?? '',
+                },
+              ]
+            : [],
+          requestedItems: createOrderDto.requestedNftContract
+            ? [
+                {
+                  nftContract: createOrderDto.requestedNftContract,
+                  tokenId: createOrderDto.requestedNftTokenId ?? '',
+                },
+              ]
+            : [],
+          durationSeconds: createOrderDto.durationSeconds ?? 86400,
         };
         const contractId = await this.settlementClient.createTrade(params);
         return { success: true, contractId };
@@ -108,6 +122,13 @@ export class OrderService {
     buyer: string,
     amount?: string,
   ): Promise<{ success: boolean }> {
+    // The contract takes `payment_amount` and compares it against the listed
+    // total, so the call cannot be made without one.
+    if (!amount) {
+      throw new BadRequestException(
+        'executing a bundle requires the payment amount',
+      );
+    }
     try {
       this.logger.log(`Executing bundle ${id} for buyer ${buyer}`);
       await this.settlementClient.executeBundle(Number(id), buyer, amount);

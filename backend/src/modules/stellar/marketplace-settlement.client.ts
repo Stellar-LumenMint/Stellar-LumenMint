@@ -18,7 +18,16 @@ import {
   CreateBundleParams,
 } from '../../shared/contracts/marketplace-settlement.types';
 import { ConfigService } from '@nestjs/config';
+import { Address } from 'stellar-sdk';
 import { SorobanService, SorobanContractArg } from './soroban.service';
+import {
+  AUCTION_TYPE_DISCRIMINANT,
+  enumToScVal,
+  hexToBytesScVal,
+  nftItemsToScVal,
+  optionToScVal,
+  type ContractAsset,
+} from './scval.encoders';
 
 // Custom error classes for better error discrimination
 export class SorobanContractError extends UnprocessableEntityException {
@@ -212,6 +221,42 @@ export class MarketplaceSettlementClient {
     );
   }
 
+  /**
+   * Resolve a currency symbol to the Stellar asset contract the marketplace
+   * settles in.
+   *
+   * The contract identifies a payment asset by its SAC address, not by a
+   * ticker, so the mapping has to come from configuration. An unconfigured
+   * currency is rejected rather than coerced into a string argument, which the
+   * host would refuse to decode anyway.
+   */
+  private resolveCurrency(symbol: string): ContractAsset {
+    const raw = this.configService.get<string>('SUPPORTED_CURRENCY_ASSETS');
+    if (!raw) {
+      throw new ServiceUnavailableException(
+        'SUPPORTED_CURRENCY_ASSETS is not configured; cannot map a currency symbol to an asset contract',
+      );
+    }
+
+    let registry: Record<string, unknown>;
+    try {
+      registry = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      throw new ServiceUnavailableException(
+        'SUPPORTED_CURRENCY_ASSETS must be a JSON object mapping symbol to asset contract id',
+      );
+    }
+
+    const contract = registry[symbol];
+    if (typeof contract !== 'string' || contract.length === 0) {
+      throw new BadRequestException(
+        `Currency ${symbol} is not configured in SUPPORTED_CURRENCY_ASSETS`,
+      );
+    }
+
+    return { contract, symbol };
+  }
+
   async createSale(params: CreateSaleParams): Promise<number> {
     return this.withRetry(async () => {
       if (
@@ -226,12 +271,14 @@ export class MarketplaceSettlementClient {
       ) {
         throw new BadRequestException('Invalid CreateSaleParams');
       }
+      // Order and types must match `create_sale(seller, nft_address, token_id,
+      // price, currency, duration_seconds)` exactly.
       const args: SorobanContractArg[] = [
         { type: 'address', value: params.seller },
-        { type: 'string', value: params.nftContract },
-        { type: 'string', value: params.tokenId },
+        { type: 'address', value: params.nftContract },
+        { type: 'u64', value: params.tokenId },
         { type: 'i128', value: params.price },
-        { type: 'string', value: params.currency },
+        { type: 'asset', value: this.resolveCurrency(params.currency) },
         { type: 'u64', value: params.durationSeconds },
       ];
       const result = await this.sorobanService.invokeContract(
@@ -243,17 +290,19 @@ export class MarketplaceSettlementClient {
     });
   }
 
-  async executeSale(
-    txId: number,
-    buyer: string,
-    amount?: string,
-  ): Promise<any> {
+  /**
+   * Execute a fixed-price sale. `amount` is required: the contract takes
+   * `payment_amount` and rejects any value other than the listed price, so
+   * omitting it (as the optional third argument previously allowed) produced a
+   * call with the wrong arity.
+   */
+  async executeSale(txId: number, buyer: string, amount: string): Promise<any> {
     return this.withRetry(async () => {
       const args: SorobanContractArg[] = [
         { type: 'u64', value: txId },
         { type: 'address', value: buyer },
+        { type: 'i128', value: amount },
       ];
-      if (amount !== undefined) args.push({ type: 'i128', value: amount });
       const result = await this.sorobanService.invokeContract(
         this.contractId,
         'execute_sale',
@@ -276,11 +325,14 @@ export class MarketplaceSettlementClient {
       ) {
         throw new BadRequestException('Invalid CreateBundleParams');
       }
+      // `items` is `Vec<NFTItem>` and `currency` is an `Asset` struct; sending
+      // the raw JavaScript objects and a currency ticker produced arguments the
+      // host could not decode.
       const args: SorobanContractArg[] = [
         { type: 'address', value: params.seller },
-        { type: 'raw', value: params.items },
+        { type: 'scval', value: nftItemsToScVal(params.items) },
         { type: 'i128', value: params.totalPrice },
-        { type: 'string', value: params.currency },
+        { type: 'asset', value: this.resolveCurrency(params.currency) },
         { type: 'u64', value: params.durationSeconds },
       ];
       const result = await this.sorobanService.invokeContract(
@@ -292,17 +344,21 @@ export class MarketplaceSettlementClient {
     });
   }
 
+  /**
+   * Execute a bundle. `amount` is required: the contract's third parameter is
+   * `payment_amount` and must equal the listed total.
+   */
   async executeBundle(
     bundleId: number,
     buyer: string,
-    amount?: string,
+    amount: string,
   ): Promise<any> {
     return this.withRetry(async () => {
       const args: SorobanContractArg[] = [
         { type: 'u64', value: bundleId },
         { type: 'address', value: buyer },
+        { type: 'i128', value: amount },
       ];
-      if (amount !== undefined) args.push({ type: 'i128', value: amount });
       const result = await this.sorobanService.invokeContract(
         this.contractId,
         'execute_bundle',
@@ -343,16 +399,26 @@ export class MarketplaceSettlementClient {
       ) {
         throw new BadRequestException('Invalid CreateAuctionParams');
       }
-      const safeParams = params;
+      if (typeof params.bidIncrement !== 'string') {
+        throw new BadRequestException('Invalid CreateAuctionParams');
+      }
+      // `create_auction(seller, nft_address, token_id, starting_price,
+      // reserve_price, duration_seconds, bid_increment, auction_type,
+      // currency)`. `bid_increment` sits between the duration and the auction
+      // type, and the auction type is a u32 enum rather than a symbol.
       const args: SorobanContractArg[] = [
-        { type: 'address', value: safeParams.seller },
-        { type: 'string', value: safeParams.nftContract },
-        { type: 'string', value: safeParams.tokenId },
-        { type: 'i128', value: safeParams.startPrice },
-        { type: 'i128', value: safeParams.reservePrice },
-        { type: 'string', value: safeParams.currency },
-        { type: 'symbol', value: safeParams.auctionType },
-        { type: 'u64', value: safeParams.durationSeconds },
+        { type: 'address', value: params.seller },
+        { type: 'address', value: params.nftContract },
+        { type: 'u64', value: params.tokenId },
+        { type: 'i128', value: params.startPrice },
+        { type: 'i128', value: params.reservePrice },
+        { type: 'u64', value: params.durationSeconds },
+        { type: 'i128', value: params.bidIncrement },
+        {
+          type: 'scval',
+          value: enumToScVal(AUCTION_TYPE_DISCRIMINANT[params.auctionType]),
+        },
+        { type: 'asset', value: this.resolveCurrency(params.currency) },
       ];
       const result = await this.sorobanService.invokeContract(
         this.contractId,
@@ -370,12 +436,19 @@ export class MarketplaceSettlementClient {
     commitment?: string,
   ) {
     return this.withRetry(async () => {
+      // `commitment_hash` is `Option<Bytes>` and is a required parameter: passing
+      // only three arguments made the call undecodable.
       const args: SorobanContractArg[] = [
         { type: 'u64', value: auctionId },
         { type: 'address', value: bidder },
         { type: 'i128', value: amount },
+        {
+          type: 'scval',
+          value: optionToScVal(
+            commitment ? hexToBytesScVal(commitment) : undefined,
+          ),
+        },
       ];
-      if (commitment) args.push({ type: 'string', value: commitment });
       const result = await this.sorobanService.invokeContract(
         this.contractId,
         'place_bid',
@@ -385,6 +458,7 @@ export class MarketplaceSettlementClient {
     });
   }
 
+  /** `salt` is `Bytes`, not a string. */
   async revealBid(
     auctionId: number,
     bidder: string,
@@ -396,7 +470,7 @@ export class MarketplaceSettlementClient {
         { type: 'u64', value: auctionId },
         { type: 'address', value: bidder },
         { type: 'i128', value: amount },
-        { type: 'string', value: salt },
+        { type: 'scval', value: hexToBytesScVal(salt) },
       ];
       const result = await this.sorobanService.invokeContract(
         this.contractId,
@@ -422,28 +496,49 @@ export class MarketplaceSettlementClient {
     });
   }
 
+  /**
+   * Create an NFT-for-NFT trade offer.
+   *
+   * `create_trade(initiator, counterparty, initiator_nfts, counterparty_nfts,
+   * duration_seconds)`. The previous encoding sent six string arguments — a
+   * contract-and-token pair plus an `expiresAt` string — against a signature
+   * with no such parameters.
+   */
   async createTrade(params: CreateTradeParams): Promise<number> {
     return this.withRetry(async () => {
       if (
         !params ||
         typeof params !== 'object' ||
         typeof params.initiator !== 'string' ||
-        typeof params.offeredNftContract !== 'string' ||
-        typeof params.offeredTokenId !== 'string' ||
-        typeof params.requestedNftContract !== 'string' ||
-        typeof params.requestedTokenId !== 'string' ||
-        typeof params.expiresAt !== 'string'
+        !Array.isArray(params.offeredItems) ||
+        !Array.isArray(params.requestedItems) ||
+        typeof params.durationSeconds !== 'number' ||
+        (params.counterparty !== undefined &&
+          typeof params.counterparty !== 'string')
       ) {
         throw new BadRequestException('Invalid CreateTradeParams');
       }
-      const safeParams = params;
+      if (
+        params.offeredItems.length === 0 &&
+        params.requestedItems.length === 0
+      ) {
+        throw new BadRequestException(
+          'A trade must offer or request at least one NFT',
+        );
+      }
       const args: SorobanContractArg[] = [
-        { type: 'address', value: safeParams.initiator },
-        { type: 'string', value: safeParams.offeredNftContract },
-        { type: 'string', value: safeParams.offeredTokenId },
-        { type: 'string', value: safeParams.requestedNftContract },
-        { type: 'string', value: safeParams.requestedTokenId },
-        { type: 'string', value: safeParams.expiresAt },
+        { type: 'address', value: params.initiator },
+        {
+          type: 'scval',
+          value: optionToScVal(
+            params.counterparty
+              ? Address.fromString(params.counterparty).toScVal()
+              : undefined,
+          ),
+        },
+        { type: 'scval', value: nftItemsToScVal(params.offeredItems) },
+        { type: 'scval', value: nftItemsToScVal(params.requestedItems) },
+        { type: 'u64', value: params.durationSeconds },
       ];
       const result = await this.sorobanService.invokeContract(
         this.contractId,
@@ -509,9 +604,11 @@ export class MarketplaceSettlementClient {
     });
   }
 
-  async getAccumulatedFees(asset: string): Promise<any> {
+  async getAccumulatedFees(currency: string): Promise<any> {
     return this.withRetry(async () => {
-      const args: SorobanContractArg[] = [{ type: 'string', value: asset }];
+      const args: SorobanContractArg[] = [
+        { type: 'asset', value: this.resolveCurrency(currency) },
+      ];
       const result = await this.sorobanService.invokeContract(
         this.contractId,
         'get_accumulated_fees',

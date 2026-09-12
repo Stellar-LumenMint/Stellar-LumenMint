@@ -32,6 +32,15 @@ export class CreateAuctionDto {
   @IsOptional()
   reservePrice?: number;
 
+  /**
+   * Minimum raise over the current highest bid. Required by the contract, which
+   * also bounds it against `min_bid_increment_bps` of the starting price.
+   */
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  bidIncrement?: number;
+
   @IsISO8601()
   @IsOptional()
   startTime?: string;

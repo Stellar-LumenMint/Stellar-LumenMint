@@ -20,7 +20,9 @@ import {
   nativeToScVal,
   scValToNative,
   StrKey,
+  xdr,
 } from 'stellar-sdk';
+import { assetToScVal } from './scval.encoders';
 import { Server as SorobanServer, assembleTransaction } from 'stellar-sdk/rpc';
 import {
   calculateExponentialBackoffDelayMs,
@@ -40,6 +42,8 @@ type SorobanArgType =
   | 'symbol'
   | 'bool'
   | 'bytes'
+  | 'asset'
+  | 'scval'
   | 'raw';
 
 export type SorobanContractArg = {
@@ -512,6 +516,33 @@ export class SorobanService implements OnModuleInit {
 
     if (type === 'bytes') {
       return nativeToScVal(Buffer.from(String(arg.value)), { type: 'bytes' });
+    }
+
+    // Composite types the contract declares as `#[contracttype]` structs,
+    // options, vectors and enums. `nativeToScVal` cannot infer those shapes,
+    // so callers build the ScVal through `scval.encoders` and pass it here.
+    if (type === 'asset') {
+      const asset = arg.value as { contract?: unknown; symbol?: unknown };
+      if (
+        !asset ||
+        typeof asset !== 'object' ||
+        typeof asset.contract !== 'string' ||
+        typeof asset.symbol !== 'string'
+      ) {
+        throw new BadRequestException(
+          'Asset argument must be an object with string `contract` and `symbol`',
+        );
+      }
+      return assetToScVal({ contract: asset.contract, symbol: asset.symbol });
+    }
+
+    if (type === 'scval') {
+      if (!(arg.value instanceof xdr.ScVal)) {
+        throw new BadRequestException(
+          'scval argument must already be an xdr.ScVal',
+        );
+      }
+      return arg.value;
     }
 
     return nativeToScVal(arg.value);

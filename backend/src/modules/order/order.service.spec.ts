@@ -172,40 +172,48 @@ describe('OrderService', () => {
       );
     });
 
+    it('should reject an execution with no payment amount', async () => {
+      // The contract takes `payment_amount` and compares it against the listed
+      // total, so there is no valid call without one.
+      await expect(service.executeBundle('123', 'buyer-id')).rejects.toThrow(
+        'executing a bundle requires the payment amount',
+      );
+    });
+
     it('should map timeout error correctly', async () => {
       jest
         .spyOn(settlementClient, 'executeBundle')
         .mockRejectedValue(new Error('timeout'));
-      await expect(service.executeBundle('123', 'buyer-id')).rejects.toThrow(
-        'Bundle execution timed out',
-      );
+      await expect(
+        service.executeBundle('123', 'buyer-id', '100'),
+      ).rejects.toThrow('Bundle execution timed out');
     });
 
     it('should map insufficient funds error correctly', async () => {
       jest
         .spyOn(settlementClient, 'executeBundle')
         .mockRejectedValue(new Error('insufficient funds'));
-      await expect(service.executeBundle('123', 'buyer-id')).rejects.toThrow(
-        'Insufficient funds to execute bundle',
-      );
+      await expect(
+        service.executeBundle('123', 'buyer-id', '100'),
+      ).rejects.toThrow('Insufficient funds to execute bundle');
     });
 
     it('should map expired error correctly', async () => {
       jest
         .spyOn(settlementClient, 'executeBundle')
         .mockRejectedValue(new Error('expired'));
-      await expect(service.executeBundle('123', 'buyer-id')).rejects.toThrow(
-        'Bundle has expired',
-      );
+      await expect(
+        service.executeBundle('123', 'buyer-id', '100'),
+      ).rejects.toThrow('Bundle has expired');
     });
 
     it('should map sold error correctly', async () => {
       jest
         .spyOn(settlementClient, 'executeBundle')
         .mockRejectedValue(new Error('sold'));
-      await expect(service.executeBundle('123', 'buyer-id')).rejects.toThrow(
-        'One or more items in the bundle are already sold',
-      );
+      await expect(
+        service.executeBundle('123', 'buyer-id', '100'),
+      ).rejects.toThrow('One or more items in the bundle are already sold');
     });
   });
 

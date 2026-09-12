@@ -17,6 +17,12 @@ export interface CreateAuctionParams {
   currency: string;
   auctionType: AuctionType;
   durationSeconds: number;
+  /**
+   * Minimum raise over the current highest bid, in the auction currency. The
+   * contract requires it as the 7th argument; omitting it shifted every
+   * subsequent argument and made the call impossible to decode.
+   */
+  bidIncrement: string;
 }
 
 export interface CreateSaleParams {
@@ -28,18 +34,32 @@ export interface CreateSaleParams {
   durationSeconds: number;
 }
 
+/** A token reference as the contract's `NFTItem` expects it. */
+export interface NftItemRef {
+  nftContract: string;
+  tokenId: string;
+}
+
+/**
+ * An NFT-for-NFT trade offer.
+ *
+ * Mirrors `create_trade(initiator, counterparty, initiator_nfts,
+ * counterparty_nfts, duration_seconds)`. The previous shape described a single
+ * offered/requested pair plus an `expiresAt` timestamp, which the contract has
+ * no parameter for at all.
+ */
 export interface CreateTradeParams {
   initiator: string;
-  offeredNftContract: string;
-  offeredTokenId: string;
-  requestedNftContract: string;
-  requestedTokenId: string;
-  expiresAt: string;
+  /** When set, only this account may accept the offer. */
+  counterparty?: string;
+  offeredItems: NftItemRef[];
+  requestedItems: NftItemRef[];
+  durationSeconds: number;
 }
 
 export interface CreateBundleParams {
   seller: string;
-  items: { nftContract: string; tokenId: string }[];
+  items: NftItemRef[];
   totalPrice: string;
   currency: string;
   durationSeconds: number;

@@ -61,6 +61,13 @@ export class AuctionService {
                   1000,
               )
             : 0,
+        // The contract requires a minimum bid increment. Default to 1% of the
+        // starting price, which is the contract's own `min_bid_increment_bps`
+        // floor, so a call is never rejected for omitting it.
+        bidIncrement: String(
+          createDto.bidIncrement ??
+            Math.max(1, Math.ceil(Number(createDto.startPrice) * 0.01)),
+        ),
       };
       const auctionId = await this.settlementClient.createAuction(params);
       return { success: true, auctionId };
