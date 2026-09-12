@@ -7,12 +7,16 @@ name: Stellar-LumenMint Vercel Deploy
 # `.vercelignore` keeps everything else out of the upload.
 #
 # Required repository secret: `VERCEL_TOKEN` — a Vercel access token for an
-# account with access to the project. The job skips itself (rather than failing
-# the pipeline) while that secret is absent, so a fork or a fresh clone still
-# has green CI.
+# account with access to the project. Without it the deploy step is skipped
+# (rather than failing the pipeline) and the run prints what is missing, so a
+# fork or a fresh clone still has green CI.
 #
 # Alternative to the secret: install the Vercel GitHub App on this repository
 # and connect it to the project, which lets Vercel deploy on push itself.
+#
+# Note on the token check: a job-level `if` cannot see `env` or `secrets` —
+# those contexts are only available to steps — so the check happens in a step
+# and every later step is gated on its output.
 
 on:
   push:
@@ -45,29 +49,39 @@ env:
   # Public identifiers that select the Vercel project; not credentials.
   VERCEL_ORG_ID: team_2ZwaePjvF4ZD0TYMFM26DRSM
   VERCEL_PROJECT_ID: prj_ng9UG8VmX8nnTwOvzHYeY6afMrHp
-  # A secret cannot be read from a job-level `if`, so it is lifted into an env
-  # var here and checked below.
-  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   deploy:
     name: Deploy frontend to Vercel
     runs-on: ubuntu-latest
-    if: ${{ env.VERCEL_TOKEN != '' }}
-    environment:
-      name: vercel-${{ github.event.inputs.target || 'production' }}
-      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     steps:
+      - name: Check for a Vercel token
+        id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${VERCEL_TOKEN:-}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Vercel deploy skipped::Add a repository secret named VERCEL_TOKEN to enable automatic Vercel deployments, or install the Vercel GitHub App for this repository (see .github/workflows/README.md)."
+          fi
+
       - name: Checkout repository
+        if: steps.check.outputs.configured == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node
+        if: steps.check.outputs.configured == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Deploy to Vercel
+        if: steps.check.outputs.configured == 'true'
         id: deploy
         shell: bash
         run: |
@@ -77,7 +91,7 @@ jobs:
           # deployment; everything else that reaches main goes to production.
           PROD_FLAG="--prod"
           if [ "${{ github.event_name }}" = "pull_request" ] || \
-             [ "${{ github.event.inputs.target }}" = "preview" ]; then
+             [ "${{ github.event.inputs.target || 'production' }}" = "preview" ]; then
             PROD_FLAG=""
           fi
 
@@ -92,6 +106,8 @@ jobs:
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Summarise deployment
+        if: steps.check.outputs.configured == 'true'
+        shell: bash
         run: |
           {
             echo "### Vercel deployment"
@@ -99,12 +115,3 @@ jobs:
             echo "- URL: ${{ steps.deploy.outputs.url }}"
             echo "- Commit: \`${{ github.sha }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
-
-  missing-token:
-    name: Deploy frontend to Vercel (skipped)
-    runs-on: ubuntu-latest
-    if: ${{ env.VERCEL_TOKEN == '' }}
-    steps:
-      - name: Explain what is missing
-        run: |
-          echo "::notice title=Vercel deploy skipped::Add a repository secret named VERCEL_TOKEN to enable automatic Vercel deployments, or install the Vercel GitHub App for this repository."
