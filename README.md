@@ -48,10 +48,10 @@ Stellar LumenMint is a **production-grade Web3 NFT marketplace and creator platf
 
 | Environment | URL | Source |
 |-------------|-----|--------|
-| **Production** | **[https://stellar-indigo-pay.vercel.app](https://stellar-indigo-pay.vercel.app)** | `main` — deployed automatically by [Vercel Deploy](.github/workflows/stellar-lumenmint-vercel.yml) on every push |
+| **Production** | **[https://stellar-lumenmint.vercel.app](https://stellar-lumenmint.vercel.app)** | `main` — deployed automatically by [Vercel Deploy](.github/workflows/stellar-lumenmint-vercel.yml) on every push |
 | Preview | per pull request | Same workflow, preview target |
 
-The production site is hosted on Vercel (project `stellar-indigo-pay`, Root Directory `frontend`) and redeploys on every push to `main`. Pull requests get an isolated preview build.
+The production site is hosted on Vercel (project `stellar-lumenmint`, Root Directory `frontend`) and redeploys on every push to `main`. Pull requests get an isolated preview build.
 
 ### Soroban contracts (Stellar Testnet)
 

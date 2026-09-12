@@ -39,7 +39,7 @@ degrade gracefully when they are missing:
 ### Vercel frontend deployment
 
 `stellar-lumenmint-vercel.yml` deploys the `frontend` workspace to the
-`stellar-indigo-pay` Vercel project. It needs a repository secret:
+`stellar-lumenmint` Vercel project. It needs a repository secret:
 
 | Secret | Value |
 |---|---|

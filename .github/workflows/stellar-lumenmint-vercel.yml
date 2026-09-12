@@ -2,7 +2,7 @@ name: Stellar-LumenMint Vercel Deploy
 
 # Deploys the frontend workspace to Vercel.
 #
-# The Vercel project (`stellar-indigo-pay`) has its Root Directory set to
+# The Vercel project (`stellar-lumenmint`) has its Root Directory set to
 # `frontend`, so the repository is checked out and deployed from its root and
 # `.vercelignore` keeps everything else out of the upload.
 #
@@ -48,7 +48,7 @@ env:
   NODE_VERSION: "20"
   # Public identifiers that select the Vercel project; not credentials.
   VERCEL_ORG_ID: team_2ZwaePjvF4ZD0TYMFM26DRSM
-  VERCEL_PROJECT_ID: prj_ng9UG8VmX8nnTwOvzHYeY6afMrHp
+  VERCEL_PROJECT_ID: prj_aWL5qR5mjRR19DqfTjesD3UQdH3w
 
 jobs:
   deploy:
