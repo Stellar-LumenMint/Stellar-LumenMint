@@ -280,6 +280,33 @@ fn test_escrow_records_use_per_transaction_storage() {
     });
 }
 
+/// Fee balances and per-user volume must not share the instance entry: the
+/// volume map grew with every account that ever traded.
+#[test]
+fn test_fee_ledger_uses_per_key_persistent_storage() {
+    use crate::fee_manager::FeeKey;
+
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let id = client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+    client.execute_sale(&id, &buyer, &1_000_000i128);
+
+    env.as_contract(&cid, || {
+        assert!(env
+            .storage()
+            .persistent()
+            .has(&FeeKey::UserVolume(buyer.clone())));
+    });
+    assert!(client.get_user_volume(&buyer) > 0);
+}
+
 #[test]
 fn test_cancel_sale_non_seller_fails() {
     let (env, cid, client, admin) = new_env();

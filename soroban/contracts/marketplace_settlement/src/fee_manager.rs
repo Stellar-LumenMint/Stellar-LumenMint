@@ -3,15 +3,28 @@ use crate::events::{
     emit_fee_config_initialized, emit_platform_fees_collected, FeeConfigInitializedEvent,
     PlatformFeesCollectedEvent,
 };
+use crate::ttl;
 use crate::types::{Asset, FeeConfig, VolumeTier};
 use crate::utils::math_utils;
-use soroban_sdk::{symbol_short, Address, Env, Map, Symbol, Vec};
+use soroban_sdk::{contracttype, symbol_short, Address, Env, Symbol, Vec};
 
 // Storage keys
 const FEE_CONFIG: Symbol = symbol_short!("fee_cfg");
 const FEE_CONFIG_INITIALIZED: Symbol = symbol_short!("fee_initd");
-const ACCUMULATED_FEES: Symbol = symbol_short!("acc_fees");
-const USER_VOLUMES: Symbol = symbol_short!("usr_vol");
+
+/// Storage key for a single fee ledger entry.
+///
+/// Accumulated fees and per-user trade volume were two `Map<...>` values in
+/// instance storage, so every settled trade rewrote the whole fee ledger and
+/// every account that ever traded. The per-user map grew with the user base
+/// with no ceiling, on an entry that already holds the admin config. Each
+/// balance now has its own persistent entry.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FeeKey {
+    Accumulated(Asset),
+    UserVolume(Address),
+}
 
 /// Fee manager for handling platform fees and fee distribution
 pub struct FeeManager;
@@ -76,19 +89,9 @@ impl FeeManager {
         collector: &Address,
     ) -> Result<(), SettlementError> {
         // Add to accumulated fees
-        let mut accumulated_fees: Map<Asset, i128> = env
-            .storage()
-            .instance()
-            .get(&ACCUMULATED_FEES)
-            .unwrap_or(Map::new(env));
-
-        let current_amount = accumulated_fees.get(asset.clone()).unwrap_or(0);
+        let current_amount = Self::get_accumulated_fees(env, asset);
         let new_amount = math_utils::safe_add(current_amount, amount, env)?;
-
-        accumulated_fees.set(asset.clone(), new_amount);
-        env.storage()
-            .instance()
-            .set(&ACCUMULATED_FEES, &accumulated_fees);
+        ttl::set(env, &FeeKey::Accumulated(asset.clone()), &new_amount);
 
         // Update user volume for dynamic fees
         Self::update_user_volume(env, collector, amount)?;
@@ -134,13 +137,7 @@ impl FeeManager {
             return Err(SettlementError::Unauthorized);
         }
 
-        let mut accumulated_fees: Map<Asset, i128> = env
-            .storage()
-            .instance()
-            .get(&ACCUMULATED_FEES)
-            .unwrap_or(Map::new(env));
-
-        let amount = accumulated_fees.get(asset.clone()).unwrap_or(0);
+        let amount = Self::get_accumulated_fees(env, asset);
 
         if amount <= 0 {
             return Err(SettlementError::InsufficientFunds);
@@ -156,10 +153,7 @@ impl FeeManager {
         )?;
 
         // Reset accumulated fees
-        accumulated_fees.set(asset.clone(), 0);
-        env.storage()
-            .instance()
-            .set(&ACCUMULATED_FEES, &accumulated_fees);
+        ttl::set(env, &FeeKey::Accumulated(asset.clone()), &0i128);
 
         Ok(amount)
     }
@@ -265,24 +259,12 @@ impl FeeManager {
 
     /// Get accumulated fees for an asset
     pub fn get_accumulated_fees(env: &Env, asset: &Asset) -> i128 {
-        let accumulated_fees: Map<Asset, i128> = env
-            .storage()
-            .instance()
-            .get(&ACCUMULATED_FEES)
-            .unwrap_or(Map::new(env));
-
-        accumulated_fees.get(asset.clone()).unwrap_or(0)
+        ttl::get(env, &FeeKey::Accumulated(asset.clone())).unwrap_or(0)
     }
 
     /// Get user trading volume
     pub fn get_user_volume(env: &Env, user: &Address) -> Result<i128, SettlementError> {
-        let user_volumes: Map<Address, i128> = env
-            .storage()
-            .instance()
-            .get(&USER_VOLUMES)
-            .unwrap_or(Map::new(env));
-
-        Ok(user_volumes.get(user.clone()).unwrap_or(0))
+        Ok(ttl::get(env, &FeeKey::UserVolume(user.clone())).unwrap_or(0))
     }
 
     /// Calculate volume-based discount
@@ -300,18 +282,9 @@ impl FeeManager {
 
     /// Update user trading volume
     fn update_user_volume(env: &Env, user: &Address, amount: i128) -> Result<(), SettlementError> {
-        let mut user_volumes: Map<Address, i128> = env
-            .storage()
-            .instance()
-            .get(&USER_VOLUMES)
-            .unwrap_or(Map::new(env));
-
-        let current_volume = user_volumes.get(user.clone()).unwrap_or(0);
+        let current_volume = Self::get_user_volume(env, user)?;
         let new_volume = math_utils::safe_add(current_volume, amount, env)?;
-
-        user_volumes.set(user.clone(), new_volume);
-        env.storage().instance().set(&USER_VOLUMES, &user_volumes);
-
+        ttl::set(env, &FeeKey::UserVolume(user.clone()), &new_volume);
         Ok(())
     }
 
@@ -348,54 +321,9 @@ impl FeeManager {
         user: &Address,
         _admin: &Address,
     ) -> Result<(), SettlementError> {
-        // Check admin permissions here
-        let mut user_volumes: Map<Address, i128> = env
-            .storage()
-            .instance()
-            .get(&USER_VOLUMES)
-            .unwrap_or(Map::new(env));
-
-        user_volumes.set(user.clone(), 0);
-        env.storage().instance().set(&USER_VOLUMES, &user_volumes);
-
+        ttl::set(env, &FeeKey::UserVolume(user.clone()), &0i128);
         Ok(())
     }
-
-    /// Get fee statistics
-    pub fn get_fee_statistics(env: &Env) -> FeeStatistics {
-        let accumulated_fees: Map<Asset, i128> = env
-            .storage()
-            .instance()
-            .get(&ACCUMULATED_FEES)
-            .unwrap_or(Map::new(env));
-
-        let user_volumes: Map<Address, i128> = env
-            .storage()
-            .instance()
-            .get(&USER_VOLUMES)
-            .unwrap_or(Map::new(env));
-
-        let total_users = user_volumes.len();
-        let mut total_volume = 0i128;
-
-        for (_, volume) in user_volumes.iter() {
-            total_volume += volume;
-        }
-
-        FeeStatistics {
-            total_accumulated_fees: accumulated_fees,
-            total_users: total_users as u64,
-            total_volume,
-        }
-    }
-}
-
-/// Fee statistics structure
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct FeeStatistics {
-    pub total_accumulated_fees: Map<Asset, i128>,
-    pub total_users: u64,
-    pub total_volume: i128,
 }
 
 /// Fee calculator for complex fee structures
