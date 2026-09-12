@@ -7,6 +7,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 [![Watch the pitch](https://img.shields.io/badge/%E2%96%B6_watch_the_pitch-5_min-00D4FF.svg)](./video/out/stellar-lumenmint-pitch.mp4)
+[![Watch on YouTube](https://img.shields.io/badge/%E2%96%B6_watch_on-YouTube-FF0000?logo=youtube&logoColor=white)](https://youtu.be/NxjQlrlRtXA)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
 <!-- Repository Status Badges -->
@@ -49,6 +50,8 @@
 ## ▶ Watch the pitch
 
 [![Watch the LumenMint product pitch — five minutes](./video/out/thumbnail.png)](./video/out/stellar-lumenmint-pitch.mp4)
+
+▶ **Watch the pitch** — [on YouTube](https://youtu.be/NxjQlrlRtXA) (*Stellar LumenMint — The Next Generation NFT Marketplace*), or play the [repository copy](./video/out/stellar-lumenmint-pitch.mp4) (37 MB, no streaming).
 
 A five-minute walkthrough of the problem, the product, the architecture, the live deployment and the engineering behind it. Every figure on screen — the gas benchmarks, the test counts, the error-code registry, the contract addresses — is read from this repository when the video is rendered, and the whole thing is produced by a [scripted pipeline](./video/README.md) rather than edited by hand, so it cannot drift from the code it describes.
 
