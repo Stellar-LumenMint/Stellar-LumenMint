@@ -61,14 +61,23 @@ impl NftCollection {
     ) -> Result<(), ContractError> {
         minter.require_auth();
         ttl::extend_instance(&env);
+        // A collection contract that was deployed without `init` — the factory
+        // always calls it, but the wasm can be deployed directly — used to fail
+        // here with an unhelpful `unwrap` panic. Report the missing collection
+        // instead.
         let admin: Address = env
             .storage()
             .instance()
             .get(&DataKey::FactoryAdmin)
-            .unwrap();
+            .ok_or(ContractError::CollectionNotFound)?;
         // Allow only admin or designated minters (the caller)
         if !Self::is_minter(&env, &minter) {
             panic_with_error!(&env, ContractError::NotMinter);
+        }
+
+        // A token sent to this contract's own address can never come back out.
+        if to == env.current_contract_address() {
+            return Err(ContractError::InvalidRecipient);
         }
 
         if env
@@ -83,7 +92,7 @@ impl NftCollection {
             .storage()
             .instance()
             .get(&DataKey::CollectionConfig)
-            .unwrap();
+            .ok_or(ContractError::CollectionNotFound)?;
         let total_supply: u32 = env
             .storage()
             .instance()
@@ -154,17 +163,28 @@ impl NftCollection {
             return Err(ContractError::NotAuthorized);
         }
 
+        // The same lock-up rule as `mint`: this contract cannot release a token
+        // it holds.
+        if to == env.current_contract_address() {
+            return Err(ContractError::InvalidRecipient);
+        }
+
         env.storage().instance().set(&DataKey::Owner(token_id), &to);
 
+        // Subtract with a checked op. The raw `- 1` panicked with a generic
+        // arithmetic error when the balance was already zero, which told the
+        // caller nothing about which invariant had broken.
         let from_balance: u32 = env
             .storage()
             .instance()
             .get(&DataKey::Balance(from.clone(), token_id))
             .unwrap_or(0);
-        env.storage().instance().set(
-            &DataKey::Balance(from.clone(), token_id),
-            &(from_balance - 1),
-        );
+        let from_balance = from_balance
+            .checked_sub(1)
+            .ok_or(ContractError::InsufficientBalance)?;
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(from.clone(), token_id), &from_balance);
 
         let to_balance: u32 = env
             .storage()
@@ -203,14 +223,24 @@ impl NftCollection {
             .instance()
             .get(&DataKey::Balance(from.clone(), token_id))
             .unwrap_or(0);
+        let balance = balance
+            .checked_sub(1)
+            .ok_or(ContractError::InsufficientBalance)?;
         env.storage()
             .instance()
-            .set(&DataKey::Balance(from.clone(), token_id), &(balance - 1));
+            .set(&DataKey::Balance(from.clone(), token_id), &balance);
 
-        let total_supply: u32 = env.storage().instance().get(&DataKey::TotalSupply).unwrap();
+        let total_supply: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::TotalSupply)
+            .ok_or(ContractError::CollectionNotFound)?;
+        let total_supply = total_supply
+            .checked_sub(1)
+            .ok_or(ContractError::InsufficientBalance)?;
         env.storage()
             .instance()
-            .set(&DataKey::TotalSupply, &(total_supply - 1));
+            .set(&DataKey::TotalSupply, &total_supply);
 
         events::emit_burn(&env, env.current_contract_address(), from, token_id, 1);
 

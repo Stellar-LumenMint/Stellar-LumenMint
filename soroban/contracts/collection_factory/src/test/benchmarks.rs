@@ -24,8 +24,10 @@ use soroban_sdk::{testutils::Address as _, Address, Bytes, BytesN, Env, String, 
 const RUNS: u32 = 3;
 
 /// Path to the collection Wasm, relative to this crate.
-const COLLECTION_WASM: &str =
-    concat!(env!("CARGO_MANIFEST_DIR"), "/../../target/wasm32-unknown-unknown/release/collection_factory.wasm");
+const COLLECTION_WASM: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../target/wasm32-unknown-unknown/release/collection_factory.wasm"
+);
 
 /// One invocation's metered resources.
 #[derive(Clone, Copy, Default)]
