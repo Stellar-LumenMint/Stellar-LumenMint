@@ -1,11 +1,28 @@
 use crate::error::SettlementError;
+use crate::ttl;
 use crate::types::{BundleTransaction, SaleTransaction, TradeTransaction};
-use soroban_sdk::{symbol_short, Env, Map, Symbol, Vec};
+use soroban_sdk::{contracttype, symbol_short, Env, Symbol};
 
-// Storage keys
-pub const SALE_TRANSACTIONS: Symbol = symbol_short!("sale_tx");
-pub const TRADE_TRANSACTIONS: Symbol = symbol_short!("trade_tx");
-pub const BUNDLE_TRANSACTIONS: Symbol = symbol_short!("bndl_tx");
+/// Storage key for a single recorded transaction.
+///
+/// Sales, trades and bundles each used to live in one `Map<u64, T>` held in
+/// **instance** storage. The instance entry is a single ledger entry shared by
+/// everything the contract keeps there, so every write rewrote the entire map,
+/// every read deserialized all of it, and the entry has a hard size ceiling.
+/// The cost of listing an NFT therefore grew with the number of listings
+/// already on the book, and the contract would eventually stop accepting new
+/// ones. Per-record persistent entries keep reads, writes and TTLs
+/// proportional to a single transaction.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum TransactionKey {
+    Sale(u64),
+    Trade(u64),
+    Bundle(u64),
+}
+
+// Id counters stay in instance storage: they are a handful of scalars, not a
+// growing collection, and instance storage is the cheapest place for them.
 pub const NEXT_SALE_ID: Symbol = symbol_short!("next_sale");
 pub const NEXT_TRADE_ID: Symbol = symbol_short!("next_trd");
 pub const NEXT_BUNDLE_ID: Symbol = symbol_short!("next_bndl");
@@ -24,29 +41,17 @@ impl SaleTransactionStore {
 
     /// Store a sale transaction
     pub fn put(env: &Env, transaction: &SaleTransaction) -> Result<(), SettlementError> {
-        let mut transactions: Map<u64, SaleTransaction> = env
-            .storage()
-            .instance()
-            .get(&SALE_TRANSACTIONS)
-            .unwrap_or(Map::new(env));
-
-        transactions.set(transaction.transaction_id, transaction.clone());
-        env.storage()
-            .instance()
-            .set(&SALE_TRANSACTIONS, &transactions);
+        ttl::set(
+            env,
+            &TransactionKey::Sale(transaction.transaction_id),
+            transaction,
+        );
         Ok(())
     }
 
     /// Get a sale transaction by ID
     pub fn get(env: &Env, transaction_id: u64) -> Result<SaleTransaction, SettlementError> {
-        let transactions: Map<u64, SaleTransaction> = env
-            .storage()
-            .instance()
-            .get(&SALE_TRANSACTIONS)
-            .ok_or(SettlementError::TransactionNotFound)?;
-
-        transactions
-            .get(transaction_id)
+        ttl::get(env, &TransactionKey::Sale(transaction_id))
             .ok_or(SettlementError::TransactionNotFound)
     }
 
@@ -57,78 +62,15 @@ impl SaleTransactionStore {
 
     /// Remove a sale transaction
     pub fn remove(env: &Env, transaction_id: u64) -> Result<(), SettlementError> {
-        let mut transactions: Map<u64, SaleTransaction> = env
+        if !env
             .storage()
-            .instance()
-            .get(&SALE_TRANSACTIONS)
-            .ok_or(SettlementError::TransactionNotFound)?;
-
-        transactions.remove(transaction_id);
-        env.storage()
-            .instance()
-            .set(&SALE_TRANSACTIONS, &transactions);
+            .persistent()
+            .has(&TransactionKey::Sale(transaction_id))
+        {
+            return Err(SettlementError::TransactionNotFound);
+        }
+        ttl::remove(env, &TransactionKey::Sale(transaction_id));
         Ok(())
-    }
-
-    /// Get all sale transactions (paginated)
-    pub fn get_all(env: &Env, offset: u64, limit: u64) -> Vec<SaleTransaction> {
-        let transactions: Map<u64, SaleTransaction> = env
-            .storage()
-            .instance()
-            .get(&SALE_TRANSACTIONS)
-            .unwrap_or(Map::new(env));
-
-        let mut result = Vec::new(env);
-        let mut count = 0u64;
-
-        for (_, transaction) in transactions.iter() {
-            if count >= limit {
-                break;
-            }
-            // Simple offset implementation - in production, you'd want a more efficient approach
-            if offset == 0 || count >= offset {
-                result.push_back(transaction);
-                count += 1;
-            }
-        }
-
-        result
-    }
-
-    /// Get transactions by seller
-    pub fn get_by_seller(env: &Env, seller: &soroban_sdk::Address) -> Vec<SaleTransaction> {
-        let transactions: Map<u64, SaleTransaction> = env
-            .storage()
-            .instance()
-            .get(&SALE_TRANSACTIONS)
-            .unwrap_or(Map::new(env));
-
-        let mut result = Vec::new(env);
-        for (_, transaction) in transactions.iter() {
-            if &transaction.seller == seller {
-                result.push_back(transaction);
-            }
-        }
-        result
-    }
-
-    /// Get transactions by buyer
-    pub fn get_by_buyer(env: &Env, buyer: &soroban_sdk::Address) -> Vec<SaleTransaction> {
-        let transactions: Map<u64, SaleTransaction> = env
-            .storage()
-            .instance()
-            .get(&SALE_TRANSACTIONS)
-            .unwrap_or(Map::new(env));
-
-        let mut result = Vec::new(env);
-        for (_, transaction) in transactions.iter() {
-            if let Some(buyer_addr) = &transaction.buyer {
-                if buyer_addr == buyer {
-                    result.push_back(transaction);
-                }
-            }
-        }
-        result
     }
 }
 
@@ -146,30 +88,17 @@ impl TradeTransactionStore {
 
     /// Store a trade transaction
     pub fn put(env: &Env, transaction: &TradeTransaction) -> Result<(), SettlementError> {
-        let mut transactions: Map<u64, TradeTransaction> = env
-            .storage()
-            .instance()
-            .get(&TRADE_TRANSACTIONS)
-            .unwrap_or(Map::new(env));
-
-        transactions.set(transaction.trade_id, transaction.clone());
-        env.storage()
-            .instance()
-            .set(&TRADE_TRANSACTIONS, &transactions);
+        ttl::set(
+            env,
+            &TransactionKey::Trade(transaction.trade_id),
+            transaction,
+        );
         Ok(())
     }
 
     /// Get a trade transaction by ID
     pub fn get(env: &Env, trade_id: u64) -> Result<TradeTransaction, SettlementError> {
-        let transactions: Map<u64, TradeTransaction> = env
-            .storage()
-            .instance()
-            .get(&TRADE_TRANSACTIONS)
-            .ok_or(SettlementError::TransactionNotFound)?;
-
-        transactions
-            .get(trade_id)
-            .ok_or(SettlementError::TransactionNotFound)
+        ttl::get(env, &TransactionKey::Trade(trade_id)).ok_or(SettlementError::TransactionNotFound)
     }
 
     /// Update a trade transaction
@@ -192,29 +121,17 @@ impl BundleTransactionStore {
 
     /// Store a bundle transaction
     pub fn put(env: &Env, transaction: &BundleTransaction) -> Result<(), SettlementError> {
-        let mut transactions: Map<u64, BundleTransaction> = env
-            .storage()
-            .instance()
-            .get(&BUNDLE_TRANSACTIONS)
-            .unwrap_or(Map::new(env));
-
-        transactions.set(transaction.bundle_id, transaction.clone());
-        env.storage()
-            .instance()
-            .set(&BUNDLE_TRANSACTIONS, &transactions);
+        ttl::set(
+            env,
+            &TransactionKey::Bundle(transaction.bundle_id),
+            transaction,
+        );
         Ok(())
     }
 
     /// Get a bundle transaction by ID
     pub fn get(env: &Env, bundle_id: u64) -> Result<BundleTransaction, SettlementError> {
-        let transactions: Map<u64, BundleTransaction> = env
-            .storage()
-            .instance()
-            .get(&BUNDLE_TRANSACTIONS)
-            .ok_or(SettlementError::TransactionNotFound)?;
-
-        transactions
-            .get(bundle_id)
+        ttl::get(env, &TransactionKey::Bundle(bundle_id))
             .ok_or(SettlementError::TransactionNotFound)
     }
 

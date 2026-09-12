@@ -173,6 +173,41 @@ fn test_cancel_sale_by_seller() {
     client.cancel_transaction(&id, &Symbol::new(&env, "sale"), &seller);
 }
 
+/// Transaction records must live in their own persistent entries.
+///
+/// They previously shared one `Map<u64, T>` in instance storage, so every write
+/// rewrote the whole book and the entry grew without bound. Asserting the
+/// storage location directly is what distinguishes the two implementations;
+/// a read-back test passes either way.
+#[test]
+fn test_transaction_records_use_per_id_persistent_storage() {
+    use crate::storage::transaction_store::TransactionKey;
+
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let first = client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+    let second = client.create_sale(&seller, &nft, &1u64, &2_000_000i128, &asset, &86400u64);
+    assert_ne!(first, second);
+
+    env.as_contract(&cid, || {
+        assert!(env.storage().persistent().has(&TransactionKey::Sale(first)));
+        assert!(env
+            .storage()
+            .persistent()
+            .has(&TransactionKey::Sale(second)));
+    });
+
+    // Each sale keeps its own price rather than the last one written.
+    assert_eq!(client.get_sale(&first).price, 1_000_000i128);
+    assert_eq!(client.get_sale(&second).price, 2_000_000i128);
+}
+
 #[test]
 fn test_cancel_sale_non_seller_fails() {
     let (env, cid, client, admin) = new_env();
