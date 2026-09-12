@@ -1,6 +1,6 @@
 # LumenMint pitch video
 
-The project's primary presentation: a five-minute, captioned product pitch that
+The project's primary presentation: a five-minute product pitch that
 explains the problem, the product, the architecture, the live deployment and the
 engineering behind it.
 
@@ -33,7 +33,6 @@ pitch can be trusted:
               │   slides.mjs                    │
               │                                 ├─▶ assemble.mjs ──▶ out/*.mp4
               └─▶ narrate.mjs ──▶ audio/*.mp3 ──┘         │
-                                   audio/*.srt           │
                                                          ├─▶ thumbnail.mjs  ──▶ out/thumbnail.png
   scenes.mjs + narration.json ──▶ transcript.mjs ────────┴─▶ transcript     ──▶ out/TRANSCRIPT.md
                                           out/* ──▶ verify-video.mjs
@@ -42,8 +41,8 @@ pitch can be trusted:
 | Stage | Script | Output |
 |---|---|---|
 | Capture | `capture.mjs` | Renders the brand slides and screenshots the live site into `assets/`, plus `manifest.json` |
-| Narrate | `narrate.mjs` | One MP3 and one SRT per scene into `audio/`, plus `narration.json` |
-| Assemble | `assemble.mjs` | Crossfades each scene's shots, burns in captions, concatenates into `out/stellar-lumenmint-pitch.mp4` |
+| Narrate | `narrate.mjs` | One MP3 per scene into `audio/`, plus `narration.json` |
+| Assemble | `assemble.mjs` | Crossfades each scene's shots and concatenates into `out/stellar-lumenmint-pitch.mp4` |
 | Thumbnail | `thumbnail.mjs` | `out/thumbnail.png`, used by the README |
 | Transcript | `transcript.mjs` | `out/TRANSCRIPT.md`, with a timestamp per chapter |
 | Verify | `verify-video.mjs` | Checks the committed artifacts and the README links; exits non-zero on failure |
@@ -71,7 +70,7 @@ npm run build
 
 # or one stage at a time
 npm run capture     # slides + live-deployment screenshots
-npm run narrate     # voice-over and captions
+npm run narrate     # voice-over
 npm run assemble    # render the video
 npm run thumbnail   # README thumbnail
 npm run transcript  # chapter-timestamped transcript
@@ -93,10 +92,6 @@ TTS_VOICE=en-GB-SoniaNeural TTS_RATE=+0% npm run narrate
 ```
 
 ## Design notes
-
-**Captions are burned in, not a sidecar.** Reviewers frequently watch with the
-sound off, and a sidecar track is easy to miss. The cues come from the TTS
-engine's word boundaries, so they are timed to the audio rather than estimated.
 
 **Scenes are rendered independently and then concatenated.** Crossfades inside a
 scene consume time, so shots are allocated the target duration *plus* the

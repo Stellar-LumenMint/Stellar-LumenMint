@@ -164,27 +164,14 @@ function buildScene(scene, narration, index) {
     last = out;
   }
 
-  // Then the audio, the scene fades and the captions, in that order, so the
-  // captions sit above the faded picture rather than being faded themselves.
+  // The fades are applied last so they fade the finished picture, and the audio
+  // is mapped after the video graph has been built.
   const audioIndex = clips.length;
-  const subtitlePath = join(HERE, narration.subs);
-  const hasSubs = existsSync(subtitlePath);
-  const subtitleEscaped = subtitlePath.replace(/([:'\\])/g, '\\$1');
 
   const post = [
     `fade=t=in:st=0:d=${SCENE_FADE}`,
     `fade=t=out:st=${Math.max(accumulated - SCENE_FADE, 0).toFixed(3)}:d=${SCENE_FADE}`,
   ];
-  if (hasSubs) {
-    // Burned in via libass, using the brand font, so the video is followable
-    // with the sound off.
-    post.push(
-      `subtitles='${subtitleEscaped}':force_style='FontName=Inter,FontSize=17,` +
-        `PrimaryColour=&H00F7F2EE,OutlineColour=&H00101010,BorderStyle=3,Outline=1,Shadow=0,` +
-        `MarginV=54,Alignment=2'`,
-    );
-  }
-
   // The label is followed directly by the filter chain — a comma here would
   // read as an empty filter name and ffmpeg rejects the whole graph.
   filters.push(`${last}${post.join(',')}[vout]`);
@@ -201,10 +188,14 @@ function buildScene(scene, narration, index) {
     '-t', accumulated.toFixed(3),
     '-r', String(FPS),
     '-c:v', 'libx264',
-    // The scene pass re-encodes clips that were already encoded at CRF 19, so a
-    // slower preset buys very little here and roughly triples the render time.
+    // The scene pass re-encodes clips that were already encoded near-losslessly,
+    // so a slower preset buys very little here and roughly triples the render
+    // time. `stillimage` is the right tune for this material — slow pushes and
+    // scrolls over static screenshots, with no fast motion for it to trade away
+    // — and it keeps the committed file inside the size budget `verify` enforces.
     '-preset', 'veryfast',
-    '-crf', '19',
+    '-crf', '21',
+    '-tune', 'stillimage',
     '-profile:v', 'high',
     '-level', '4.0',
     '-pix_fmt', 'yuv420p',

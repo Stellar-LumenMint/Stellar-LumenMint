@@ -137,7 +137,7 @@ const HTML = `<!doctype html>
         </div>
         <div class="meta">
           <div class="t">Watch the 5-minute pitch</div>
-          <div class="d">${DURATION} · Captioned · Full transcript included</div>
+          <div class="d">${DURATION} · Full transcript included</div>
         </div>
       </div>
     </div>

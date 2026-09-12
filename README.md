@@ -48,7 +48,7 @@
 
 ## ▶ Watch the pitch
 
-[![Watch the LumenMint product pitch — five minutes, captioned](./video/out/thumbnail.png)](./video/out/stellar-lumenmint-pitch.mp4)
+[![Watch the LumenMint product pitch — five minutes](./video/out/thumbnail.png)](./video/out/stellar-lumenmint-pitch.mp4)
 
 A five-minute walkthrough of the problem, the product, the architecture, the live deployment and the engineering behind it. Every figure on screen — the gas benchmarks, the test counts, the error-code registry, the contract addresses — is read from this repository when the video is rendered, and the whole thing is produced by a [scripted pipeline](./video/README.md) rather than edited by hand, so it cannot drift from the code it describes.
 
