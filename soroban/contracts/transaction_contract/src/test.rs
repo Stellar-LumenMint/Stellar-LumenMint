@@ -2,6 +2,9 @@
 
 extern crate std;
 
+// Gas benchmarks for the transaction entrypoints.
+mod benchmarks;
+
 use soroban_sdk::{map, testutils::Address as _, vec, Address, Env, String, Vec};
 
 use crate::transaction_core::{TransactionContract, TransactionContractClient};
