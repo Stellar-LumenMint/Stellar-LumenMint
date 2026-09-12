@@ -93,7 +93,20 @@ All PRs require:
 Do not open public issues for vulnerabilities. See [SECURITY.md](./SECURITY.md)
 for the private reporting process, including the contract-specific path.
 
+## Code of Conduct
+
+Participation in this project is covered by the
+[Contributor Covenant](./CODE_OF_CONDUCT.md). Report unacceptable behaviour to
+the maintainers, or through a private security advisory if you would rather not
+email. Reports are handled confidentially.
+
 ## Issues
 
 See [GitHub Issues](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues)
 for open tasks.
+
+Issues labelled **good first issue** are scoped to be approachable without prior
+context in the codebase; **help wanted** marks work where the design is settled
+but the implementation is open. If an issue's description no longer matches the
+code, say so on the issue rather than working around it — a stale issue is a bug
+in its own right, and this repository has had several.

@@ -238,6 +238,7 @@ Contract source: [`soroban/contracts/`](./soroban/contracts) · [Contract Invari
 | [soroban/SECURITY.md](./soroban/SECURITY.md) | Smart contract security considerations |
 | [soroban/GAS.md](./soroban/GAS.md) | Gas benchmarks, regression ceilings and Testnet fee measurements |
 | [docs/ERROR_CODES.md](./docs/ERROR_CODES.md) | Every error code across the contracts, API and frontend (generated) |
+| [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Contributor Covenant and how to report a problem |
 | [.github/workflows/README.md](./.github/workflows/README.md) | CI/CD pipeline architecture |
 
 ---
