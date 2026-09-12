@@ -143,12 +143,17 @@ pub struct TradeTransaction {
 }
 
 // NFT item structure for bundles and trades
+//
+// A reference, not a snapshot: the royalty for an item is resolved from the
+// royalty store at settlement time. Storing a `RoyaltyDistribution` here meant
+// every caller had to construct a distribution (including a recipient map) just
+// to name a token, and it froze a stale royalty that could disagree with the
+// creator's current configuration.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NFTItem {
     pub nft_address: Address,
     pub token_id: u64,
-    pub royalty_info: RoyaltyDistribution,
 }
 
 // Bundle transaction for multi-item sales

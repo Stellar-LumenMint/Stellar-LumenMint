@@ -36,6 +36,7 @@ impl RateLimiter {
             let reveal_bid_sym = Symbol::new(env, "reveal_bid");
             let create_auction_sym = Symbol::new(env, "create_auction");
             let create_sale_sym = Symbol::new(env, "create_sale");
+            let create_bundle_sym = Symbol::new(env, "create_bundle");
             let create_trade_sym = Symbol::new(env, "create_trade");
             let accept_trade_sym = Symbol::new(env, "accept_trade");
             let execute_trade_sym = Symbol::new(env, "execute_trade");
@@ -47,6 +48,7 @@ impl RateLimiter {
                 })
             } else if function == &create_auction_sym
                 || function == &create_sale_sym
+                || function == &create_bundle_sym
                 || function == &create_trade_sym
                 || function == &accept_trade_sym
                 || function == &execute_trade_sym

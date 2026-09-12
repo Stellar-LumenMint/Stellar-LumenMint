@@ -4,7 +4,7 @@ use crate::{
     error::SettlementError,
     royalty_distributor::RoyaltyDistributor,
     settlement_core::{MarketplaceSettlement, MarketplaceSettlementClient},
-    types::{Asset, AuctionType, FeeConfig, TransactionState},
+    types::{Asset, AuctionType, FeeConfig, NFTItem, TransactionState},
 };
 use soroban_sdk::{
     testutils::{Address as _, Ledger as _},
@@ -647,32 +647,18 @@ fn test_get_royalty_not_found_fails() {
 
 #[test]
 fn test_create_trade_success() {
-    use crate::types::{NFTItem, RoyaltyDistribution};
     let (env, _cid, client, _admin) = new_env();
     let _asset = mk_asset(&env);
     let initiator = Address::generate(&env);
-    let creator = Address::generate(&env);
-    let dummy = RoyaltyDistribution {
-        creator_address: creator.clone(),
-        creator_percentage: 500,
-        seller_address: creator.clone(),
-        seller_percentage: 9000,
-        platform_address: creator.clone(),
-        platform_percentage: 500,
-        total_amount: 0,
-        amounts: soroban_sdk::Map::new(&env),
-    };
     let mut i_nfts = soroban_sdk::Vec::new(&env);
     i_nfts.push_back(NFTItem {
         nft_address: Address::generate(&env),
         token_id: 1,
-        royalty_info: dummy.clone(),
     });
     let mut c_nfts = soroban_sdk::Vec::new(&env);
     c_nfts.push_back(NFTItem {
         nft_address: Address::generate(&env),
         token_id: 2,
-        royalty_info: dummy,
     });
     let id = client.create_trade(&initiator, &None, &i_nfts, &c_nfts, &3600u64);
     assert!(id > 0);
@@ -693,37 +679,166 @@ fn test_create_trade_empty_nfts_fails() {
 
 #[test]
 fn test_create_bundle_success() {
-    use crate::types::{NFTItem, RoyaltyDistribution};
     let (env, cid, client, admin) = new_env();
     let asset = mk_asset(&env);
     let seller = Address::generate(&env);
     let creator = Address::generate(&env);
-    let nft = Address::generate(&env);
+    let nft = env.register(MockNft, ());
 
     // Register NFT contract and add asset to whitelist
     reg(&env, &cid, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
 
     // Add the asset to supported assets list
     client.add_supported_asset(&admin, &asset);
 
-    let dummy = RoyaltyDistribution {
-        creator_address: creator.clone(),
-        creator_percentage: 500,
-        seller_address: creator.clone(),
-        seller_percentage: 9000,
-        platform_address: creator.clone(),
-        platform_percentage: 500,
-        total_amount: 0,
-        amounts: soroban_sdk::Map::new(&env),
-    };
     let mut items = soroban_sdk::Vec::new(&env);
     items.push_back(NFTItem {
         nft_address: nft,
         token_id: 1,
-        royalty_info: dummy,
     });
     let id = client.create_bundle(&seller, &items, &500_000i128, &asset, &86400u64);
     assert!(id > 0);
+}
+
+/// A bundle is escrowed at creation: the tokens sit in the marketplace, so a
+/// buyer can settle even if the seller never signs again.
+#[test]
+fn test_create_bundle_escrows_every_item() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let nft_a = env.register(MockNft, ());
+    let nft_b = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    client.add_allowed_nft_contract(&admin, &nft_a);
+    client.add_allowed_nft_contract(&admin, &nft_b);
+    client.add_allowed_token_contract(&admin, &asset.contract);
+    client.add_supported_asset(&admin, &asset);
+    let _ = creator;
+
+    MockNftClient::new(&env, &nft_a).set_owner(&seller);
+    MockNftClient::new(&env, &nft_b).set_owner(&seller);
+
+    let mut items = soroban_sdk::Vec::new(&env);
+    items.push_back(NFTItem {
+        nft_address: nft_a.clone(),
+        token_id: 1,
+    });
+    items.push_back(NFTItem {
+        nft_address: nft_b.clone(),
+        token_id: 2,
+    });
+
+    client.create_bundle(&seller, &items, &500_000i128, &asset, &86400u64);
+
+    assert_eq!(MockNftClient::new(&env, &nft_a).owner_of(&1u64), cid);
+    assert_eq!(MockNftClient::new(&env, &nft_b).owner_of(&2u64), cid);
+}
+
+/// Executing a bundle must move the payment and every token, and must do both
+/// exactly once. The previous implementation had no `execute_bundle` at all,
+/// while the API client already called it.
+#[test]
+fn test_execute_bundle_settles_and_releases_items() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    client.add_allowed_nft_contract(&admin, &nft);
+    client.add_allowed_token_contract(&admin, &asset.contract);
+    client.add_supported_asset(&admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let mut items = soroban_sdk::Vec::new(&env);
+    items.push_back(NFTItem {
+        nft_address: nft.clone(),
+        token_id: 7,
+    });
+    let bundle_id = client.create_bundle(&seller, &items, &500_000i128, &asset, &86400u64);
+
+    let result = client.execute_bundle(&bundle_id, &buyer, &500_000i128);
+    assert!(result.success);
+    assert!(result.transferred_nft);
+    assert!(result.transferred_payment);
+
+    assert_eq!(MockNftClient::new(&env, &nft).owner_of(&7u64), buyer);
+    let bundle = client.get_bundle(&bundle_id);
+    assert_eq!(bundle.state, TransactionState::Executed);
+
+    // A second execution must not move anything again.
+    assert!(client
+        .try_execute_bundle(&bundle_id, &buyer, &500_000i128)
+        .is_err());
+    assert_eq!(MockNftClient::new(&env, &nft).owner_of(&7u64), buyer);
+    let _ = cid;
+}
+
+/// Cancelling returns the escrowed items instead of stranding them.
+#[test]
+fn test_cancel_bundle_returns_items_to_seller() {
+    let (env, _cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    client.add_allowed_nft_contract(&admin, &nft);
+    client.add_allowed_token_contract(&admin, &asset.contract);
+    client.add_supported_asset(&admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let mut items = soroban_sdk::Vec::new(&env);
+    items.push_back(NFTItem {
+        nft_address: nft.clone(),
+        token_id: 9,
+    });
+    let bundle_id = client.create_bundle(&seller, &items, &500_000i128, &asset, &86400u64);
+    client.cancel_bundle(&bundle_id, &seller);
+
+    assert_eq!(MockNftClient::new(&env, &nft).owner_of(&9u64), seller);
+    assert_eq!(
+        client.get_bundle(&bundle_id).state,
+        TransactionState::Cancelled
+    );
+}
+
+/// The same token cannot be listed twice in one bundle, and a non-owner cannot
+/// list someone else's token.
+#[test]
+fn test_create_bundle_rejects_duplicates_and_non_owner() {
+    let (env, _cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let stranger = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    client.add_allowed_nft_contract(&admin, &nft);
+    client.add_allowed_token_contract(&admin, &asset.contract);
+    client.add_supported_asset(&admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let mut duplicated = soroban_sdk::Vec::new(&env);
+    duplicated.push_back(NFTItem {
+        nft_address: nft.clone(),
+        token_id: 3,
+    });
+    duplicated.push_back(NFTItem {
+        nft_address: nft.clone(),
+        token_id: 3,
+    });
+    assert_eq!(
+        client.try_create_bundle(&seller, &duplicated, &500_000i128, &asset, &86400u64),
+        Err(Ok(SettlementError::AlreadyExists))
+    );
+
+    let mut single = soroban_sdk::Vec::new(&env);
+    single.push_back(NFTItem {
+        nft_address: nft.clone(),
+        token_id: 3,
+    });
+    assert_eq!(
+        client.try_create_bundle(&stranger, &single, &500_000i128, &asset, &86400u64),
+        Err(Ok(SettlementError::Unauthorized))
+    );
 }
 
 #[test]

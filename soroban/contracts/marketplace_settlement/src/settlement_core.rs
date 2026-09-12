@@ -3,7 +3,8 @@ use crate::auction_engine::AuctionEngine;
 use crate::dispute_resolution::DisputeResolutionManager;
 use crate::error::SettlementError;
 use crate::events::{
-    emit_address_blocked, emit_address_unblocked, AddressBlockedEvent, AddressUnblockedEvent,
+    emit_address_blocked, emit_address_unblocked, emit_bundle_created, emit_bundle_executed,
+    AddressBlockedEvent, AddressUnblockedEvent,
 };
 use crate::fee_manager::FeeManager;
 use crate::pause_manager::{ModuleType, PauseManager};
@@ -828,7 +829,13 @@ impl MarketplaceSettlement {
         })
     }
 
-    /// Create a bundle sale
+    /// Create a bundle sale.
+    ///
+    /// Every item is escrowed by this call: the marketplace takes custody of
+    /// the tokens so settlement does not depend on the seller still holding
+    /// them (or on a stale approval) when a buyer shows up. Soroban reverts the
+    /// whole invocation if any transfer fails, so the bundle is never recorded
+    /// holding fewer tokens than it claims.
     pub fn create_bundle(
         env: Env,
         seller: Address,
@@ -842,16 +849,75 @@ impl MarketplaceSettlement {
         // Check if bundles module is paused
         PauseManager::check_module_not_paused(&env, ModuleType::Bundles)?;
 
+        // Check if seller is blocked
+        if BlocklistStore::is_blocked(&env, &seller) {
+            return Err(SettlementError::AddressBlocked);
+        }
+
         ReentrancyGuard::execute(&env, &seller, "create_bundle", || {
             if items.is_empty() {
                 return Err(SettlementError::InvalidAmount);
             }
+            if total_price <= 0 {
+                return Err(SettlementError::InvalidAmount);
+            }
+
+            crate::security::rate_limiter::RateLimiter::check_rate_limit(
+                &env,
+                &seller,
+                &Symbol::new(&env, "create_bundle"),
+            )?;
 
             // Get supported assets from storage
             let supported_assets = Self::get_supported_assets(env.clone());
 
             // Validate asset
             asset_utils::validate_asset(&currency, &supported_assets, &env)?;
+
+            time_utils::validate_transaction_timing(
+                env.ledger().timestamp(),
+                env.ledger().timestamp() + duration_seconds,
+                2592000, // 30 days max
+                &env,
+            )?;
+
+            let platform_fee = FeeManager::calculate_fee(&env, total_price, &seller)?;
+
+            // Validate ownership and take custody before recording anything, so
+            // a bad item aborts the whole bundle rather than leaving a partial
+            // escrow behind.
+            for i in 0..items.len() {
+                let item = items.get(i).ok_or(SettlementError::InvalidAmount)?;
+
+                asset_utils::validate_nft_contract(&item.nft_address, &env)?;
+                if !asset_utils::check_nft_ownership(
+                    &item.nft_address,
+                    item.token_id,
+                    &seller,
+                    &env,
+                )? {
+                    return Err(SettlementError::Unauthorized);
+                }
+
+                // A bundle that lists the same token twice would escrow it once
+                // and settle twice: the second transfer would fail at execution
+                // time, after the buyer's payment had been taken.
+                for j in (i + 1)..items.len() {
+                    let other = items.get(j).ok_or(SettlementError::InvalidAmount)?;
+                    if other.nft_address == item.nft_address && other.token_id == item.token_id {
+                        return Err(SettlementError::AlreadyExists);
+                    }
+                }
+
+                asset_utils::transfer_nft_from(
+                    &item.nft_address,
+                    &seller,
+                    &seller,
+                    &env.current_contract_address(),
+                    item.token_id,
+                    &env,
+                )?;
+            }
 
             let bundle_id = BundleTransactionStore::next_id(&env);
 
@@ -861,16 +927,169 @@ impl MarketplaceSettlement {
                 buyer: None,
                 items,
                 total_price,
-                currency,
+                currency: currency.clone(),
                 state: crate::types::TransactionState::Pending,
                 created_at: env.ledger().timestamp(),
                 expires_at: env.ledger().timestamp() + duration_seconds,
-                platform_fee: 0, // Would be calculated
+                platform_fee,
             };
 
             BundleTransactionStore::put(&env, &bundle)?;
+
+            emit_bundle_created(
+                &env,
+                crate::events::BundleCreatedEvent {
+                    bundle_id,
+                    seller: seller.clone(),
+                    item_count: bundle.items.len() as u64,
+                    total_price,
+                    currency,
+                    expires_at: bundle.expires_at,
+                    timestamp: env.ledger().timestamp(),
+                },
+            );
+
             Ok(bundle_id)
         })
+    }
+
+    /// Execute a bundle sale.
+    ///
+    /// The buyer pays `payment_amount`, which must equal the listed total. Every
+    /// item is released to the buyer and the payment is split between the
+    /// creators, the seller and the platform in the same transaction, so there
+    /// is no window in which one side has been paid but the other has not been
+    /// delivered.
+    pub fn execute_bundle(
+        env: Env,
+        bundle_id: u64,
+        buyer: Address,
+        payment_amount: i128,
+    ) -> Result<ExecutionResult, SettlementError> {
+        buyer.require_auth();
+
+        // Check if bundles module is paused
+        PauseManager::check_module_not_paused(&env, ModuleType::Bundles)?;
+
+        if BlocklistStore::is_blocked(&env, &buyer) {
+            return Err(SettlementError::AddressBlocked);
+        }
+
+        ReentrancyGuard::execute(&env, &buyer, "execute_bundle", || {
+            let mut bundle = BundleTransactionStore::get(&env, bundle_id)?;
+
+            if bundle.state != crate::types::TransactionState::Pending {
+                return Err(SettlementError::InvalidState);
+            }
+            if time_utils::is_expired(bundle.expires_at, &env) {
+                return Err(SettlementError::Expired);
+            }
+            if payment_amount != bundle.total_price {
+                return Err(SettlementError::InvalidAmount);
+            }
+
+            // Take the payment before paying anything out, so every payout is
+            // backed by funds received in this call.
+            asset_utils::transfer_tokens(
+                &bundle.currency.contract,
+                &buyer,
+                &env.current_contract_address(),
+                payment_amount,
+                &env,
+            )?;
+
+            let fee_config = FeeManager::get_fee_config(&env)?;
+            let distribution = RoyaltyDistributor::calculate_bundle_royalties(
+                &env,
+                &bundle.items,
+                bundle.total_price,
+                &bundle.seller,
+                &fee_config.fee_recipient,
+                bundle.platform_fee,
+            )?;
+            RoyaltyDistributor::distribute_royalties(
+                &env,
+                bundle_id,
+                &distribution,
+                &bundle.currency,
+            )?;
+
+            // Release each escrowed item to the buyer.
+            for item in bundle.items.iter() {
+                asset_utils::transfer_nft(
+                    &item.nft_address,
+                    &env.current_contract_address(),
+                    &buyer,
+                    item.token_id,
+                    &env,
+                )?;
+            }
+
+            bundle.buyer = Some(buyer.clone());
+            bundle.state = crate::types::TransactionState::Executed;
+            BundleTransactionStore::update(&env, &bundle)?;
+
+            FeeManager::record_platform_volume(&env, &buyer, bundle.platform_fee)?;
+
+            emit_bundle_executed(
+                &env,
+                crate::events::BundleExecutedEvent {
+                    bundle_id,
+                    buyer: buyer.clone(),
+                    timestamp: env.ledger().timestamp(),
+                },
+            );
+
+            Ok(ExecutionResult {
+                transaction_id: bundle_id,
+                success: true,
+                transferred_nft: true,
+                transferred_payment: true,
+                distributed_royalties: true,
+                collected_platform_fee: true,
+                timestamp: env.ledger().timestamp(),
+            })
+        })
+    }
+
+    /// Cancel a bundle listing and return every escrowed item to the seller.
+    pub fn cancel_bundle(env: Env, bundle_id: u64, seller: Address) -> Result<(), SettlementError> {
+        seller.require_auth();
+
+        // A cancellation is always allowed: refusing to run it while paused
+        // would strand escrowed tokens for as long as the pause lasts.
+        PauseManager::check_not_paused(&env)?;
+
+        ReentrancyGuard::execute(&env, &seller, "cancel_bundle", || {
+            let mut bundle = BundleTransactionStore::get(&env, bundle_id)?;
+
+            if bundle.seller != seller {
+                return Err(SettlementError::Unauthorized);
+            }
+            if bundle.state != crate::types::TransactionState::Pending {
+                return Err(SettlementError::InvalidState);
+            }
+
+            for item in bundle.items.iter() {
+                asset_utils::transfer_nft(
+                    &item.nft_address,
+                    &env.current_contract_address(),
+                    &seller,
+                    item.token_id,
+                    &env,
+                )?;
+            }
+
+            bundle.state = crate::types::TransactionState::Cancelled;
+            BundleTransactionStore::update(&env, &bundle)?;
+
+            Ok(())
+        })
+    }
+
+    /// Get bundle details
+    pub fn get_bundle(env: Env, bundle_id: u64) -> Result<BundleTransaction, SettlementError> {
+        BundleTransactionStore::get(&env, bundle_id)
     }
 
     /// Cancel a transaction

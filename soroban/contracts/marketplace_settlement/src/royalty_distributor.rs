@@ -1,7 +1,7 @@
 use crate::error::SettlementError;
 use crate::events::{emit_royalties_distributed, RoyaltiesDistributedEvent};
 use crate::ttl;
-use crate::types::{AdminConfig, Asset, DistributionResult, RoyaltyDistribution};
+use crate::types::{AdminConfig, Asset, DistributionResult, NFTItem, RoyaltyDistribution};
 use crate::utils::asset_utils;
 use crate::utils::math_utils;
 use soroban_sdk::{contracttype, symbol_short, Address, Env, Map, Vec};
@@ -318,87 +318,73 @@ impl RoyaltyDistributor {
         Ok(())
     }
 
-    /// Calculate royalty splits for complex transactions (bundles).
-    /// Uses value-proportional splitting based on `value_weights` rather than equal division.
-    pub fn calculate_complex_royalties(
+    /// Calculate the royalty distribution for a multi-item bundle.
+    ///
+    /// Each item is valued at an equal share of `total_price`, and the
+    /// creator's royalty is computed on that share and aggregated per creator,
+    /// so a creator holding several items in the bundle is paid once. The
+    /// platform fee is the amount the caller resolved through `FeeManager` —
+    /// the same authority `calculate_royalties` uses; the function this
+    /// replaces hardcoded 5% and ignored the configured fee. The seller absorbs
+    /// the rounding residue, so the shares always sum to exactly `total_price`.
+    pub fn calculate_bundle_royalties(
         env: &Env,
-        nft_contracts: &Vec<Address>,
-        token_ids: &Vec<u64>,
-        sale_price: i128,
+        items: &Vec<NFTItem>,
+        total_price: i128,
         seller: &Address,
         platform_address: &Address,
-        value_weights: &Vec<i128>,
+        platform_fee: i128,
     ) -> Result<RoyaltyDistribution, SettlementError> {
-        if nft_contracts.len() != token_ids.len() {
-            return Err(SettlementError::InvalidAmount);
-        }
-        if nft_contracts.len() != value_weights.len() {
+        if items.is_empty() {
             return Err(SettlementError::InvalidAmount);
         }
 
-        // Calculate total weight for proportional distribution
-        let mut total_weight: i128 = 0;
-        for w in value_weights.iter() {
-            total_weight = math_utils::safe_add(total_weight, w, env)?;
-        }
-
+        let item_count = items.len() as i128;
         let mut total_royalty_amount = 0i128;
         let mut amounts = Map::new(env);
 
-        // Calculate royalties for each NFT proportionally by value weight
-        for i in 0..nft_contracts.len() {
-            let nft_contract = nft_contracts.get(i).ok_or(SettlementError::InvalidAmount)?;
-            let token_id = token_ids.get(i).ok_or(SettlementError::InvalidAmount)?;
-            let weight = value_weights.get(i).ok_or(SettlementError::InvalidAmount)?;
-
-            let royalty_info = Self::get_royalty_info(env, &nft_contract, token_id)?;
-
-            // Calculate proportional price: sale_price * weight / total_weight
-            let individual_price = if total_weight > 0 {
-                math_utils::calculate_percentage_with_rounding_and_basis(
-                    sale_price,
-                    weight as u64,
-                    math_utils::RoundingMode::HalfUp,
-                    total_weight as u64,
-                    env,
-                )?
-            } else {
-                math_utils::safe_div(sale_price, nft_contracts.len() as i128, env)?
-            };
-
-            let royalty_amount = math_utils::calculate_percentage(
-                individual_price,
-                royalty_info.royalty_percentage,
-                env,
-            )?;
-
-            // Aggregate by creator
-            let current_amount = amounts.get(royalty_info.creator.clone()).unwrap_or(0);
-            let new_amount = math_utils::safe_add(current_amount, royalty_amount, env)?;
-            amounts.set(royalty_info.creator, new_amount);
-
+        for item in items.iter() {
+            let share = math_utils::safe_div(total_price, item_count, env)?;
+            let royalty_info =
+                Self::resolve_royalty_info(env, &item.nft_address, item.token_id, seller);
+            let royalty_amount =
+                math_utils::calculate_percentage(share, royalty_info.royalty_percentage, env)?;
+            Self::add_amount(&mut amounts, &royalty_info.creator, royalty_amount);
             total_royalty_amount = math_utils::safe_add(total_royalty_amount, royalty_amount, env)?;
         }
 
-        // Calculate remaining amounts for seller and platform on post-royalty remainder
-        let remainder = math_utils::safe_sub(sale_price, total_royalty_amount, env)?;
-        let platform_percentage = 500u64; // 5%
-        let platform_amount =
-            math_utils::calculate_percentage(remainder, platform_percentage, env)?;
+        let remainder = math_utils::safe_sub(total_price, total_royalty_amount, env)?;
+        let platform_amount = if platform_fee < 0 {
+            0
+        } else if platform_fee > remainder {
+            remainder
+        } else {
+            platform_fee
+        };
         let seller_amount = math_utils::safe_sub(remainder, platform_amount, env)?;
 
-        // Use real addresses passed as parameters
-        amounts.set(seller.clone(), seller_amount);
-        amounts.set(platform_address.clone(), platform_amount);
+        Self::add_amount(&mut amounts, seller, seller_amount);
+        Self::add_amount(&mut amounts, platform_address, platform_amount);
+
+        let platform_percentage = if total_price > 0 {
+            ((platform_amount * 10_000) / total_price) as u64
+        } else {
+            0
+        };
+        let seller_percentage = if total_price > 0 {
+            ((seller_amount * 10_000) / total_price) as u64
+        } else {
+            0
+        };
 
         Ok(RoyaltyDistribution {
-            creator_address: seller.clone(), // Fallback — multiple creators in amounts map
+            creator_address: seller.clone(), // Fallback — creators are listed in `amounts`
             creator_percentage: 0,
             seller_address: seller.clone(),
-            seller_percentage: 9500,
+            seller_percentage,
             platform_address: platform_address.clone(),
-            platform_percentage: 500,
-            total_amount: sale_price,
+            platform_percentage,
+            total_amount: total_price,
             amounts,
         })
     }
