@@ -104,6 +104,22 @@ pub fn check_nft_ownership(
     Ok(current_owner == *owner)
 }
 
+/// Look up a token's current owner through the NFT contract's `owner_of`.
+///
+/// Unlike [`check_nft_ownership`], a rejected invocation (the address is not a
+/// contract, the contract does not expose `owner_of`, or it traps) returns
+/// `None` instead of aborting the caller. Configuration paths use this so a
+/// misbehaving NFT contract cannot make an unrelated settlement call revert.
+pub fn try_owner_of(nft_contract: &Address, token_id: u64, env: &Env) -> Option<Address> {
+    env.try_invoke_contract::<Address, SettlementError>(
+        nft_contract,
+        &Symbol::new(env, "owner_of"),
+        soroban_sdk::vec![env, token_id.into_val(env)],
+    )
+    .ok()
+    .and_then(|result| result.ok())
+}
+
 /// Transfer an NFT, authorizing as the marketplace contract itself.
 ///
 /// The caller position of the NFT contract's `transfer` must be an owner or an

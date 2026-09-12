@@ -1,10 +1,10 @@
 use crate::error::SettlementError;
 use crate::events::{emit_royalties_distributed, RoyaltiesDistributedEvent};
 use crate::ttl;
-use crate::types::{Asset, DistributionResult, RoyaltyDistribution};
+use crate::types::{AdminConfig, Asset, DistributionResult, RoyaltyDistribution};
 use crate::utils::asset_utils;
 use crate::utils::math_utils;
-use soroban_sdk::{contracttype, Address, Env, Map, Vec};
+use soroban_sdk::{contracttype, symbol_short, Address, Env, Map, Vec};
 
 /// Storage key for a single NFT's royalty configuration.
 ///
@@ -206,17 +206,61 @@ impl RoyaltyDistributor {
         Ok(result)
     }
 
-    /// Set royalty information for an NFT
+    /// Maximum royalty a creator may charge, in basis points (50%).
+    pub const MAX_ROYALTY_BPS: u64 = 5000;
+
+    /// Assert that `setter` is allowed to configure royalties for `token_id`.
+    ///
+    /// The previous implementation ignored its `setter` argument entirely, so
+    /// any account could designate itself (or anyone else) as the royalty
+    /// recipient for any token. That is a first-come land grab on a value that
+    /// is paid out of every future sale, so it has to be anchored to a real
+    /// claim on the token.
+    ///
+    /// Two principals qualify:
+    /// * the token's **current owner**, resolved through the NFT contract —
+    ///   the same authority that can move the token, and
+    /// * the **marketplace admin**, so a misconfigured record can be repaired
+    ///   without holding the owner's key.
+    fn assert_can_configure(
+        env: &Env,
+        nft_contract: &Address,
+        token_id: u64,
+        setter: &Address,
+    ) -> Result<(), SettlementError> {
+        if let Some(admin_config) = env
+            .storage()
+            .instance()
+            .get::<_, AdminConfig>(&symbol_short!("admin_cfg"))
+        {
+            if admin_config.admin == *setter {
+                return Ok(());
+            }
+        }
+
+        match asset_utils::try_owner_of(nft_contract, token_id, env) {
+            Some(owner) if owner == *setter => Ok(()),
+            _ => Err(SettlementError::Unauthorized),
+        }
+    }
+
+    /// Set royalty information for an NFT.
+    ///
+    /// `setter` must authorize the call and must be the token's current owner
+    /// or the marketplace admin; see [`Self::assert_can_configure`].
     pub fn set_royalty_info(
         env: &Env,
         nft_contract: &Address,
         token_id: u64,
         creator: &Address,
         royalty_percentage: u64,
-        _setter: &Address,
+        setter: &Address,
     ) -> Result<(), SettlementError> {
+        setter.require_auth();
+        Self::assert_can_configure(env, nft_contract, token_id, setter)?;
+
         // Validate royalty percentage (max 50%)
-        if royalty_percentage > 5000 {
+        if royalty_percentage > Self::MAX_ROYALTY_BPS {
             return Err(SettlementError::InvalidRoyaltyPercentage);
         }
 
@@ -250,15 +294,20 @@ impl RoyaltyDistributor {
         new_percentage: u64,
         updater: &Address,
     ) -> Result<(), SettlementError> {
+        // Authorize before reading: a rejected update should not leak the
+        // current configuration to an unauthorized caller.
+        updater.require_auth();
+
         let mut royalty_info = Self::get_royalty_info(env, nft_contract, token_id)?;
 
-        // Check authorization (only creator can update)
+        // Only the recorded creator may change the percentage. (The admin has
+        // `set_royalty_info` for repairs, which can also change the recipient.)
         if royalty_info.creator != *updater {
             return Err(SettlementError::Unauthorized);
         }
 
         // Validate new percentage
-        if new_percentage > 5000 {
+        if new_percentage > Self::MAX_ROYALTY_BPS {
             return Err(SettlementError::InvalidRoyaltyPercentage);
         }
 

@@ -1106,6 +1106,64 @@ impl MarketplaceSettlement {
         crate::security::rate_limiter::RateLimiter::get_config(&env, &function)
     }
 
+    // === ROYALTY CONFIGURATION ===
+
+    /// Configure the royalty paid to `creator` on every sale of a token.
+    ///
+    /// `setter` must authorize the call, and must be either the token's current
+    /// owner or the marketplace admin. `nft_contract` must be on the allowlist
+    /// so royalties can only be recorded for contracts the marketplace
+    /// actually settles.
+    pub fn set_royalty_info(
+        env: Env,
+        setter: Address,
+        nft_contract: Address,
+        token_id: u64,
+        creator: Address,
+        royalty_percentage: u64,
+    ) -> Result<(), SettlementError> {
+        asset_utils::validate_nft_contract(&nft_contract, &env)?;
+        ReentrancyGuard::execute(&env, &setter, "set_royalty_info", || {
+            RoyaltyDistributor::set_royalty_info(
+                &env,
+                &nft_contract,
+                token_id,
+                &creator,
+                royalty_percentage,
+                &setter,
+            )
+        })
+    }
+
+    /// Change the royalty percentage for a token. Only the recorded creator may
+    /// call this; changing the recipient requires [`Self::set_royalty_info`].
+    pub fn update_royalty_percentage(
+        env: Env,
+        updater: Address,
+        nft_contract: Address,
+        token_id: u64,
+        new_percentage: u64,
+    ) -> Result<(), SettlementError> {
+        ReentrancyGuard::execute(&env, &updater, "update_royalty_percentage", || {
+            RoyaltyDistributor::update_royalty_percentage(
+                &env,
+                &nft_contract,
+                token_id,
+                new_percentage,
+                &updater,
+            )
+        })
+    }
+
+    /// Read the royalty configuration recorded for a token.
+    pub fn get_royalty_info(
+        env: Env,
+        nft_contract: Address,
+        token_id: u64,
+    ) -> Result<crate::royalty_distributor::RoyaltyInfo, SettlementError> {
+        RoyaltyDistributor::get_royalty_info(&env, &nft_contract, token_id)
+    }
+
     /// Get transaction details
     pub fn get_sale(env: Env, transaction_id: u64) -> Result<SaleTransaction, SettlementError> {
         SaleTransactionStore::get(&env, transaction_id)
