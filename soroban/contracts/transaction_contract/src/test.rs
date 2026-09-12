@@ -597,6 +597,52 @@ fn test_complex_dependency_resolution() {
     }
 }
 
+/// Operations declared out of dependency order must still execute.
+///
+/// The executor ran operations in insertion order, so a transaction that
+/// declared `2` (which depends on `1`) before `1` failed with
+/// `DependencyNotMet` even though `1 -> 2` is a valid order. Operations arrive
+/// from different subsystems, so declaration order is not a contract callers
+/// can be expected to satisfy.
+#[test]
+fn test_out_of_order_operations_are_resolved() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, creator) = make_client(&env);
+
+    let tx_id = client.create_transaction(&creator, &map![&env], &vec![&env]);
+
+    // Declared leaf-first: 4 depends on 3, 3 depends on 2, 2 depends on 1.
+    client.add_operation(&tx_id, &sample_operation(&env, 4, vec![&env, 3]));
+    client.add_operation(&tx_id, &sample_operation(&env, 3, vec![&env, 2]));
+    client.add_operation(&tx_id, &sample_operation(&env, 2, vec![&env, 1]));
+    client.add_operation(&tx_id, &sample_operation(&env, 1, vec![&env]));
+
+    let result = client.execute_transaction(&tx_id, &None, &None);
+    assert_eq!(result.final_state, TransactionState::Completed);
+    assert_eq!(result.successful_operations, 4);
+
+    // Results come back in resolved order, not declaration order.
+    for i in 0..4 {
+        assert_eq!(result.results.get(i).unwrap().operation_id, (i + 1) as u64);
+    }
+}
+
+/// An operation whose dependency was never added must fail the transaction
+/// rather than being silently skipped.
+#[test]
+#[should_panic]
+fn test_unsatisfiable_dependency_fails_transaction() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, creator) = make_client(&env);
+
+    let tx_id = client.create_transaction(&creator, &map![&env], &vec![&env]);
+    // Operation 1 depends on operation 99, which is never added.
+    client.add_operation(&tx_id, &sample_operation(&env, 1, vec![&env, 99]));
+    client.execute_transaction(&tx_id, &None, &None);
+}
+
 #[test]
 #[should_panic(expected = "HostError: Error(Contract, #5)")] // TransactionError::DependencyNotMet
 fn test_circular_dependency_detection() {

@@ -121,7 +121,16 @@ impl TransactionContract {
         let mut used_gas = 0_u64;
         let mut successful_operations = 0_u32;
 
-        for op in tx.operations.iter() {
+        // Execute in a dependency-respecting order. Iterating `tx.operations`
+        // directly meant declaration order decided success: an operation that
+        // was added before one it depends on aborted the whole transaction with
+        // `DependencyNotMet`, even though a valid order existed. Operations
+        // arrive from different subsystems, so callers cannot be expected to
+        // submit them topologically sorted.
+        let ordered_operations =
+            crate::dependency_resolver::resolve_execution_order(&env, &tx.operations);
+
+        for op in ordered_operations.iter() {
             if !dependencies_satisfied(&succeeded_ids, &op.dependencies) {
                 tx.state = TransactionState::Failed;
                 tx.error_reason = Some(String::from_str(&env, "operation dependency not met"));

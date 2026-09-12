@@ -40,16 +40,3 @@ pub fn estimate_with_config(
         }
     }
 }
-
-// Placeholder reordering hook. Returns same order now for deterministic draft behavior.
-pub fn reorder_for_efficiency(
-    env: &Env,
-    operations: &Vec<Operation>,
-    _cfg: &GasOptimizationConfig,
-) -> Vec<Operation> {
-    let mut out = Vec::new(env);
-    for op in operations.iter() {
-        out.push_back(op);
-    }
-    out
-}
