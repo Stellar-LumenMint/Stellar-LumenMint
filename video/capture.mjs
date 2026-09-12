@@ -88,7 +88,8 @@ async function captureSite(browser, url, outFile) {
  * backend API, and the deployed frontend has no API reachable (`lib/config.ts`
  * defaults to `http://localhost:9000`), so both render "Failed to fetch".
  * Filming a broken page in a product pitch would be dishonest, so they are
- * excluded and tracked as a bug instead.
+ * excluded instead — see issue #71. Removing an entry here is the last step of
+ * that fix, because it means the route is worth filming again.
  */
 const KNOWN_BROKEN = ['/marketplace/auctions', '/marketplace/auction/'];
 
