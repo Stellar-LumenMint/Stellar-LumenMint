@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { catchError, throwError, type Observable } from 'rxjs';
 import { getStellarConfig } from '../config/stellar.config';
+import { AppErrorCode } from '../common/enums/app-error-code.enum';
 import { SorobanRpcService } from '../services/soroban-rpc.service';
 import {
   asHttpRequest,
@@ -16,29 +17,32 @@ import {
 
 type ErrorMapping = {
   status: HttpStatus;
-  code: string;
+  code: AppErrorCode;
 };
 
+// Codes come from the shared enum rather than being spelled out here, so the
+// set of codes a client can receive is enumerable from one file. The string
+// values are unchanged, so nothing on the wire moved.
 const ERROR_MAP: Record<string, ErrorMapping> = {
   SorobanRpcError: {
     status: HttpStatus.BAD_GATEWAY,
-    code: 'SOROBAN_RPC_ERROR',
+    code: AppErrorCode.SOROBAN_RPC_ERROR,
   },
   TransactionFailedError: {
     status: HttpStatus.BAD_REQUEST,
-    code: 'STELLAR_TRANSACTION_FAILED',
+    code: AppErrorCode.STELLAR_TRANSACTION_FAILED,
   },
   InsufficientBalanceError: {
     status: HttpStatus.PAYMENT_REQUIRED,
-    code: 'INSUFFICIENT_BALANCE',
+    code: AppErrorCode.INSUFFICIENT_BALANCE,
   },
   InvalidSignatureError: {
     status: HttpStatus.UNAUTHORIZED,
-    code: 'INVALID_SIGNATURE',
+    code: AppErrorCode.INVALID_SIGNATURE,
   },
   ContractError: {
     status: HttpStatus.UNPROCESSABLE_ENTITY,
-    code: 'SOROBAN_CONTRACT_ERROR',
+    code: AppErrorCode.SOROBAN_CONTRACT_ERROR,
   },
 };
 
@@ -128,12 +132,20 @@ export class StellarErrorInterceptor implements NestInterceptor {
       return ERROR_MAP.SorobanRpcError;
     }
 
+    // An error that already carries a member of the enum keeps it; anything
+    // else — including a free-text code a driver happened to set — becomes the
+    // catch-all, so the set of codes a client can observe stays closed.
+    const explicit =
+      typeof error.code === 'string'
+        ? AppErrorCode[error.code as keyof typeof AppErrorCode]
+        : undefined;
+
     return {
       status:
         typeof error.status === 'number'
           ? error.status
           : HttpStatus.INTERNAL_SERVER_ERROR,
-      code: error.code || 'STELLAR_UNKNOWN_ERROR',
+      code: explicit ?? AppErrorCode.STELLAR_UNKNOWN_ERROR,
     };
   }
 
