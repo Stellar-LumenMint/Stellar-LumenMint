@@ -396,14 +396,69 @@ impl TransactionContract {
         })
     }
 
+    /// Resolve the gas-optimization settings that will actually be applied to a
+    /// transaction.
+    ///
+    /// This returned `default_gas_config` and ignored its argument entirely, so
+    /// a caller had no way to know which of its requested settings took effect —
+    /// the answer was always "none of them". It now validates the request
+    /// against the transaction and returns the effective configuration, so the
+    /// caller sees what was accepted and what was clamped.
+    ///
+    /// * `batch_size` is capped at the number of operations: batching more work
+    ///   than exists is a no-op.
+    /// * `max_parallel_operations` is pinned to 1. A Soroban transaction is a
+    ///   single invocation and executes its host functions sequentially; there
+    ///   is no parallelism to request.
+    /// * `enable_caching` is granted only when the transaction repeats an
+    ///   operation type, which is the case the estimator's discount models.
+    /// * `enable_reordering` is always reported false. Gas is the sum of the
+    ///   per-operation costs and does not depend on order, so reordering cannot
+    ///   save gas; the only ordering that matters is dependency order, which
+    ///   execution applies unconditionally.
+    /// * the safety multiplier is clamped to [100%, 200%] so a request cannot
+    ///   disable the buffer or inflate the estimate without bound.
     pub fn optimize_transaction_flow(
         env: Env,
         transaction_id: u64,
-        _config: GasOptimizationConfig,
+        config: GasOptimizationConfig,
     ) -> Result<GasOptimizationConfig, TransactionError> {
-        let _ = storage::load_transaction(&env, transaction_id)
+        let tx = storage::load_transaction(&env, transaction_id)
             .ok_or(TransactionError::TransactionNotFound)?;
-        Ok(default_gas_config(&env))
+
+        let operation_count = tx.operations.len();
+        let batch_size = if config.batch_size == 0 {
+            1
+        } else {
+            config.batch_size.min(operation_count.max(1))
+        };
+
+        // Detect a repeated operation type: the estimator applies its caching
+        // discount to work that is identical to work already done.
+        let mut repeated_type = false;
+        for i in 0..operation_count {
+            let Some(op) = tx.operations.get(i) else {
+                continue;
+            };
+            for j in (i + 1)..operation_count {
+                if let Some(other) = tx.operations.get(j) {
+                    if other.operation_type == op.operation_type {
+                        repeated_type = true;
+                    }
+                }
+            }
+        }
+
+        let multiplier = config.fallback_gas_multiplier_bps.clamp(10_000, 20_000);
+
+        Ok(GasOptimizationConfig {
+            batch_size,
+            max_parallel_operations: 1,
+            gas_price_tolerance: config.gas_price_tolerance,
+            enable_reordering: false,
+            enable_caching: config.enable_caching && repeated_type,
+            fallback_gas_multiplier_bps: multiplier,
+        })
     }
 
     // -------------------------------------------------------------------------

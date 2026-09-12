@@ -711,9 +711,48 @@ fn test_gas_optimization_reordering_placeholder() {
     };
 
     let result_cfg = client.optimize_transaction_flow(&tx_id, &cfg);
-    // Should return default config currently
-    assert_eq!(result_cfg.batch_size, 10);
+
+    // The transaction holds a single operation, so a batch of 5 is clamped to
+    // what actually exists instead of being echoed back as accepted.
+    assert_eq!(result_cfg.batch_size, 1);
+    // Soroban executes one invocation sequentially: there is no parallelism.
+    assert_eq!(result_cfg.max_parallel_operations, 1);
+    // Reordering cannot reduce gas (cost is order-independent), so the flag is
+    // reported false regardless of the request.
     assert!(!result_cfg.enable_reordering);
+    // Caching is denied because this transaction repeats no operation type.
+    assert!(!result_cfg.enable_caching);
+    // The 10500 bps buffer is inside the allowed range and is preserved.
+    assert_eq!(result_cfg.fallback_gas_multiplier_bps, 10500);
+    assert_eq!(result_cfg.gas_price_tolerance, 10);
+}
+
+/// A caching request is honoured only when there is repeated work for it to
+/// apply to, and the safety multiplier is clamped to a sane range.
+#[test]
+fn test_optimize_transaction_flow_accepts_caching_for_repeated_work() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, creator) = make_client(&env);
+
+    let tx_id = client.create_transaction(&creator, &map![&env], &vec![&env]);
+    let first = sample_operation(&env, 1, vec![&env]);
+    let mut second = sample_operation(&env, 2, vec![&env, 1]);
+    second.operation_type = first.operation_type.clone();
+    client.add_operation(&tx_id, &first);
+    client.add_operation(&tx_id, &second);
+
+    let cfg = GasOptimizationConfig {
+        enable_caching: true,
+        fallback_gas_multiplier_bps: 90_000,
+        ..crate::types::default_gas_config(&env)
+    };
+    let resolved = client.optimize_transaction_flow(&tx_id, &cfg);
+
+    assert_eq!(resolved.batch_size, 2);
+    assert!(resolved.enable_caching);
+    // Clamped to the 200% ceiling rather than accepted verbatim.
+    assert_eq!(resolved.fallback_gas_multiplier_bps, 20_000);
 }
 
 #[test]
