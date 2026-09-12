@@ -21,9 +21,9 @@
     "test": "npm run test:backend && npm run test:frontend && npm run test:admin && npm run test:mobile",
     "lint": "cd backend && npx eslint \"{src,test}/**/*.ts\" && cd ../frontend && npx eslint .",
     "format:check": "cd backend && npx prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
-  "contracts:build": "cd soroban && cargo build --workspace --release",
-  "contracts:test": "cd soroban && cargo test --workspace",
-  "errors:build": "node scripts/error-code-registry.mjs",
-  "errors:check": "node scripts/error-code-registry.mjs --check"
+    "contracts:build": "cd soroban && cargo build --workspace --release",
+    "contracts:test": "cd soroban && cargo test --workspace",
+    "errors:build": "node scripts/error-code-registry.mjs",
+    "errors:check": "node scripts/error-code-registry.mjs --check"
   }
 }
