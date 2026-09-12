@@ -3,18 +3,42 @@ use crate::storage::DataKey;
 use crate::types::role;
 use soroban_sdk::{panic_with_error, Address, Env};
 
-pub fn grant_role(env: &Env, caller: &Address, target: &Address, role: u32) {
+/// Grant `role` to `target`, reporting a no-op instead of silently succeeding.
+///
+/// Both directions used to be unconditional writes that returned nothing, so a
+/// caller could not tell a role change that happened from one that was already
+/// in place. A duplicate grant and a revocation of a role nobody holds are both
+/// caller mistakes worth surfacing.
+pub fn grant_role(
+    env: &Env,
+    caller: &Address,
+    target: &Address,
+    role: u32,
+) -> Result<(), ContractError> {
     require_owner(env, caller);
+    if has_role(env, target, role) {
+        return Err(ContractError::RoleAlreadyGranted);
+    }
     env.storage()
         .instance()
         .set(&DataKey::Role(target.clone(), role), &true);
+    Ok(())
 }
 
-pub fn revoke_role(env: &Env, caller: &Address, target: &Address, role_disc: u32) {
+pub fn revoke_role(
+    env: &Env,
+    caller: &Address,
+    target: &Address,
+    role_disc: u32,
+) -> Result<(), ContractError> {
     require_owner(env, caller);
+    if !has_role(env, target, role_disc) {
+        return Err(ContractError::RoleNotGranted);
+    }
     env.storage()
         .instance()
         .set(&DataKey::Role(target.clone(), role_disc), &false);
+    Ok(())
 }
 
 pub fn has_role(env: &Env, address: &Address, role_disc: u32) -> bool {

@@ -40,6 +40,41 @@ fn check_supply(env: &Env) -> Result<(), ContractError> {
     Ok(())
 }
 
+/// Reject a batch that is empty or larger than the contract accepts.
+///
+/// An empty batch used to report `BatchTooLarge`, which told the caller the
+/// opposite of what was wrong: `0` is too *small*.
+fn validate_batch_size(n: u32) -> Result<(), ContractError> {
+    if n == 0 {
+        return Err(ContractError::InvalidBatchSize);
+    }
+    if n > MAX_BATCH_SIZE {
+        return Err(ContractError::BatchTooLarge);
+    }
+    Ok(())
+}
+
+/// Reject a mint or transfer that would hand a token to this contract itself.
+///
+/// The NFT contract has no way to move a token back out, so a token sent to its
+/// own address is destroyed rather than held. Escrow lives in the settlement
+/// contract, not here, so no legitimate flow needs this.
+fn validate_recipient(env: &Env, to: &Address) -> Result<(), ContractError> {
+    if to == &env.current_contract_address() {
+        return Err(ContractError::InvalidRecipient);
+    }
+    Ok(())
+}
+
+/// Reject an empty metadata URI, which would produce a token whose metadata can
+/// never resolve.
+fn validate_uri(uri: &String) -> Result<(), ContractError> {
+    if uri.is_empty() {
+        return Err(ContractError::InvalidUri);
+    }
+    Ok(())
+}
+
 fn mint_one(
     env: &Env,
     caller: &Address,
@@ -49,6 +84,8 @@ fn mint_one(
     royalty_override: Option<RoyaltyInfo>,
 ) -> Result<u64, ContractError> {
     check_supply(env)?;
+    validate_recipient(env, to)?;
+    validate_uri(&metadata_uri)?;
 
     let token_id = next_token_id(env);
     let default_royalty: RoyaltyInfo = env
@@ -140,9 +177,7 @@ pub fn batch_mint(
     if n != metadata_uris.len() || n != attributes.len() {
         return Err(ContractError::MismatchedArrays);
     }
-    if n == 0 || n > MAX_BATCH_SIZE {
-        return Err(ContractError::BatchTooLarge);
-    }
+    validate_batch_size(n)?;
 
     // Check total supply headroom up front
     let config: CollectionConfig = env
@@ -291,9 +326,7 @@ pub fn burn(env: &Env, caller: &Address, token_id: u64) -> Result<(), ContractEr
 pub fn batch_burn(env: &Env, caller: &Address, token_ids: Vec<u64>) -> Result<(), ContractError> {
     // 1. Validate batch size
     let n = token_ids.len();
-    if n == 0 || n > MAX_BATCH_SIZE {
-        return Err(ContractError::BatchTooLarge);
-    }
+    validate_batch_size(n)?;
 
     // 2. Check if caller has burner role (allows burning any tokens)
     let has_burner_role = access_control::has_role(env, caller, crate::types::role::BURNER);
@@ -360,9 +393,7 @@ pub fn batch_transfer(
     token_ids: Vec<u64>,
 ) -> Result<(), ContractError> {
     let n = token_ids.len();
-    if n == 0 || n > MAX_BATCH_SIZE {
-        return Err(ContractError::BatchTooLarge);
-    }
+    validate_batch_size(n)?;
 
     for i in 0..n {
         let token_id = token_ids.get(i).unwrap();

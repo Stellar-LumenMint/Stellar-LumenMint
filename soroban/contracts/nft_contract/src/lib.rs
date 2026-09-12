@@ -282,16 +282,26 @@ impl NftContract {
     // Access control
     // -------------------------------------------------------------------------
 
-    pub fn grant_role(env: Env, caller: Address, target: Address, role: u32) {
+    pub fn grant_role(
+        env: Env,
+        caller: Address,
+        target: Address,
+        role: u32,
+    ) -> Result<(), ContractError> {
         caller.require_auth();
         ttl::extend_instance(&env);
-        ac::grant_role(&env, &caller, &target, role);
+        ac::grant_role(&env, &caller, &target, role)
     }
 
-    pub fn revoke_role(env: Env, caller: Address, target: Address, role: u32) {
+    pub fn revoke_role(
+        env: Env,
+        caller: Address,
+        target: Address,
+        role: u32,
+    ) -> Result<(), ContractError> {
         caller.require_auth();
         ttl::extend_instance(&env);
-        ac::revoke_role(&env, &caller, &target, role);
+        ac::revoke_role(&env, &caller, &target, role)
     }
 
     pub fn has_role(env: Env, address: Address, role: u32) -> bool {

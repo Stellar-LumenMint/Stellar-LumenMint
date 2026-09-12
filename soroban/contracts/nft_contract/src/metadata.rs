@@ -46,6 +46,12 @@ pub fn set_token_uri(
         return Err(ContractError::NotAuthorized);
     }
 
+    // An empty URI would leave the token permanently unreadable off-chain, so
+    // it is rejected rather than written.
+    if uri.is_empty() {
+        return Err(ContractError::InvalidUri);
+    }
+
     let mut data: TokenData =
         ttl::get(env, &DataKey::TokenData(token_id)).ok_or(ContractError::TokenNotFound)?;
     data.metadata_uri = uri;

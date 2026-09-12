@@ -142,6 +142,14 @@ fn do_transfer_effects(
     to: &Address,
     token_id: u64,
 ) -> Result<(), ContractError> {
+    // A transfer to this contract's own address is unrecoverable, because there
+    // is no entrypoint that moves a token back out. Checked here rather than in
+    // each caller so `transfer`, `safe_transfer_from` and `batch_transfer` all
+    // reject it.
+    if to == &env.current_contract_address() {
+        return Err(ContractError::InvalidRecipient);
+    }
+
     // Clear per-token approval on transfer
     ttl::remove(env, &DataKey::TokenApproved(token_id));
 
