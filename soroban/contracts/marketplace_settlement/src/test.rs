@@ -511,6 +511,62 @@ fn test_set_and_get_royalty_info() {
     });
 }
 
+/// Royalty configurations are keyed by `(nft_contract, token_id)`.
+///
+/// The previous implementation built the storage key with a helper that
+/// returned an empty `Bytes` regardless of its arguments, so every NFT shared
+/// a single record: configuring token 1 overwrote the configuration for every
+/// other token, and each read returned whatever was written last. This test
+/// pins the isolation, which the old implementation could not satisfy.
+#[test]
+fn test_royalty_configs_are_isolated_per_token() {
+    let (env, cid, _client, _admin) = new_env();
+    let nft_a = Address::generate(&env);
+    let nft_b = Address::generate(&env);
+    let creator_a = Address::generate(&env);
+    let creator_b = Address::generate(&env);
+    env.as_contract(&cid, || {
+        RoyaltyDistributor::set_royalty_info(&env, &nft_a, 1, &creator_a, 500, &creator_a).unwrap();
+        RoyaltyDistributor::set_royalty_info(&env, &nft_a, 2, &creator_b, 1000, &creator_b)
+            .unwrap();
+        RoyaltyDistributor::set_royalty_info(&env, &nft_b, 1, &creator_b, 2000, &creator_b)
+            .unwrap();
+
+        let a1 = RoyaltyDistributor::get_royalty_info(&env, &nft_a, 1).unwrap();
+        let a2 = RoyaltyDistributor::get_royalty_info(&env, &nft_a, 2).unwrap();
+        let b1 = RoyaltyDistributor::get_royalty_info(&env, &nft_b, 1).unwrap();
+
+        assert_eq!(a1.royalty_percentage, 500);
+        assert_eq!(a1.creator, creator_a);
+        assert_eq!(a2.royalty_percentage, 1000);
+        assert_eq!(a2.creator, creator_b);
+        assert_eq!(b1.royalty_percentage, 2000);
+        assert_eq!(b1.creator, creator_b);
+    });
+}
+
+/// An NFT with no recorded royalty must still be sellable.
+///
+/// Royalties are opt-in, but `calculate_royalties` used to propagate the
+/// `NotFound` from `get_royalty_info`, which made `create_sale` revert for
+/// every token on a deployment where no creator had configured one.
+#[test]
+fn test_create_sale_without_configured_royalty_succeeds() {
+    let (env, _cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    // Deliberately register the allowlists without setting any royalty config.
+    client.add_allowed_nft_contract(&admin, &nft);
+    client.add_allowed_token_contract(&admin, &asset.contract);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let id = client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+    let sale = client.get_sale(&id);
+    assert_eq!(sale.royalty_info.creator_percentage, 0);
+    assert!(sale.royalty_info.amounts.contains_key(seller));
+}
+
 #[test]
 fn test_royalty_exceeds_max_fails() {
     let (env, cid, _client, _admin) = new_env();

@@ -1,15 +1,25 @@
 use crate::error::SettlementError;
 use crate::events::{emit_royalties_distributed, RoyaltiesDistributedEvent};
+use crate::ttl;
 use crate::types::{Asset, DistributionResult, RoyaltyDistribution};
 use crate::utils::asset_utils;
 use crate::utils::math_utils;
-use soroban_sdk::{contracttype, symbol_short, Address, Bytes, Env, Map, Symbol, Vec};
+use soroban_sdk::{contracttype, Address, Env, Map, Vec};
 
-// Storage keys
-const ROYALTY_CONFIGS: Symbol = symbol_short!("roy_cfgs");
-
-// Type alias for royalty key
-type RoyaltyKey = Bytes;
+/// Storage key for a single NFT's royalty configuration.
+///
+/// This used to be a `Bytes` value produced by a helper that ignored both of
+/// its arguments and always returned an empty `Bytes`. Every NFT therefore
+/// shared one map slot: configuring royalties for token N silently rewrote the
+/// configuration for every other token, and `get_royalty_info` returned
+/// whichever token was configured last. Making the key an explicit enum that
+/// carries the contract address and token id removes that ambiguity at the
+/// type level.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RoyaltyKey {
+    Config(Address, u64),
+}
 
 /// Royalty information for an NFT
 #[contracttype]
@@ -26,6 +36,29 @@ pub struct RoyaltyInfo {
 pub struct RoyaltyDistributor;
 
 impl RoyaltyDistributor {
+    /// Resolve the royalty configuration for an NFT, falling back to a
+    /// zero-percentage configuration when none has been recorded.
+    ///
+    /// Royalties are opt-in: an NFT whose creator never configured a royalty
+    /// must still be sellable, with the whole sale price flowing through the
+    /// normal seller/platform split. Treating "unconfigured" as an error — as
+    /// the previous `get_royalty_info(...)?` call did — meant `create_sale`
+    /// reverted for every token on a fresh deployment.
+    pub fn resolve_royalty_info(
+        env: &Env,
+        nft_contract: &Address,
+        token_id: u64,
+        default_creator: &Address,
+    ) -> RoyaltyInfo {
+        Self::get_royalty_info(env, nft_contract, token_id).unwrap_or(RoyaltyInfo {
+            nft_contract: nft_contract.clone(),
+            token_id,
+            creator: default_creator.clone(),
+            royalty_percentage: 0,
+            last_updated: 0,
+        })
+    }
+
     /// Calculate royalties for an NFT sale.
     ///
     /// The creator's royalty comes out of the full sale price. The platform
@@ -45,7 +78,7 @@ impl RoyaltyDistributor {
         platform_address: &Address,
         platform_fee: i128,
     ) -> Result<RoyaltyDistribution, SettlementError> {
-        let royalty_info = Self::get_royalty_info(env, nft_contract, token_id)?;
+        let royalty_info = Self::resolve_royalty_info(env, nft_contract, token_id, seller);
 
         // Calculate royalty amount on full sale price (rounds in creator's favor via half-up)
         let royalty_amount =
@@ -205,17 +238,8 @@ impl RoyaltyDistributor {
         nft_contract: &Address,
         token_id: u64,
     ) -> Result<RoyaltyInfo, SettlementError> {
-        let key = Self::make_royalty_key(env, nft_contract, token_id);
-        let royalty_configs: Map<RoyaltyKey, RoyaltyInfo> = env
-            .storage()
-            .instance()
-            .get(&ROYALTY_CONFIGS)
-            .unwrap_or(Map::new(env));
-
-        match royalty_configs.get(key) {
-            Some(info) => Ok(info),
-            None => Err(SettlementError::NotFound),
-        }
+        ttl::get(env, &RoyaltyKey::Config(nft_contract.clone(), token_id))
+            .ok_or(SettlementError::NotFound)
     }
 
     /// Update royalty percentage for an NFT
@@ -388,25 +412,18 @@ impl RoyaltyDistributor {
         Ok(())
     }
 
-    /// Internal: Create storage key for royalty info
-    fn make_royalty_key(env: &Env, _nft_contract: &Address, _token_id: u64) -> RoyaltyKey {
-        Bytes::new(env)
-    }
-
-    /// Internal: Store royalty information
+    /// Internal: Store royalty information under the token's own key.
+    ///
+    /// Persistent storage rather than one instance-level map: royalty configs
+    /// are per-token and are read on every listing/settlement, so they must
+    /// neither contend for the instance entry's size limit nor be rewritten in
+    /// full on each update.
     fn store_royalty_info(env: &Env, royalty_info: &RoyaltyInfo) -> Result<(), SettlementError> {
-        let mut royalty_configs: Map<RoyaltyKey, RoyaltyInfo> = env
-            .storage()
-            .instance()
-            .get(&ROYALTY_CONFIGS)
-            .unwrap_or(Map::new(env));
-
-        let key = Self::make_royalty_key(env, &royalty_info.nft_contract, royalty_info.token_id);
-        royalty_configs.set(key, royalty_info.clone());
-
-        env.storage()
-            .instance()
-            .set(&ROYALTY_CONFIGS, &royalty_configs);
+        ttl::set(
+            env,
+            &RoyaltyKey::Config(royalty_info.nft_contract.clone(), royalty_info.token_id),
+            royalty_info,
+        );
         Ok(())
     }
 }
