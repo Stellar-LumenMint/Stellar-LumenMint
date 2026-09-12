@@ -57,15 +57,15 @@ deploy_contract() {
     echo ""
     echo "--- Deploying $CONTRACT ---"
 
-    WASM_HASH=$(soroban contract install \
+    WASM_HASH=$(stellar contract upload \
         --wasm "$WASM" \
-        --source "$SOURCE" \
+        --source-account "$SOURCE" \
         --network "$NETWORK")
     echo "  WASM Hash: $WASM_HASH"
 
-    CONTRACT_ID=$(soroban contract deploy \
+    CONTRACT_ID=$(stellar contract deploy \
         --wasm-hash "$WASM_HASH" \
-        --source "$SOURCE" \
+        --source-account "$SOURCE" \
         --network "$NETWORK")
     echo "  Contract ID: $CONTRACT_ID"
 

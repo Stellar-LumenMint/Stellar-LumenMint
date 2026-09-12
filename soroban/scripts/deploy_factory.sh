@@ -21,30 +21,30 @@ cargo build --target wasm32-unknown-unknown --release --package collection_facto
 echo "Deploying to $NETWORK..."
 
 # Install WASM and capture hash
-WASM_HASH=$(soroban contract install \
+WASM_HASH=$(stellar contract upload \
   --wasm target/wasm32-unknown-unknown/release/collection_factory.wasm \
-  --source "$SOURCE" \
+  --source-account "$SOURCE" \
   --network "$NETWORK")
 
 echo "WASM Hash: $WASM_HASH"
 
 # Deploy the contract instance
-CONTRACT_ID=$(soroban contract deploy \
+CONTRACT_ID=$(stellar contract deploy \
   --wasm-hash "$WASM_HASH" \
-  --source "$SOURCE" \
+  --source-account "$SOURCE" \
   --network "$NETWORK")
 
 echo "Contract ID: $CONTRACT_ID"
 
 # Initialize the factory
 echo "Initializing factory..."
-soroban contract invoke \
+stellar contract invoke \
   --id "$CONTRACT_ID" \
-  --source "$SOURCE" \
+  --source-account "$SOURCE" \
   --network "$NETWORK" \
   -- \
   initialize \
-  --admin "$(soroban config identity address "$SOURCE")"
+  --admin "$(stellar keys public-key "$SOURCE")"
 
 echo "Deployment complete!"
 echo "Factory Address: $CONTRACT_ID"

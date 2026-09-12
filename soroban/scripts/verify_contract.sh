@@ -14,9 +14,9 @@ echo "Verifying contract $CONTRACT_ID on $NETWORK..."
 
 # Get collection count
 echo "Checking collection count..."
-COUNT=$(soroban contract invoke \
+COUNT=$(stellar contract invoke \
   --id $CONTRACT_ID \
-  --source $SOURCE \
+  --source-account $SOURCE \
   --network $NETWORK \
   -- \
   get_collection_count)
