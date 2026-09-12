@@ -76,5 +76,12 @@ for CONTRACT in "${CONTRACTS[@]}"; do
     deploy_contract "$CONTRACT"
 done
 
+# A deployed instance is inert until its admin, fee configuration, settlement
+# asset and allowlists are set. Initialisation lives in its own script so it can
+# also be re-run against an existing manifest after a partial failure.
 echo ""
-echo "All contracts deployed. Manifest updated at deployments/manifest.json"
+echo "Initialising deployed contracts..."
+NETWORK="$NETWORK" SOURCE="$SOURCE" "$SCRIPT_DIR/initialize_all.sh"
+
+echo ""
+echo "All contracts deployed and initialised. Manifest updated at deployments/manifest.json"
