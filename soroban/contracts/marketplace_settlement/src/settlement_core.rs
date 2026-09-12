@@ -4,7 +4,8 @@ use crate::dispute_resolution::DisputeResolutionManager;
 use crate::error::SettlementError;
 use crate::events::{
     emit_address_blocked, emit_address_unblocked, emit_bundle_created, emit_bundle_executed,
-    AddressBlockedEvent, AddressUnblockedEvent,
+    emit_trade_accepted, emit_trade_created, emit_trade_executed, AddressBlockedEvent,
+    AddressUnblockedEvent,
 };
 use crate::fee_manager::FeeManager;
 use crate::pause_manager::{ModuleType, PauseManager};
@@ -704,7 +705,69 @@ impl MarketplaceSettlement {
         })
     }
 
-    /// Create a trade
+    /// Escrow every item into the marketplace, checking ownership first.
+    ///
+    /// The caller must already hold the re-entrancy guard. Soroban reverts the
+    /// whole invocation on the first failure, so a partially escrowed list can
+    /// never be committed.
+    fn escrow_items(
+        env: &Env,
+        owner: &Address,
+        items: &Vec<crate::types::NFTItem>,
+    ) -> Result<(), SettlementError> {
+        for i in 0..items.len() {
+            let item = items.get(i).ok_or(SettlementError::InvalidAmount)?;
+
+            asset_utils::validate_nft_contract(&item.nft_address, env)?;
+            if !asset_utils::check_nft_ownership(&item.nft_address, item.token_id, owner, env)? {
+                return Err(SettlementError::Unauthorized);
+            }
+
+            // The same token listed twice would escrow once and be transferred
+            // twice, so reject duplicates before any state is recorded.
+            for j in (i + 1)..items.len() {
+                let other = items.get(j).ok_or(SettlementError::InvalidAmount)?;
+                if other.nft_address == item.nft_address && other.token_id == item.token_id {
+                    return Err(SettlementError::AlreadyExists);
+                }
+            }
+
+            asset_utils::transfer_nft_from(
+                &item.nft_address,
+                owner,
+                owner,
+                &env.current_contract_address(),
+                item.token_id,
+                env,
+            )?;
+        }
+        Ok(())
+    }
+
+    /// Release escrowed items to `to`.
+    fn release_items(
+        env: &Env,
+        to: &Address,
+        items: &Vec<crate::types::NFTItem>,
+    ) -> Result<(), SettlementError> {
+        for item in items.iter() {
+            asset_utils::transfer_nft(
+                &item.nft_address,
+                &env.current_contract_address(),
+                to,
+                item.token_id,
+                env,
+            )?;
+        }
+        Ok(())
+    }
+
+    /// Create an NFT-for-NFT trade offer.
+    ///
+    /// The initiator's items are escrowed immediately, so the offer cannot be
+    /// accepted by someone and then fail because the initiator moved the tokens
+    /// away in the meantime. The counterparty's items are escrowed when they
+    /// accept, and both sides move in the single `execute_trade` call.
     pub fn create_trade(
         env: Env,
         initiator: Address,
@@ -731,9 +794,18 @@ impl MarketplaceSettlement {
             )?;
 
             // Validate trade parameters
-            if initiator_nfts.is_empty() {
+            if initiator_nfts.is_empty() && counterparty_nfts.is_empty() {
                 return Err(SettlementError::InvalidAmount);
             }
+
+            time_utils::validate_transaction_timing(
+                env.ledger().timestamp(),
+                env.ledger().timestamp() + duration_seconds,
+                2592000, // 30 days max
+                &env,
+            )?;
+
+            Self::escrow_items(&env, &initiator, &initiator_nfts)?;
 
             let trade_id = TradeTransactionStore::next_id(&env);
 
@@ -746,15 +818,26 @@ impl MarketplaceSettlement {
                 state: crate::types::TransactionState::Pending,
                 created_at: env.ledger().timestamp(),
                 expires_at: env.ledger().timestamp() + duration_seconds,
-                platform_fee: 0, // Would be calculated
+                platform_fee: 0,
             };
 
             TradeTransactionStore::put(&env, &trade)?;
+
+            emit_trade_created(
+                &env,
+                crate::events::TradeCreatedEvent {
+                    trade_id,
+                    initiator: initiator.clone(),
+                    expires_at: trade.expires_at,
+                    timestamp: env.ledger().timestamp(),
+                },
+            );
+
             Ok(trade_id)
         })
     }
 
-    /// Accept a trade
+    /// Accept a trade offer, escrowing the acceptor's side.
     pub fn accept_trade(env: Env, trade_id: u64, acceptor: Address) -> Result<(), SettlementError> {
         acceptor.require_auth();
 
@@ -783,15 +866,37 @@ impl MarketplaceSettlement {
                 return Err(SettlementError::Expired);
             }
 
-            trade.counterparty = Some(acceptor);
+            // A directed offer names the only account that may accept it.
+            if let Some(named) = trade.counterparty.clone() {
+                if named != acceptor {
+                    return Err(SettlementError::Unauthorized);
+                }
+            }
+
+            if trade.initiator == acceptor {
+                return Err(SettlementError::InvalidState);
+            }
+
+            Self::escrow_items(&env, &acceptor, &trade.counterparty_nfts)?;
+
+            trade.counterparty = Some(acceptor.clone());
             trade.state = crate::types::TransactionState::Funded;
             TradeTransactionStore::update(&env, &trade)?;
+
+            emit_trade_accepted(
+                &env,
+                crate::events::TradeAcceptedEvent {
+                    trade_id,
+                    acceptor: acceptor.clone(),
+                    timestamp: env.ledger().timestamp(),
+                },
+            );
 
             Ok(())
         })
     }
 
-    /// Execute a trade
+    /// Execute an accepted trade, moving both sides in one transaction.
     pub fn execute_trade(
         env: Env,
         trade_id: u64,
@@ -819,14 +924,103 @@ impl MarketplaceSettlement {
             if trade.state != crate::types::TransactionState::Funded {
                 return Err(SettlementError::InvalidState);
             }
+            if time_utils::is_expired(trade.expires_at, &env) {
+                return Err(SettlementError::Expired);
+            }
 
-            // Execute NFT swaps
-            // This is a simplified implementation
+            let counterparty = trade
+                .counterparty
+                .clone()
+                .ok_or(SettlementError::NotFound)?;
+
+            // Only the two parties may settle, so an unrelated account cannot
+            // choose the moment of execution.
+            if executor != trade.initiator && executor != counterparty {
+                return Err(SettlementError::Unauthorized);
+            }
+
+            // Both legs move: the initiator's items go to the acceptor and the
+            // acceptor's items go to the initiator. Marking the trade executed
+            // without moving anything — as the previous implementation did —
+            // recorded a completed swap on chain that never happened.
+            Self::release_items(&env, &counterparty, &trade.initiator_nfts)?;
+            Self::release_items(&env, &trade.initiator, &trade.counterparty_nfts)?;
+
             trade.state = crate::types::TransactionState::Executed;
             TradeTransactionStore::update(&env, &trade)?;
 
+            emit_trade_executed(
+                &env,
+                crate::events::TradeExecutedEvent {
+                    trade_id,
+                    timestamp: env.ledger().timestamp(),
+                },
+            );
+
             Ok(())
         })
+    }
+
+    /// Cancel a trade and return every escrowed item to its owner.
+    ///
+    /// An open offer can be withdrawn by its initiator; once accepted, either
+    /// party may unwind it so one side cannot hold the other's escrowed items
+    /// hostage indefinitely.
+    pub fn cancel_trade(
+        env: Env,
+        trade_id: u64,
+        canceller: Address,
+    ) -> Result<(), SettlementError> {
+        canceller.require_auth();
+
+        // A cancellation is always allowed: refusing it while paused would
+        // strand escrowed tokens for as long as the pause lasts.
+        PauseManager::check_not_paused(&env)?;
+
+        ReentrancyGuard::execute(&env, &canceller, "cancel_trade", || {
+            Self::cancel_trade_inner(&env, trade_id, &canceller)
+        })
+    }
+
+    /// Get trade details
+    pub fn get_trade(env: Env, trade_id: u64) -> Result<TradeTransaction, SettlementError> {
+        TradeTransactionStore::get(&env, trade_id)
+    }
+
+    /// Cancel logic shared by `cancel_trade` and `cancel_transaction`.
+    ///
+    /// Split out so the dispatcher can reuse it without nesting the
+    /// re-entrancy guard (which is a single global flag and would reject the
+    /// inner acquisition).
+    fn cancel_trade_inner(
+        env: &Env,
+        trade_id: u64,
+        canceller: &Address,
+    ) -> Result<(), SettlementError> {
+        let mut trade = TradeTransactionStore::get(env, trade_id)?;
+        let acceptor = trade.counterparty.clone();
+
+        let is_party =
+            *canceller == trade.initiator || acceptor.as_ref().is_some_and(|a| a == canceller);
+        if !is_party {
+            return Err(SettlementError::Unauthorized);
+        }
+
+        match trade.state {
+            crate::types::TransactionState::Pending => {
+                Self::release_items(env, &trade.initiator, &trade.initiator_nfts)?;
+            }
+            crate::types::TransactionState::Funded => {
+                let acceptor = acceptor.ok_or(SettlementError::NotFound)?;
+                Self::release_items(env, &trade.initiator, &trade.initiator_nfts)?;
+                Self::release_items(env, &acceptor, &trade.counterparty_nfts)?;
+            }
+            _ => return Err(SettlementError::InvalidState),
+        }
+
+        trade.state = crate::types::TransactionState::Cancelled;
+        TradeTransactionStore::update(env, &trade)?;
+        Ok(())
     }
 
     /// Create a bundle sale.
@@ -886,38 +1080,7 @@ impl MarketplaceSettlement {
             // Validate ownership and take custody before recording anything, so
             // a bad item aborts the whole bundle rather than leaving a partial
             // escrow behind.
-            for i in 0..items.len() {
-                let item = items.get(i).ok_or(SettlementError::InvalidAmount)?;
-
-                asset_utils::validate_nft_contract(&item.nft_address, &env)?;
-                if !asset_utils::check_nft_ownership(
-                    &item.nft_address,
-                    item.token_id,
-                    &seller,
-                    &env,
-                )? {
-                    return Err(SettlementError::Unauthorized);
-                }
-
-                // A bundle that lists the same token twice would escrow it once
-                // and settle twice: the second transfer would fail at execution
-                // time, after the buyer's payment had been taken.
-                for j in (i + 1)..items.len() {
-                    let other = items.get(j).ok_or(SettlementError::InvalidAmount)?;
-                    if other.nft_address == item.nft_address && other.token_id == item.token_id {
-                        return Err(SettlementError::AlreadyExists);
-                    }
-                }
-
-                asset_utils::transfer_nft_from(
-                    &item.nft_address,
-                    &seller,
-                    &seller,
-                    &env.current_contract_address(),
-                    item.token_id,
-                    &env,
-                )?;
-            }
+            Self::escrow_items(&env, &seller, &items)?;
 
             let bundle_id = BundleTransactionStore::next_id(&env);
 
@@ -1014,16 +1177,7 @@ impl MarketplaceSettlement {
                 &bundle.currency,
             )?;
 
-            // Release each escrowed item to the buyer.
-            for item in bundle.items.iter() {
-                asset_utils::transfer_nft(
-                    &item.nft_address,
-                    &env.current_contract_address(),
-                    &buyer,
-                    item.token_id,
-                    &env,
-                )?;
-            }
+            Self::release_items(&env, &buyer, &bundle.items)?;
 
             bundle.buyer = Some(buyer.clone());
             bundle.state = crate::types::TransactionState::Executed;
@@ -1061,30 +1215,31 @@ impl MarketplaceSettlement {
         PauseManager::check_not_paused(&env)?;
 
         ReentrancyGuard::execute(&env, &seller, "cancel_bundle", || {
-            let mut bundle = BundleTransactionStore::get(&env, bundle_id)?;
-
-            if bundle.seller != seller {
-                return Err(SettlementError::Unauthorized);
-            }
-            if bundle.state != crate::types::TransactionState::Pending {
-                return Err(SettlementError::InvalidState);
-            }
-
-            for item in bundle.items.iter() {
-                asset_utils::transfer_nft(
-                    &item.nft_address,
-                    &env.current_contract_address(),
-                    &seller,
-                    item.token_id,
-                    &env,
-                )?;
-            }
-
-            bundle.state = crate::types::TransactionState::Cancelled;
-            BundleTransactionStore::update(&env, &bundle)?;
-
-            Ok(())
+            Self::cancel_bundle_inner(&env, bundle_id, &seller)
         })
+    }
+
+    /// Cancel logic shared by `cancel_bundle` and `cancel_transaction`.
+    fn cancel_bundle_inner(
+        env: &Env,
+        bundle_id: u64,
+        canceller: &Address,
+    ) -> Result<(), SettlementError> {
+        let mut bundle = BundleTransactionStore::get(env, bundle_id)?;
+
+        if bundle.seller != *canceller {
+            return Err(SettlementError::Unauthorized);
+        }
+        if bundle.state != crate::types::TransactionState::Pending {
+            return Err(SettlementError::InvalidState);
+        }
+
+        Self::release_items(env, canceller, &bundle.items)?;
+
+        bundle.state = crate::types::TransactionState::Cancelled;
+        BundleTransactionStore::update(env, &bundle)?;
+
+        Ok(())
     }
 
     /// Get bundle details
@@ -1105,6 +1260,9 @@ impl MarketplaceSettlement {
         PauseManager::check_not_paused(&env)?;
 
         ReentrancyGuard::execute(&env, &canceller, "cancel_transaction", || {
+            // Dispatch to the same logic the dedicated entry points use, so the
+            // documented "sale", "trade", "bundle" types all behave alike. An
+            // unknown type is a caller error, not an amount error.
             if transaction_type == Symbol::new(&env, "sale") {
                 let mut sale = SaleTransactionStore::get(&env, transaction_id)?;
                 if sale.seller != canceller {
@@ -1118,8 +1276,12 @@ impl MarketplaceSettlement {
                 AtomicSwapEngine::cancel_swap(&env, transaction_id, &canceller)?;
                 sale.state = crate::types::TransactionState::Cancelled;
                 SaleTransactionStore::update(&env, &sale)?;
+            } else if transaction_type == Symbol::new(&env, "trade") {
+                Self::cancel_trade_inner(&env, transaction_id, &canceller)?;
+            } else if transaction_type == Symbol::new(&env, "bundle") {
+                Self::cancel_bundle_inner(&env, transaction_id, &canceller)?;
             } else {
-                return Err(SettlementError::InvalidAmount);
+                return Err(SettlementError::NotFound);
             }
             Ok(())
         })

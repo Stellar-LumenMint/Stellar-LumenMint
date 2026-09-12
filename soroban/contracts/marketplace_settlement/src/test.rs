@@ -647,21 +647,22 @@ fn test_get_royalty_not_found_fails() {
 
 #[test]
 fn test_create_trade_success() {
-    let (env, _cid, client, _admin) = new_env();
-    let _asset = mk_asset(&env);
+    let (env, _cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
     let initiator = Address::generate(&env);
+    let offered = env.register(MockNft, ());
+    client.add_allowed_nft_contract(&admin, &offered);
+    MockNftClient::new(&env, &offered).set_owner(&initiator);
+
     let mut i_nfts = soroban_sdk::Vec::new(&env);
     i_nfts.push_back(NFTItem {
-        nft_address: Address::generate(&env),
+        nft_address: offered.clone(),
         token_id: 1,
     });
-    let mut c_nfts = soroban_sdk::Vec::new(&env);
-    c_nfts.push_back(NFTItem {
-        nft_address: Address::generate(&env),
-        token_id: 2,
-    });
-    let id = client.create_trade(&initiator, &None, &i_nfts, &c_nfts, &3600u64);
+    let empty = soroban_sdk::Vec::new(&env);
+    let id = client.create_trade(&initiator, &None, &i_nfts, &empty, &3600u64);
     assert!(id > 0);
+    let _ = asset;
 }
 
 #[test]
@@ -673,6 +674,143 @@ fn test_create_trade_empty_nfts_fails() {
     assert!(client
         .try_create_trade(&initiator, &None, &empty, &empty, &3600u64)
         .is_err());
+}
+
+/// A trade must move both sides. The previous `execute_trade` marked the trade
+/// executed without transferring anything, so the chain recorded a completed
+/// swap while every token stayed where it was.
+#[test]
+fn test_execute_trade_swaps_both_sides() {
+    let (env, _cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let initiator = Address::generate(&env);
+    let acceptor = Address::generate(&env);
+    let offered = env.register(MockNft, ());
+    let requested = env.register(MockNft, ());
+    client.add_allowed_nft_contract(&admin, &offered);
+    client.add_allowed_nft_contract(&admin, &requested);
+    MockNftClient::new(&env, &offered).set_owner(&initiator);
+    MockNftClient::new(&env, &requested).set_owner(&acceptor);
+
+    let mut i_nfts = soroban_sdk::Vec::new(&env);
+    i_nfts.push_back(NFTItem {
+        nft_address: offered.clone(),
+        token_id: 11,
+    });
+    let mut c_nfts = soroban_sdk::Vec::new(&env);
+    c_nfts.push_back(NFTItem {
+        nft_address: requested.clone(),
+        token_id: 22,
+    });
+
+    let trade_id = client.create_trade(&initiator, &None, &i_nfts, &c_nfts, &3600u64);
+    client.accept_trade(&trade_id, &acceptor);
+    client.execute_trade(&trade_id, &initiator);
+
+    assert_eq!(
+        MockNftClient::new(&env, &offered).owner_of(&11u64),
+        acceptor
+    );
+    assert_eq!(
+        MockNftClient::new(&env, &requested).owner_of(&22u64),
+        initiator
+    );
+    assert_eq!(
+        client.get_trade(&trade_id).state,
+        TransactionState::Executed
+    );
+    let _ = asset;
+}
+
+/// A directed offer may only be accepted by the account it names.
+#[test]
+fn test_accept_trade_rejects_wrong_counterparty() {
+    let (env, _cid, client, admin) = new_env();
+    let initiator = Address::generate(&env);
+    let named = Address::generate(&env);
+    let stranger = Address::generate(&env);
+    let offered = env.register(MockNft, ());
+    client.add_allowed_nft_contract(&admin, &offered);
+    MockNftClient::new(&env, &offered).set_owner(&initiator);
+
+    let mut i_nfts = soroban_sdk::Vec::new(&env);
+    i_nfts.push_back(NFTItem {
+        nft_address: offered.clone(),
+        token_id: 5,
+    });
+    let empty = soroban_sdk::Vec::new(&env);
+    let trade_id = client.create_trade(&initiator, &Some(named.clone()), &i_nfts, &empty, &3600u64);
+
+    assert_eq!(
+        client.try_accept_trade(&trade_id, &stranger),
+        Err(Ok(SettlementError::Unauthorized))
+    );
+    client.accept_trade(&trade_id, &named);
+    assert_eq!(client.get_trade(&trade_id).state, TransactionState::Funded);
+}
+
+/// Cancelling an accepted trade returns each side's escrowed items.
+#[test]
+fn test_cancel_funded_trade_refunds_both_sides() {
+    let (env, _cid, client, admin) = new_env();
+    let initiator = Address::generate(&env);
+    let acceptor = Address::generate(&env);
+    let offered = env.register(MockNft, ());
+    let requested = env.register(MockNft, ());
+    client.add_allowed_nft_contract(&admin, &offered);
+    client.add_allowed_nft_contract(&admin, &requested);
+    MockNftClient::new(&env, &offered).set_owner(&initiator);
+    MockNftClient::new(&env, &requested).set_owner(&acceptor);
+
+    let mut i_nfts = soroban_sdk::Vec::new(&env);
+    i_nfts.push_back(NFTItem {
+        nft_address: offered.clone(),
+        token_id: 31,
+    });
+    let mut c_nfts = soroban_sdk::Vec::new(&env);
+    c_nfts.push_back(NFTItem {
+        nft_address: requested.clone(),
+        token_id: 32,
+    });
+
+    let trade_id = client.create_trade(&initiator, &None, &i_nfts, &c_nfts, &3600u64);
+    client.accept_trade(&trade_id, &acceptor);
+    client.cancel_trade(&trade_id, &acceptor);
+
+    assert_eq!(
+        MockNftClient::new(&env, &offered).owner_of(&31u64),
+        initiator
+    );
+    assert_eq!(
+        MockNftClient::new(&env, &requested).owner_of(&32u64),
+        acceptor
+    );
+    assert_eq!(
+        client.get_trade(&trade_id).state,
+        TransactionState::Cancelled
+    );
+}
+
+/// A trade cannot be created for tokens the initiator does not own.
+#[test]
+fn test_create_trade_requires_ownership() {
+    let (env, _cid, client, admin) = new_env();
+    let initiator = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let offered = env.register(MockNft, ());
+    client.add_allowed_nft_contract(&admin, &offered);
+    MockNftClient::new(&env, &offered).set_owner(&owner);
+
+    let mut i_nfts = soroban_sdk::Vec::new(&env);
+    i_nfts.push_back(NFTItem {
+        nft_address: offered.clone(),
+        token_id: 41,
+    });
+    let empty = soroban_sdk::Vec::new(&env);
+    assert_eq!(
+        client.try_create_trade(&initiator, &None, &i_nfts, &empty, &3600u64),
+        Err(Ok(SettlementError::Unauthorized))
+    );
 }
 
 // ─── Bundle ───────────────────────────────────────────────────────────────────
