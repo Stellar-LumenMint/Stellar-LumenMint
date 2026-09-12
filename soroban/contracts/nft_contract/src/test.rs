@@ -1,3 +1,7 @@
+// Gas benchmarks. Declared here so they are part of the test target; the file
+// previously sat in `src/test/` with no `mod` declaration and never compiled.
+mod benchmarks;
+
 use crate::types::{CollectionConfig, RoyaltyInfo, TokenAttribute};
 use crate::{NftContract, NftContractClient};
 use soroban_sdk::{testutils::Address as _, testutils::Ledger, Address, Env, String, Vec};
