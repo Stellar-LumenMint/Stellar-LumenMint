@@ -5,8 +5,8 @@ use crate::error::TransactionError;
 use crate::events;
 use crate::tx_storage as storage;
 use crate::types::{
-    default_gas_config, BatchExecutionResult, ExecutionResult, GasEstimate, GasOptimizationConfig,
-    Operation, OperationResult, RecoveryResult, RecoveryStrategy, SignatureRecord, Transaction,
+    BatchExecutionResult, ExecutionResult, GasEstimate, GasOptimizationConfig, Operation,
+    OperationResult, RecoveryResult, RecoveryStrategy, SignatureRecord, Transaction,
     TransactionBlueprint, TransactionState, TransactionStatus,
 };
 
@@ -399,7 +399,8 @@ impl TransactionContract {
     /// Resolve the gas-optimization settings that will actually be applied to a
     /// transaction.
     ///
-    /// This returned `default_gas_config` and ignored its argument entirely, so
+    /// This returned the default gas configuration and ignored its argument
+    /// entirely, so
     /// a caller had no way to know which of its requested settings took effect —
     /// the answer was always "none of them". It now validates the request
     /// against the transaction and returns the effective configuration, so the
