@@ -982,6 +982,45 @@ fn test_rate_limiter_window_reset() {
     assert!(id > 0);
 }
 
+/// `update_rate_limit` must not accept a caller who merely names the admin.
+///
+/// The address comparison alone passed for anyone who supplied the admin's
+/// public address; only the missing `require_auth()` stood between an
+/// unauthenticated caller and the marketplace's abuse controls. Auth mocking is
+/// cleared for this test so a genuinely unauthorized call is exercised.
+#[test]
+fn test_update_rate_limit_requires_admin_authorization() {
+    let (env, _cid, client, admin) = new_env();
+    let function = Symbol::new(&env, "place_bid");
+
+    env.mock_auths(&[]);
+    assert!(client
+        .try_update_rate_limit(&function, &2u32, &30u64, &admin)
+        .is_err());
+
+    // The default configuration must be untouched after the rejected call.
+    let config = client.get_rate_limit_config(&function).unwrap();
+    assert_eq!(config.limit, 5);
+    assert_eq!(config.window_seconds, 60);
+}
+
+/// Degenerate rate-limit windows must be rejected: `check_rate_limit` treats a
+/// zero-length window as "always a new window", which disables the limiter.
+#[test]
+fn test_update_rate_limit_rejects_degenerate_config() {
+    let (env, _cid, client, admin) = new_env();
+    let function = Symbol::new(&env, "place_bid");
+
+    assert_eq!(
+        client.try_update_rate_limit(&function, &0u32, &60u64, &admin),
+        Err(Ok(SettlementError::InvalidAmount))
+    );
+    assert_eq!(
+        client.try_update_rate_limit(&function, &5u32, &0u64, &admin),
+        Err(Ok(SettlementError::InvalidAmount))
+    );
+}
+
 #[test]
 fn test_rate_limiter_admin_update_config() {
     let (env, _cid, _client, _admin) = new_env();

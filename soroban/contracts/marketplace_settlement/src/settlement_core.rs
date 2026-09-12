@@ -1071,6 +1071,16 @@ impl MarketplaceSettlement {
     }
 
     /// Update rate limit configuration for a specific function (admin only)
+    ///
+    /// `admin` must authorize the call. The address check alone is not an
+    /// authorization check: `admin` is a caller-supplied argument, so anyone
+    /// could name the real admin and the comparison would succeed. Rate limits
+    /// are the only abuse control in front of bid and listing creation, so an
+    /// unauthenticated writer could switch them off (or wedge them) at will.
+    ///
+    /// Reject degenerate windows and limits: a zero-length window makes
+    /// `check_rate_limit` treat every call as the start of a fresh window and
+    /// therefore allow everything, and a zero limit would reject every caller.
     pub fn update_rate_limit(
         env: Env,
         function: Symbol,
@@ -1078,6 +1088,8 @@ impl MarketplaceSettlement {
         window_seconds: u64,
         admin: Address,
     ) -> Result<(), SettlementError> {
+        admin.require_auth();
+
         // Check admin permissions
         let admin_config: AdminConfig = env
             .storage()
@@ -1087,6 +1099,10 @@ impl MarketplaceSettlement {
 
         if admin_config.admin != admin {
             return Err(SettlementError::Unauthorized);
+        }
+
+        if limit == 0 || window_seconds == 0 {
+            return Err(SettlementError::InvalidAmount);
         }
 
         crate::security::rate_limiter::RateLimiter::set_config(
