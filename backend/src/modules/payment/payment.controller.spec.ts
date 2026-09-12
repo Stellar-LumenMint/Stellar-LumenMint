@@ -1,6 +1,14 @@
+import 'reflect-metadata';
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+
+const guardsOf = (handler: unknown): unknown[] =>
+  (Reflect.getMetadata(GUARDS_METADATA, handler as object) as unknown[]) ?? [];
 
 describe('PaymentController', () => {
   let controller: PaymentController;
@@ -108,7 +116,7 @@ describe('PaymentController', () => {
       expect(paymentService.processPayout).toHaveBeenCalledWith(body);
     });
 
-    it('should throw error for invalid Stellar address', async () => {
+    it('should reject an invalid Stellar address as a bad request', async () => {
       paymentService.isValidStellarAddress.mockReturnValue(false);
 
       const body = {
@@ -117,10 +125,42 @@ describe('PaymentController', () => {
         currency: 'XLM' as const,
       };
 
+      // A malformed address is client error, not a server fault: a bare
+      // `Error` used to surface this as a 500.
+      await expect(controller.processPayout(body)).rejects.toThrow(
+        BadRequestException,
+      );
       await expect(controller.processPayout(body)).rejects.toThrow(
         'Invalid Stellar address',
       );
       expect(paymentService.processPayout).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── Authorization ────────────────────────────────────────────────────────
+  // The controller advertised `@ApiBearerAuth()` while enforcing nothing, so
+  // these pin the guards that now back that claim up.
+
+  describe('authorization', () => {
+    it('requires a session to create a payment intent', () => {
+      expect(guardsOf(PaymentController.prototype.createIntent)).toContain(
+        JwtAuthGuard,
+      );
+    });
+
+    it('restricts payouts to authenticated admins', () => {
+      const guards = guardsOf(PaymentController.prototype.processPayout);
+      expect(guards).toContain(JwtAuthGuard);
+      expect(guards).toContain(RolesGuard);
+    });
+
+    it('leaves the read-only lookup routes public', () => {
+      expect(
+        guardsOf(PaymentController.prototype.getSupportedMethods),
+      ).not.toContain(JwtAuthGuard);
+      expect(
+        guardsOf(PaymentController.prototype.validateAddress),
+      ).not.toContain(JwtAuthGuard);
     });
   });
 

@@ -9,6 +9,7 @@ import {
   HttpStatus,
   HttpCode,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,6 +21,10 @@ import {
 import { PaymentService, PaymentIntent } from './payment.service';
 import { SUPPORTED_PAYMENT_METHODS } from './enums/payment-method.enum';
 import { CreatePaymentIntentDto, ProcessPayoutDto } from './dto/payment.dto';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @ApiTags('Payments')
 @Controller('api/payments')
@@ -27,6 +32,7 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('intent')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a payment intent' })
   @ApiBearerAuth()
   @ApiResponse({
@@ -57,7 +63,14 @@ export class PaymentController {
     );
   }
 
+  // Moving funds out of the platform wallet is an administrative action, so it
+  // requires both a valid session and the admin role. The endpoint previously
+  // advertised `@ApiBearerAuth()` while enforcing nothing, which left an
+  // unauthenticated route that paid out to any Stellar address supplied in the
+  // body.
   @Post('payout')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Process a payout to a Stellar address' })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Payout processed successfully' })
@@ -69,11 +82,17 @@ export class PaymentController {
     status: 401,
     description: 'Unauthorized — valid JWT required',
   })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — the caller is not an admin',
+  })
   async processPayout(
     @Body() body: ProcessPayoutDto,
   ): Promise<{ success: boolean; txHash?: string }> {
     if (!this.paymentService.isValidStellarAddress(body.recipientAddress)) {
-      throw new Error('Invalid Stellar address');
+      // A bad address is a client error, not a server fault: throwing a bare
+      // `Error` surfaced as a 500.
+      throw new BadRequestException('Invalid Stellar address');
     }
     return this.paymentService.processPayout(body);
   }

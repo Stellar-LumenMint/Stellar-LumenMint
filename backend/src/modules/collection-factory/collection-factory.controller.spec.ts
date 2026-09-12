@@ -1,6 +1,12 @@
+import 'reflect-metadata';
 import { Test, TestingModule } from '@nestjs/testing';
+import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { CollectionFactoryController } from './collection-factory.controller';
 import { CollectionFactoryService } from './collection-factory.service';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+
+const guardsOf = (handler: unknown): unknown[] =>
+  (Reflect.getMetadata(GUARDS_METADATA, handler as object) as unknown[]) ?? [];
 
 describe('CollectionFactoryController', () => {
   let controller: CollectionFactoryController;
@@ -30,6 +36,36 @@ describe('CollectionFactoryController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  // These routes mint, move and reconfigure tokens with the platform key, so
+  // they must not be reachable anonymously. The read-only routes stay open.
+  describe('authorization', () => {
+    it.each([
+      [
+        'createCollection',
+        CollectionFactoryController.prototype.createCollection,
+      ],
+      ['mintToken', CollectionFactoryController.prototype.mintToken],
+      ['batchMint', CollectionFactoryController.prototype.batchMint],
+      ['transferToken', CollectionFactoryController.prototype.transferToken],
+      ['setRoyalty', CollectionFactoryController.prototype.setRoyalty],
+    ])('requires a session for %s', (_name, handler) => {
+      expect(guardsOf(handler)).toContain(JwtAuthGuard);
+    });
+
+    it.each([
+      [
+        'getCollectionCount',
+        CollectionFactoryController.prototype.getCollectionCount,
+      ],
+      [
+        'getCollectionAddress',
+        CollectionFactoryController.prototype.getCollectionAddress,
+      ],
+    ])('leaves %s public', (_name, handler) => {
+      expect(guardsOf(handler)).not.toContain(JwtAuthGuard);
+    });
   });
 
   describe('createCollection', () => {
