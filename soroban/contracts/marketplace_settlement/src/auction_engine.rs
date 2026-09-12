@@ -52,6 +52,7 @@ impl AuctionEngine {
 
         // Validate auction parameters
         Self::validate_auction_params(
+            auction_type.clone(),
             starting_price,
             reserve_price,
             duration_seconds,
@@ -215,6 +216,17 @@ impl AuctionEngine {
 
         // Store bid
         AuctionStore::add_bid(env, auction_id, &bid)?;
+
+        // Record the new leading bid before persisting. Nothing used to update
+        // these fields, so the auction kept reporting `highest_bid: 0`: the
+        // minimum-increment rule never applied (the next bid fell through to
+        // the "first bid" branch), any bidder could take the lot for the
+        // starting price, and `end_auction` would settle against a zero
+        // highest bid. Sealed bids only become the leading bid on reveal.
+        if !bid.is_committed {
+            auction.highest_bid = bid_amount;
+            auction.highest_bidder = Some(bidder.clone());
+        }
 
         // Update auction if direct bid
         if !bid.is_committed {
@@ -592,6 +604,7 @@ impl AuctionEngine {
 
     /// Internal: Validate auction parameters
     fn validate_auction_params(
+        auction_type: AuctionType,
         starting_price: i128,
         reserve_price: i128,
         duration: u64,
@@ -614,11 +627,19 @@ impl AuctionEngine {
             return Err(SettlementError::InvalidBidIncrement);
         }
 
-        // Validate that bid_increment meets or exceeds min_bid_increment_bps
-        // Convert bid_increment from absolute value to basis points relative to starting_price
-        let bid_increment_bps = (bid_increment * 10000) / starting_price;
-        if bid_increment_bps < config.min_bid_increment_bps as i128 {
-            return Err(SettlementError::InvalidBidIncrement);
+        // Validate that bid_increment meets or exceeds min_bid_increment_bps.
+        // Convert bid_increment from absolute value to basis points relative to
+        // starting_price.
+        //
+        // A Dutch auction has no bid increments at all — the price descends on
+        // a schedule and the first buyer takes it — so requiring the parameter
+        // to clear a minimum that is never applied only made Dutch auctions
+        // impossible to create.
+        if auction_type != AuctionType::Dutch {
+            let bid_increment_bps = (bid_increment * 10000) / starting_price;
+            if bid_increment_bps < config.min_bid_increment_bps as i128 {
+                return Err(SettlementError::InvalidBidIncrement);
+            }
         }
 
         Ok(())

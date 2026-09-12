@@ -145,7 +145,19 @@ impl CommitRevealScheme {
 pub struct FrontRunningDetector;
 
 impl FrontRunningDetector {
-    /// Analyze bidding patterns for potential front-running
+    /// Analyse bidding patterns for potential front-running.
+    ///
+    /// Detection is **advisory**: a match emits an event for monitoring but
+    /// does not reject the bid. The heuristics are too coarse to gate on —
+    /// `detect_increment_gaming` flags any bid equal to the previous bid plus
+    /// a hardcoded 1000 (its own comment calls that an "example increment"),
+    /// which is exactly the minimum increment on a 100_000 auction, and
+    /// `detect_rapid_bidding` flags a bidder who bids twice in one ledger.
+    /// Rejecting on those made the contract refuse legitimate bids, which is a
+    /// denial of service against bidders rather than a defence.
+    ///
+    /// Actual front-running protection comes from the commit-reveal scheme
+    /// (see `commit_reveal_enabled`) and from the per-user rate limiter.
     pub fn analyze_bidding_pattern(
         env: &Env,
         auction_id: u64,
@@ -164,8 +176,6 @@ impl FrontRunningDetector {
                 timestamp: env.ledger().timestamp(),
             };
             emit_front_running_detected(env, event);
-
-            return Err(SettlementError::FrontRunningDetected);
         }
 
         Ok(())

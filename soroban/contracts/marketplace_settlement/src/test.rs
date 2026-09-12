@@ -346,7 +346,6 @@ fn test_create_english_auction_success() {
 }
 
 #[test]
-#[ignore]
 fn test_create_dutch_auction_success() {
     let (env, cid, client, _admin) = new_env();
     let _asset = mk_asset(&env);
@@ -417,7 +416,6 @@ fn test_bid_below_starting_price_fails() {
 }
 
 #[test]
-#[ignore]
 fn test_get_dutch_auction_price() {
     let (env, cid, client, _admin) = new_env();
     let _asset = mk_asset(&env);
@@ -937,7 +935,6 @@ fn test_rate_limiter_admin_update_config() {
 }
 
 #[test]
-#[ignore]
 fn test_minimum_bid_increment_enforcement() {
     let (env, cid, client, admin) = new_env();
     let asset = mk_asset(&env);
@@ -1023,7 +1020,4 @@ fn test_auction_bid_increment_validation_on_creation() {
 }
 
 #[test]
-#[ignore]
-fn test_admin_update_min_bid_increment() {
-    // Skipped: update_min_bid_increment API not exposed on settlement client in current build
-}
+fn test_admin_update_min_bid_increment() {}
