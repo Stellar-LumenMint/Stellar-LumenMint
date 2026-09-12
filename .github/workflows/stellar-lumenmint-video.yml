@@ -37,11 +37,21 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       # The check needs `ffprobe` and nothing else, so the workspace is
-      # deliberately not installed: pulling in the Playwright dependency tree
-      # would add minutes to every run for a job that never launches a browser.
-      # `ffprobe` ships with ffmpeg, which the ubuntu-latest image already has.
-      - name: Verify ffprobe is available
-        run: ffprobe -version | head -n 1
+      # deliberately not installed: `video/package.json` declares Playwright,
+      # whose dependency tree and browser download would add minutes to every run
+      # for a job that never opens a browser.
+      #
+      # ffprobe is not on the ubuntu-latest image, so it is installed here rather
+      # than assumed. The guard below is a bare invocation with no pipe: piping
+      # into `head` masks a missing binary, because the pipeline reports the exit
+      # status of its last command and the step passes with ffprobe absent —
+      # which is exactly how the first version of this job failed at the check
+      # instead of at the guard.
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Confirm ffprobe is available
+        run: ffprobe -version
 
       # Catches a truncated render, a thumbnail at the wrong resolution, a
       # transcript that no longer matches the script, and any relative link in a

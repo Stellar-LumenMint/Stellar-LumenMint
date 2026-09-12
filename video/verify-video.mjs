@@ -68,6 +68,20 @@ function pngSize(file) {
 }
 
 function main() {
+  // Fail with something readable rather than an ENOENT stack trace a few frames
+  // deep in `spawnSync`. `ffprobe` is the one external tool this needs.
+  try {
+    execFileSync('ffprobe', ['-version'], { stdio: 'ignore' });
+  } catch {
+    console.error(
+      'ffprobe is not installed.\n\n' +
+        'It ships with ffmpeg:\n' +
+        '  macOS   brew install ffmpeg\n' +
+        '  Debian  sudo apt-get install -y ffmpeg\n',
+    );
+    process.exit(1);
+  }
+
   // ── The video ────────────────────────────────────────────────────────────
   check('video exists', existsSync(VIDEO), `${VIDEO} is missing; run npm run assemble`);
 
