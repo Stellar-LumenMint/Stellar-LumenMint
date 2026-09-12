@@ -17,7 +17,7 @@ import {
   writeFileSync,
   existsSync,
   mkdirSync,
-  globSync,
+  readdirSync,
 } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -144,10 +144,26 @@ function parseFrontendErrors(relPath) {
 
 // ── Collect ───────────────────────────────────────────────────────────────────
 
+/**
+ * The error.rs of every contract package.
+ *
+ * Enumerated with `readdirSync` rather than a glob helper: `fs.globSync` only
+exists from Node 22, and CI runs Node 20. A registry that cannot start on the
+version CI uses is worse than no check, because it fails for a reason that looks
+nothing like the change that triggered it.
+ */
+function rustErrorFiles() {
+  const contractsDir = join(ROOT, 'soroban', 'contracts');
+
+  return readdirSync(contractsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join('soroban', 'contracts', entry.name, 'src', 'error.rs'))
+    .filter((relPath) => existsSync(join(ROOT, relPath)))
+    .sort();
+}
+
 function collect() {
-  const contracts = globSync('soroban/contracts/*/src/error.rs')
-    .sort()
-    .flatMap((file) => parseRustErrors(relative(ROOT, file)));
+  const contracts = rustErrorFiles().flatMap((file) => parseRustErrors(file));
 
   const backend = parseBackendErrors(
     'backend/src/common/enums/app-error-code.enum.ts',
