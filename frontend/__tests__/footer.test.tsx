@@ -12,6 +12,7 @@ jest.mock('@/hooks/useTranslation', () => ({
 }));
 
 import Footer from '../components/Footer';
+import { DEPLOYED_CONTRACTS } from '@/lib/deployment';
 
 describe('Footer component', () => {
   it('renders brand logo', () => {
@@ -34,5 +35,17 @@ describe('Footer component', () => {
   it('renders scroll-to-top button', () => {
     render(<Footer />);
     expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
+  });
+
+  it('links to the deployed contracts on the block explorer', () => {
+    render(<Footer />);
+
+    const link = screen.getByRole('link', { name: /Stellar Testnet/i });
+    expect(link).toHaveAttribute(
+      'href',
+      `https://stellar.expert/explorer/testnet/contract/${DEPLOYED_CONTRACTS.marketplace}`,
+    );
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    expect(link).toHaveTextContent('4 contracts');
   });
 });

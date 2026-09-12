@@ -11,12 +11,15 @@ import {
   Sparkles,
   Globe,
   ArrowUpRight,
+  ExternalLink,
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { DEPLOYMENT_COMMIT, getDeploymentSummary } from '@/lib/deployment';
 
 const Footer = () => {
   const { t, locale } = useTranslation();
   const year = new Date().getFullYear();
+  const deployment = getDeploymentSummary();
 
   const quickLinks = [
     { href: `/${locale}/marketplace`, label: t('navigation.marketplace') },
@@ -189,6 +192,22 @@ const Footer = () => {
               <span className="text-[#6B7A8D]">·</span>
               <span className="text-[#7B6FFF] font-medium">Soroban</span>
             </div>
+            {deployment.marketplaceExplorerUrl && (
+              <>
+                <span className="hidden sm:inline text-[#1E2D3D]">·</span>
+                <a
+                  href={deployment.marketplaceExplorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Deployed to Stellar ${deployment.label} from commit ${DEPLOYMENT_COMMIT}`}
+                  className="inline-flex items-center gap-1 hover:text-[#8A9BB0] transition-colors"
+                >
+                  <span>Stellar {deployment.label}</span>
+                  <span className="text-[#6B7A8D]">· {deployment.contracts.length} contracts</span>
+                  <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                </a>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-4 text-xs text-[#6B7A8D]">
             <Link
