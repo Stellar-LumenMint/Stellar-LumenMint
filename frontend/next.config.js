@@ -7,6 +7,22 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
 
+// The app ships a web manifest and a service worker so it can be installed as
+// a PWA. `next-pwa` was a dependency and `public/sw.js` was checked in, but no
+// build ever wrapped the config, so the worker was never regenerated, never
+// registered and drifted stale against the app it claimed to cache. Wrapping
+// the config makes the build emit and register it.
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  // A service worker caching aggressively during development hides edits and
+  // serves stale assets, so it is production-only.
+  disable: process.env.NODE_ENV === 'development',
+  // `middleware-manifest.json` is not a public asset and must not be precached.
+  buildExcludes: [/middleware-manifest\.json$/],
+});
+
 // Next.js 13 has no nonce plumbing for its inline bootstrap scripts, so
 // `'unsafe-inline'` is required; `'unsafe-eval'` is only needed by the dev
 // bundler and is dropped from production. Everything else is locked to the
@@ -94,4 +110,4 @@ const nextConfig = {
   },
 };
 
-module.exports = withBundleAnalyzer(nextConfig);
+module.exports = withPWA(withBundleAnalyzer(nextConfig));
