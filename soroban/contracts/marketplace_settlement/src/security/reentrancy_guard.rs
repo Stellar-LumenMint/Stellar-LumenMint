@@ -39,6 +39,15 @@ impl ReentrancyGuard {
             return Err(SettlementError::ReentrancyDetected);
         }
 
+        // Refresh the contract's instance TTL. Every state-changing entry point
+        // goes through this guard, which makes it the one place that can keep
+        // the admin config, the pause state, the id counters and the allow/deny
+        // lists — all instance entries sharing a single TTL — from ageing out
+        // while the marketplace is in active use. Read-only entry points do not
+        // come through here; an archived entry reached by a read is restored
+        // automatically from the transaction's restore list.
+        crate::ttl::extend_instance(env);
+
         // Set the reentrancy lock
         env.storage().instance().set(&REENTRANCY_GUARD, &true);
 
