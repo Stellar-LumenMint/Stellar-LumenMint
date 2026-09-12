@@ -273,7 +273,10 @@ fn bench_transfer() {
         client.transfer(&alice, &alice, &bob, &token_id)
     });
 
-    assert_cpu_under("nft.transfer", &cost, 600_000);
+    // Recorded baseline 348,135 after the duplicate-owner-read fix. The
+    // ceiling sits at 1.3x rather than the usual 1.6x because the win is small
+    // enough that ordinary headroom would swallow a relapse.
+    assert_cpu_under("nft.transfer", &cost, 460_000);
 }
 
 #[test]
@@ -296,17 +299,38 @@ fn bench_batch_transfer_10() {
         client.batch_transfer(&alice, &alice, &bob, &batch)
     });
 
-    assert_cpu_under("nft.batch_transfer(10)", &cost, 6_300_000);
+    assert_cpu_under("nft.batch_transfer(10)", &cost, 4_800_000);
 
-    // Recorded so the suite fails loudly if batching ever becomes *worse* than
-    // ten individual transfers (3.65M instructions at the time of writing)
-    // instead of drifting there unnoticed.
+    // The point of batching. Ten single transfers cost 3.48M instructions, so
+    // anything at or above that has lost the amortisation this entrypoint
+    // exists to provide. Recorded at 3.71M after the duplicate-owner-read fix
+    // brought it down from 3.94M.
     assert!(
-        cost.cpu < 4_500_000,
-        "nft.batch_transfer(10) at {} instructions is barely cheaper than ten \
-         single transfers (3.65M)",
+        cost.cpu < 3_900_000,
+        "nft.batch_transfer(10) at {} instructions is no cheaper than ten \
+         single transfers (3.48M)",
         cost.cpu
     );
+}
+
+#[test]
+fn bench_safe_transfer_from() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, admin) = setup(&env);
+    let alice = Address::generate(&env);
+    let bob = Address::generate(&env);
+
+    let ids = pre_mint(&client, &env, &admin, &alice, RUNS + 1);
+    let mut next = 0u32;
+
+    let cost = bench(&env, "nft.safe_transfer_from", || {
+        let token_id = ids.get(next).unwrap();
+        next += 1;
+        client.safe_transfer_from(&alice, &alice, &bob, &token_id)
+    });
+
+    assert_cpu_under("nft.safe_transfer_from", &cost, 460_000);
 }
 
 // ─── Burn ────────────────────────────────────────────────────────────────────

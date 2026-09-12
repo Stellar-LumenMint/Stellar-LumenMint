@@ -329,10 +329,13 @@ pub fn transfer(
     to: Address,
     token_id: u64,
 ) -> Result<(), ContractError> {
-    if !transfer::is_approved_or_owner(env, caller, token_id) {
+    // Read the owner once and share it with both checks; reading it separately
+    // in each was two persistent entry reads for one transfer.
+    let owner = transfer::read_owner(env, token_id)?;
+    if !transfer::is_approved_or_owner_of(env, &owner, caller, token_id) {
         return Err(ContractError::NotApproved);
     }
-    transfer::do_transfer(env, &from, &to, token_id)
+    transfer::do_transfer_checked(env, &owner, &from, &to, token_id)
 }
 
 pub fn safe_transfer_from(
@@ -342,10 +345,11 @@ pub fn safe_transfer_from(
     to: Address,
     token_id: u64,
 ) -> Result<(), ContractError> {
-    if !transfer::is_approved_or_owner(env, caller, token_id) {
+    let owner = transfer::read_owner(env, token_id)?;
+    if !transfer::is_approved_or_owner_of(env, &owner, caller, token_id) {
         return Err(ContractError::NotApproved);
     }
-    transfer::do_transfer(env, &from, &to, token_id)
+    transfer::do_transfer_checked(env, &owner, &from, &to, token_id)
 }
 
 pub fn batch_transfer(
@@ -362,10 +366,13 @@ pub fn batch_transfer(
 
     for i in 0..n {
         let token_id = token_ids.get(i).unwrap();
-        if !transfer::is_approved_or_owner(env, caller, token_id) {
+        // One owner read per token, shared by the authorization check and the
+        // transfer itself. Previously each token paid for two.
+        let owner = transfer::read_owner(env, token_id)?;
+        if !transfer::is_approved_or_owner_of(env, &owner, caller, token_id) {
             return Err(ContractError::NotApproved);
         }
-        transfer::do_transfer(env, &from, &to, token_id)?;
+        transfer::do_transfer_checked(env, &owner, &from, &to, token_id)?;
     }
     Ok(())
 }
