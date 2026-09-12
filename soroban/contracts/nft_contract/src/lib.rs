@@ -9,6 +9,7 @@ pub mod royalty;
 pub mod storage;
 pub mod token;
 pub mod transfer;
+pub mod ttl;
 pub mod types;
 pub mod upgrade;
 pub mod version;
@@ -35,6 +36,7 @@ impl NftContract {
         config: CollectionConfig,
         default_royalty: Option<RoyaltyInfo>,
     ) -> Result<(), ContractError> {
+        ttl::extend_instance(&env);
         if env.storage().instance().has(&DataKey::Admin) {
             panic_with_error!(&env, ContractError::AlreadyInitialized);
         }
@@ -81,6 +83,7 @@ impl NftContract {
         royalty_override: Option<RoyaltyInfo>,
     ) -> Result<u64, ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         token::mint(
             &env,
             &caller,
@@ -99,16 +102,19 @@ impl NftContract {
         attributes: Vec<Vec<TokenAttribute>>,
     ) -> Result<Vec<u64>, ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         token::batch_mint(&env, &caller, recipients, metadata_uris, attributes)
     }
 
     pub fn burn(env: Env, caller: Address, token_id: u64) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         token::burn(&env, &caller, token_id)
     }
 
     pub fn batch_burn(env: Env, caller: Address, token_ids: Vec<u64>) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         token::batch_burn(&env, &caller, token_ids)
     }
 
@@ -120,6 +126,7 @@ impl NftContract {
         token_id: u64,
     ) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         token::transfer(&env, &caller, from, to, token_id)
     }
 
@@ -131,6 +138,7 @@ impl NftContract {
         token_id: u64,
     ) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         token::safe_transfer_from(&env, &caller, from, to, token_id)
     }
 
@@ -142,6 +150,7 @@ impl NftContract {
         token_ids: Vec<u64>,
     ) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         token::batch_transfer(&env, &caller, from, to, token_ids)
     }
 
@@ -150,14 +159,17 @@ impl NftContract {
     // -------------------------------------------------------------------------
 
     pub fn owner_of(env: Env, token_id: u64) -> Result<Address, ContractError> {
+        ttl::extend_instance(&env);
         token::owner_of(&env, token_id)
     }
 
     pub fn balance_of(env: Env, owner: Address) -> u64 {
+        ttl::extend_instance(&env);
         token::balance_of(&env, &owner)
     }
 
     pub fn total_supply(env: Env) -> u64 {
+        ttl::extend_instance(&env);
         token::total_supply(&env)
     }
 
@@ -168,19 +180,23 @@ impl NftContract {
         token_id: u64,
     ) -> Result<(), ContractError> {
         owner.require_auth();
+        ttl::extend_instance(&env);
         transfer::approve(&env, &owner, &approved, token_id)
     }
 
     pub fn set_approval_for_all(env: Env, owner: Address, operator: Address, approved: bool) {
         owner.require_auth();
+        ttl::extend_instance(&env);
         transfer::set_approval_for_all(&env, &owner, &operator, approved);
     }
 
     pub fn get_approved(env: Env, token_id: u64) -> Option<Address> {
+        ttl::extend_instance(&env);
         transfer::get_approved(&env, token_id)
     }
 
     pub fn is_approved_for_all(env: Env, owner: Address, operator: Address) -> bool {
+        ttl::extend_instance(&env);
         transfer::is_approved_for_all(&env, &owner, &operator)
     }
 
@@ -189,10 +205,12 @@ impl NftContract {
     // -------------------------------------------------------------------------
 
     pub fn token_uri(env: Env, token_id: u64) -> Result<String, ContractError> {
+        ttl::extend_instance(&env);
         metadata::token_uri(&env, token_id)
     }
 
     pub fn token_metadata(env: Env, token_id: u64) -> Result<TokenData, ContractError> {
+        ttl::extend_instance(&env);
         metadata::token_metadata(&env, token_id)
     }
 
@@ -203,20 +221,24 @@ impl NftContract {
         uri: String,
     ) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         metadata::set_token_uri(&env, &caller, token_id, uri)
     }
 
     pub fn set_base_uri(env: Env, caller: Address, base_uri: String) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         metadata::set_base_uri(&env, &caller, base_uri)
     }
 
     pub fn freeze_metadata(env: Env, caller: Address) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         metadata::freeze_metadata(&env, &caller)
     }
 
     pub fn is_metadata_frozen(env: Env) -> bool {
+        ttl::extend_instance(&env);
         metadata::is_metadata_frozen(&env)
     }
 
@@ -231,6 +253,7 @@ impl NftContract {
         percentage: u32,
     ) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         royalty::set_default_royalty(&env, &caller, recipient, percentage)
     }
 
@@ -242,6 +265,7 @@ impl NftContract {
         percentage: u32,
     ) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         royalty::set_token_royalty(&env, &caller, token_id, recipient, percentage)
     }
 
@@ -250,6 +274,7 @@ impl NftContract {
         token_id: u64,
         sale_price: i128,
     ) -> Result<(Address, i128), ContractError> {
+        ttl::extend_instance(&env);
         royalty::get_royalty_info(&env, token_id, sale_price)
     }
 
@@ -259,15 +284,18 @@ impl NftContract {
 
     pub fn grant_role(env: Env, caller: Address, target: Address, role: u32) {
         caller.require_auth();
+        ttl::extend_instance(&env);
         ac::grant_role(&env, &caller, &target, role);
     }
 
     pub fn revoke_role(env: Env, caller: Address, target: Address, role: u32) {
         caller.require_auth();
+        ttl::extend_instance(&env);
         ac::revoke_role(&env, &caller, &target, role);
     }
 
     pub fn has_role(env: Env, address: Address, role: u32) -> bool {
+        ttl::extend_instance(&env);
         ac::has_role(&env, &address, role)
     }
 
@@ -278,10 +306,12 @@ impl NftContract {
     pub fn set_pause(env: Env, caller: Address, paused: bool) {
         caller.require_auth();
         ac::require_admin_or_owner(&env, &caller);
+        ttl::extend_instance(&env);
         env.storage().instance().set(&DataKey::IsPaused, &paused);
     }
 
     pub fn is_paused(env: Env) -> bool {
+        ttl::extend_instance(&env);
         env.storage()
             .instance()
             .get::<_, bool>(&DataKey::IsPaused)
@@ -300,6 +330,7 @@ impl NftContract {
         new_admin: Address,
     ) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         upgrade::set_upgrade_admin(&env, &caller, new_admin)
     }
 
@@ -312,12 +343,14 @@ impl NftContract {
         target_version: u32,
     ) -> Result<(), ContractError> {
         caller.require_auth();
+        ttl::extend_instance(&env);
         upgrade::perform_upgrade(&env, &caller, target_version)
     }
 
     /// Get the current upgrade state including storage version,
     /// latest available version, and admin addresses.
     pub fn get_upgrade_info(env: Env) -> UpgradeInfo {
+        ttl::extend_instance(&env);
         upgrade::get_upgrade_info(&env)
     }
 
@@ -327,6 +360,7 @@ impl NftContract {
 
     pub fn supports_interface(env: Env, interface_id: u32) -> bool {
         let _ = env;
+        ttl::extend_instance(&env);
         interface::supports_interface(interface_id)
     }
 
@@ -336,12 +370,14 @@ impl NftContract {
 
     /// Returns the semver string with embedded git commit: "0.1.0+abc1234"
     pub fn version(env: Env) -> String {
+        ttl::extend_instance(&env);
         version::version(&env)
     }
 
     /// Returns full build metadata for incident response:
     /// "version=0.1.0;git=abc1234;ts=1700000000;rustc=rustc 1.x.y"
     pub fn get_version(env: Env) -> String {
+        ttl::extend_instance(&env);
         version::get_version(&env)
     }
 }

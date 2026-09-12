@@ -3,6 +3,7 @@ use crate::error::ContractError;
 use crate::events;
 use crate::storage::{DataKey, MAX_BATCH_SIZE, MAX_SUPPLY_HARD_CAP};
 use crate::transfer;
+use crate::ttl;
 use crate::types::{CollectionConfig, RoyaltyInfo, TokenAttribute, TokenData};
 use soroban_sdk::{Address, Env, String, Vec};
 
@@ -76,21 +77,11 @@ fn mint_one(
         last_transfer_at: 0,
     };
 
-    env.storage()
-        .persistent()
-        .set(&DataKey::TokenData(token_id), &data);
-    env.storage()
-        .persistent()
-        .set(&DataKey::TokenOwner(token_id), to);
+    ttl::set(env, &DataKey::TokenData(token_id), &data);
+    ttl::set(env, &DataKey::TokenOwner(token_id), to);
 
-    let bal: u64 = env
-        .storage()
-        .persistent()
-        .get(&DataKey::Balance(to.clone()))
-        .unwrap_or(0);
-    env.storage()
-        .persistent()
-        .set(&DataKey::Balance(to.clone()), &(bal + 1));
+    let bal: u64 = ttl::get(env, &DataKey::Balance(to.clone())).unwrap_or(0);
+    ttl::set(env, &DataKey::Balance(to.clone()), &(bal + 1));
 
     let total: u64 = env
         .storage()
@@ -206,25 +197,18 @@ pub fn batch_mint(
 /// - Emits BurnFailed event on failure
 pub fn burn(env: &Env, caller: &Address, token_id: u64) -> Result<(), ContractError> {
     // 1. Validate token exists
-    let owner: Address = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenOwner(token_id))
-        .ok_or_else(|| {
-            events::emit_burn_failed(
-                env,
-                token_id,
-                caller.clone(),
-                ContractError::TokenNotFound as u32,
-            );
-            ContractError::TokenNotFound
-        })?;
+    let owner: Address = ttl::get(env, &DataKey::TokenOwner(token_id)).ok_or_else(|| {
+        events::emit_burn_failed(
+            env,
+            token_id,
+            caller.clone(),
+            ContractError::TokenNotFound as u32,
+        );
+        ContractError::TokenNotFound
+    })?;
 
     // 2. Validate not already burned - check if token data exists
-    let token_data: Option<TokenData> = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenData(token_id));
+    let token_data: Option<TokenData> = ttl::get(env, &DataKey::TokenData(token_id));
     if token_data.is_none() {
         events::emit_burn_failed(
             env,
@@ -251,9 +235,7 @@ pub fn burn(env: &Env, caller: &Address, token_id: u64) -> Result<(), ContractEr
 
     // 4. Clean up operator approvals for this token
     // Remove TokenApproved entry
-    env.storage()
-        .persistent()
-        .remove(&DataKey::TokenApproved(token_id));
+    ttl::remove(env, &DataKey::TokenApproved(token_id));
 
     // Remove any approval-for-all entries that reference this token
     // Note: We need to iterate through all operators or use a different approach
@@ -261,26 +243,18 @@ pub fn burn(env: &Env, caller: &Address, token_id: u64) -> Result<(), ContractEr
     // not per-token, so it doesn't need to be cleaned up for individual burns.
 
     // 5. Remove token data and ownership
-    env.storage()
-        .persistent()
-        .remove(&DataKey::TokenOwner(token_id));
-    env.storage()
-        .persistent()
-        .remove(&DataKey::TokenData(token_id));
-    env.storage()
-        .persistent()
-        .remove(&DataKey::TokenRoyalty(token_id));
+    ttl::remove(env, &DataKey::TokenOwner(token_id));
+    ttl::remove(env, &DataKey::TokenData(token_id));
+    ttl::remove(env, &DataKey::TokenRoyalty(token_id));
 
     // 6. Update owner balance
-    let bal: u64 = env
-        .storage()
-        .persistent()
-        .get(&DataKey::Balance(owner.clone()))
-        .unwrap_or(0);
+    let bal: u64 = ttl::get(env, &DataKey::Balance(owner.clone())).unwrap_or(0);
     if bal > 0 {
-        env.storage()
-            .persistent()
-            .set(&DataKey::Balance(owner.clone()), &bal.saturating_sub(1));
+        ttl::set(
+            env,
+            &DataKey::Balance(owner.clone()),
+            &bal.saturating_sub(1),
+        );
     }
 
     // 7. Update total supply
@@ -328,10 +302,7 @@ pub fn batch_burn(env: &Env, caller: &Address, token_ids: Vec<u64>) -> Result<()
     if !has_burner_role {
         for i in 0..n {
             let token_id = token_ids.get(i).unwrap();
-            let owner: Address = env
-                .storage()
-                .persistent()
-                .get(&DataKey::TokenOwner(token_id))
+            let owner: Address = ttl::get(env, &DataKey::TokenOwner(token_id))
                 .ok_or(ContractError::TokenNotFound)?;
 
             if caller != &owner {
@@ -400,17 +371,11 @@ pub fn batch_transfer(
 }
 
 pub fn owner_of(env: &Env, token_id: u64) -> Result<Address, ContractError> {
-    env.storage()
-        .persistent()
-        .get(&DataKey::TokenOwner(token_id))
-        .ok_or(ContractError::TokenNotFound)
+    ttl::get(env, &DataKey::TokenOwner(token_id)).ok_or(ContractError::TokenNotFound)
 }
 
 pub fn balance_of(env: &Env, owner: &Address) -> u64 {
-    env.storage()
-        .persistent()
-        .get(&DataKey::Balance(owner.clone()))
-        .unwrap_or(0)
+    ttl::get(env, &DataKey::Balance(owner.clone())).unwrap_or(0)
 }
 
 pub fn total_supply(env: &Env) -> u64 {

@@ -1,6 +1,7 @@
 use crate::error::ContractError;
 use crate::events;
 use crate::storage::DataKey;
+use crate::ttl;
 use crate::types::{CollectionConfig, RoyaltyInfo, TokenMetadata};
 use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, String, Vec};
 
@@ -10,6 +11,7 @@ pub struct NftCollection;
 #[contractimpl]
 impl NftCollection {
     pub fn init(env: Env, admin: Address, factory_address: Address, config: CollectionConfig) {
+        ttl::extend_instance(&env);
         if env.storage().instance().has(&DataKey::CollectionConfig) {
             panic_with_error!(&env, ContractError::AlreadyInitialized);
         }
@@ -58,6 +60,7 @@ impl NftCollection {
         attributes: Vec<(String, String)>,
     ) -> Result<(), ContractError> {
         minter.require_auth();
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -131,6 +134,7 @@ impl NftCollection {
         token_id: u32,
     ) -> Result<(), ContractError> {
         from.require_auth();
+        ttl::extend_instance(&env);
 
         if env
             .storage()
@@ -177,6 +181,7 @@ impl NftCollection {
     }
 
     pub fn burn(env: Env, from: Address, token_id: u32) -> Result<(), ContractError> {
+        ttl::extend_instance(&env);
         from.require_auth();
 
         let owner: Address = env
@@ -213,6 +218,7 @@ impl NftCollection {
     }
 
     pub fn get_token_uri(env: Env, token_id: u32) -> Option<String> {
+        ttl::extend_instance(&env);
         let metadata: TokenMetadata = env
             .storage()
             .instance()
@@ -221,12 +227,14 @@ impl NftCollection {
     }
 
     pub fn get_token_metadata(env: Env, token_id: u32) -> Option<TokenMetadata> {
+        ttl::extend_instance(&env);
         env.storage()
             .instance()
             .get(&DataKey::TokenMetadata(token_id))
     }
 
     pub fn total_supply(env: Env) -> u32 {
+        ttl::extend_instance(&env);
         env.storage()
             .instance()
             .get(&DataKey::TotalSupply)
@@ -234,6 +242,7 @@ impl NftCollection {
     }
 
     pub fn balance_of(env: Env, owner: Address, token_id: u32) -> u32 {
+        ttl::extend_instance(&env);
         env.storage()
             .instance()
             .get(&DataKey::Balance(owner, token_id))
@@ -241,6 +250,7 @@ impl NftCollection {
     }
 
     pub fn owner_of(env: Env, token_id: u32) -> Option<Address> {
+        ttl::extend_instance(&env);
         env.storage().instance().get(&DataKey::Owner(token_id))
     }
 
@@ -249,6 +259,7 @@ impl NftCollection {
         recipient: Address,
         percentage: u32,
     ) -> Result<(), ContractError> {
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -272,10 +283,12 @@ impl NftCollection {
     }
 
     pub fn get_royalty_info(env: Env) -> RoyaltyInfo {
+        ttl::extend_instance(&env);
         env.storage().instance().get(&DataKey::RoyaltyInfo).unwrap()
     }
 
     pub fn set_pause(env: Env, paused: bool) {
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -286,6 +299,7 @@ impl NftCollection {
     }
 
     pub fn set_minter(env: Env, minter: Address, is_minter: bool) {
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -305,10 +319,12 @@ impl NftCollection {
     }
 
     pub fn get_factory(env: Env) -> Option<Address> {
+        ttl::extend_instance(&env);
         env.storage().instance().get(&DataKey::FactoryAddress)
     }
 
     pub fn is_fact(env: Env, factory: Address) -> bool {
+        ttl::extend_instance(&env);
         match env
             .storage()
             .instance()

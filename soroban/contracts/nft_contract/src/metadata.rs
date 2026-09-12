@@ -2,15 +2,13 @@ use crate::access_control;
 use crate::error::ContractError;
 use crate::events;
 use crate::storage::DataKey;
+use crate::ttl;
 use crate::types::TokenData;
 use soroban_sdk::{Address, Env, String};
 
 pub fn token_uri(env: &Env, token_id: u64) -> Result<String, ContractError> {
-    let data: TokenData = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenData(token_id))
-        .ok_or(ContractError::TokenNotFound)?;
+    let data: TokenData =
+        ttl::get(env, &DataKey::TokenData(token_id)).ok_or(ContractError::TokenNotFound)?;
 
     let base: Option<String> = env.storage().instance().get(&DataKey::BaseUri);
     if let Some(base_uri) = base {
@@ -22,10 +20,7 @@ pub fn token_uri(env: &Env, token_id: u64) -> Result<String, ContractError> {
 }
 
 pub fn token_metadata(env: &Env, token_id: u64) -> Result<TokenData, ContractError> {
-    env.storage()
-        .persistent()
-        .get(&DataKey::TokenData(token_id))
-        .ok_or(ContractError::TokenNotFound)
+    ttl::get(env, &DataKey::TokenData(token_id)).ok_or(ContractError::TokenNotFound)
 }
 
 pub fn set_token_uri(
@@ -43,26 +38,18 @@ pub fn set_token_uri(
         return Err(ContractError::MetadataFrozen);
     }
 
-    let owner: Address = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenOwner(token_id))
-        .ok_or(ContractError::TokenNotFound)?;
+    let owner: Address =
+        ttl::get(env, &DataKey::TokenOwner(token_id)).ok_or(ContractError::TokenNotFound)?;
 
     // Only the token owner may update the URI
     if caller != &owner {
         return Err(ContractError::NotAuthorized);
     }
 
-    let mut data: TokenData = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenData(token_id))
-        .ok_or(ContractError::TokenNotFound)?;
+    let mut data: TokenData =
+        ttl::get(env, &DataKey::TokenData(token_id)).ok_or(ContractError::TokenNotFound)?;
     data.metadata_uri = uri;
-    env.storage()
-        .persistent()
-        .set(&DataKey::TokenData(token_id), &data);
+    ttl::set(env, &DataKey::TokenData(token_id), &data);
 
     events::emit_metadata_update(env, token_id);
     Ok(())

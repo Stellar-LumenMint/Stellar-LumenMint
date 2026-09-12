@@ -1,6 +1,7 @@
 use crate::error::ContractError;
 use crate::events;
 use crate::storage::DataKey;
+use crate::ttl;
 use crate::types::{CollectionConfig, CollectionInfo};
 use crate::version;
 use soroban_sdk::{
@@ -14,6 +15,7 @@ pub struct CollectionFactory;
 #[contractimpl]
 impl CollectionFactory {
     pub fn initialize(env: Env, admin: Address, fee_asset: Address) {
+        ttl::extend_instance(&env);
         if env.storage().instance().has(&DataKey::FactoryAdmin) {
             panic_with_error!(&env, ContractError::AlreadyInitialized);
         }
@@ -40,6 +42,7 @@ impl CollectionFactory {
         config: CollectionConfig,
     ) -> Result<Address, ContractError> {
         creator.require_auth();
+        ttl::extend_instance(&env);
 
         let admin: Address = env
             .storage()
@@ -148,6 +151,7 @@ impl CollectionFactory {
     }
 
     pub fn verify_factory_origin(env: Env, collection: Address) -> bool {
+        ttl::extend_instance(&env);
         // Check if the collection was deployed by this factory
         // by calling is_from_factory on the collection
         let result: bool = env.invoke_contract::<bool>(
@@ -159,6 +163,7 @@ impl CollectionFactory {
     }
 
     pub fn get_collections_by_factory(env: Env) -> Vec<Address> {
+        ttl::extend_instance(&env);
         let count = env
             .storage()
             .instance()
@@ -182,6 +187,7 @@ impl CollectionFactory {
     /// ledger limits. This bounded variant lets callers page through the list;
     /// `limit` is capped so one call can never materialize the whole set.
     pub fn get_collections_page(env: Env, start: u32, limit: u32) -> Vec<Address> {
+        ttl::extend_instance(&env);
         const MAX_PAGE_SIZE: u32 = 100;
 
         let count: u32 = env
@@ -218,6 +224,7 @@ impl CollectionFactory {
     /* Operational Admin Functions */
 
     pub fn update_creator_limit(env: Env, new_limit: u32) {
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -239,6 +246,7 @@ impl CollectionFactory {
     }
 
     pub fn set_overflow_fee(env: Env, fee_amount: i128) {
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -252,6 +260,7 @@ impl CollectionFactory {
     }
 
     pub fn reset_creator_collection_count(env: Env, creator: Address) {
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -269,6 +278,7 @@ impl CollectionFactory {
     /* Getter Views */
 
     pub fn get_max_collections(env: Env) -> u32 {
+        ttl::extend_instance(&env);
         env.storage()
             .instance()
             .get(&DataKey::MaxCollectionsPerCreator)
@@ -276,6 +286,7 @@ impl CollectionFactory {
     }
 
     pub fn get_creator_collection_count(env: Env, creator: Address) -> u32 {
+        ttl::extend_instance(&env);
         env.storage()
             .instance()
             .get(&DataKey::CreatorCollectionCount(creator))
@@ -283,6 +294,7 @@ impl CollectionFactory {
     }
 
     pub fn get_remaining_count(env: Env, creator: Address) -> u32 {
+        ttl::extend_instance(&env);
         let max_allowed: u32 = env
             .storage()
             .instance()
@@ -298,6 +310,7 @@ impl CollectionFactory {
     }
 
     pub fn get_collection_count(env: Env) -> u32 {
+        ttl::extend_instance(&env);
         env.storage()
             .instance()
             .get(&DataKey::CollectionCount)
@@ -305,16 +318,19 @@ impl CollectionFactory {
     }
 
     pub fn get_collection_address(env: Env, id: u32) -> Option<Address> {
+        ttl::extend_instance(&env);
         env.storage()
             .instance()
             .get(&DataKey::CollectionAddress(id))
     }
 
     pub fn get_collection_info(env: Env, id: u32) -> Option<CollectionInfo> {
+        ttl::extend_instance(&env);
         env.storage().instance().get(&DataKey::CollectionInfo(id))
     }
 
     pub fn set_admin(env: Env, new_admin: Address) {
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -327,6 +343,7 @@ impl CollectionFactory {
     }
 
     pub fn withdraw_fees(env: Env, to: Address) -> Result<(), ContractError> {
+        ttl::extend_instance(&env);
         let admin: Address = env
             .storage()
             .instance()
@@ -355,12 +372,14 @@ impl CollectionFactory {
 
     /// Returns the semver string with embedded git commit: "0.1.0+abc1234"
     pub fn version(env: Env) -> String {
+        ttl::extend_instance(&env);
         version::version(&env)
     }
 
     /// Returns full build metadata for incident response:
     /// "version=0.1.0;git=abc1234;ts=1700000000;rustc=rustc 1.x.y"
     pub fn get_version(env: Env) -> String {
+        ttl::extend_instance(&env);
         version::get_version(&env)
     }
 }

@@ -1,5 +1,6 @@
 use crate::error::ContractError;
 use crate::storage::DataKey;
+use crate::ttl;
 use crate::types::{LegacyTokenDataV1, TokenData};
 use soroban_sdk::{contracttype, Address, Env};
 
@@ -190,21 +191,15 @@ fn migrate_v1_to_v2(env: &Env) -> Result<(), ContractError> {
 
     for token_id in 1..=total {
         // Check if already migrated (idempotent guard via explicit marker)
-        let already_migrated: bool = env
-            .storage()
-            .persistent()
-            .get(&DataKey::TokenMigratedToV2(token_id))
-            .unwrap_or(false);
+        let already_migrated: bool =
+            ttl::get(env, &DataKey::TokenMigratedToV2(token_id)).unwrap_or(false);
         if already_migrated {
             continue; // Already migrated, skip
         }
 
         // Read as v1 schema and transform to v2
-        let legacy: LegacyTokenDataV1 = env
-            .storage()
-            .persistent()
-            .get(&DataKey::TokenData(token_id))
-            .ok_or(ContractError::TokenNotFound)?;
+        let legacy: LegacyTokenDataV1 =
+            ttl::get(env, &DataKey::TokenData(token_id)).ok_or(ContractError::TokenNotFound)?;
 
         let v2_data = TokenData {
             id: legacy.id,
@@ -221,12 +216,8 @@ fn migrate_v1_to_v2(env: &Env) -> Result<(), ContractError> {
             last_transfer_at: 0,
         };
 
-        env.storage()
-            .persistent()
-            .set(&DataKey::TokenData(token_id), &v2_data);
-        env.storage()
-            .persistent()
-            .set(&DataKey::TokenMigratedToV2(token_id), &true);
+        ttl::set(env, &DataKey::TokenData(token_id), &v2_data);
+        ttl::set(env, &DataKey::TokenMigratedToV2(token_id), &true);
     }
 
     Ok(())

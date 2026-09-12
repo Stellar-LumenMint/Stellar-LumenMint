@@ -2,6 +2,7 @@ use crate::access_control;
 use crate::error::ContractError;
 use crate::events;
 use crate::storage::{DataKey, MAX_ROYALTY_BPS};
+use crate::ttl;
 use crate::types::RoyaltyInfo;
 use soroban_sdk::{Address, Env};
 
@@ -41,9 +42,7 @@ pub fn set_token_royalty(
         recipient,
         percentage,
     };
-    env.storage()
-        .persistent()
-        .set(&DataKey::TokenRoyalty(token_id), &info);
+    ttl::set(env, &DataKey::TokenRoyalty(token_id), &info);
     Ok(())
 }
 
@@ -53,10 +52,7 @@ pub fn get_royalty_info(
     token_id: u64,
     sale_price: i128,
 ) -> Result<(Address, i128), ContractError> {
-    let info: RoyaltyInfo = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenRoyalty(token_id))
+    let info: RoyaltyInfo = ttl::get(env, &DataKey::TokenRoyalty(token_id))
         .or_else(|| env.storage().instance().get(&DataKey::DefaultRoyalty))
         .ok_or(ContractError::NotFound)?;
 

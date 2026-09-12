@@ -1,6 +1,7 @@
 use crate::error::ContractError;
 use crate::events;
 use crate::storage::DataKey;
+use crate::ttl;
 use crate::types::TokenData;
 use soroban_sdk::{Address, Env};
 
@@ -10,26 +11,22 @@ pub fn approve(
     approved: &Address,
     token_id: u64,
 ) -> Result<(), ContractError> {
-    let token_owner: Address = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenOwner(token_id))
-        .ok_or(ContractError::TokenNotFound)?;
+    let token_owner: Address =
+        ttl::get(env, &DataKey::TokenOwner(token_id)).ok_or(ContractError::TokenNotFound)?;
 
     if &token_owner != owner {
         return Err(ContractError::NotOwner);
     }
 
-    env.storage()
-        .persistent()
-        .set(&DataKey::TokenApproved(token_id), approved);
+    ttl::set(env, &DataKey::TokenApproved(token_id), approved);
 
     events::emit_approval(env, owner.clone(), approved.clone(), token_id);
     Ok(())
 }
 
 pub fn set_approval_for_all(env: &Env, owner: &Address, operator: &Address, approved: bool) {
-    env.storage().persistent().set(
+    ttl::set(
+        env,
         &DataKey::OperatorApproval(owner.clone(), operator.clone()),
         &approved,
     );
@@ -37,25 +34,20 @@ pub fn set_approval_for_all(env: &Env, owner: &Address, operator: &Address, appr
 }
 
 pub fn get_approved(env: &Env, token_id: u64) -> Option<Address> {
-    env.storage()
-        .persistent()
-        .get(&DataKey::TokenApproved(token_id))
+    ttl::get(env, &DataKey::TokenApproved(token_id))
 }
 
 pub fn is_approved_for_all(env: &Env, owner: &Address, operator: &Address) -> bool {
-    env.storage()
-        .persistent()
-        .get(&DataKey::OperatorApproval(owner.clone(), operator.clone()))
-        .unwrap_or(false)
+    ttl::get::<_, bool>(
+        env,
+        &DataKey::OperatorApproval(owner.clone(), operator.clone()),
+    )
+    .unwrap_or(false)
 }
 
 /// Returns true if `spender` is the owner, approved for the token, or an operator.
 pub fn is_approved_or_owner(env: &Env, spender: &Address, token_id: u64) -> bool {
-    let owner: Address = match env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenOwner(token_id))
-    {
+    let owner: Address = match ttl::get(env, &DataKey::TokenOwner(token_id)) {
         Some(o) => o,
         None => return false,
     };
@@ -63,11 +55,7 @@ pub fn is_approved_or_owner(env: &Env, spender: &Address, token_id: u64) -> bool
     if spender == &owner {
         return true;
     }
-    if let Some(approved) = env
-        .storage()
-        .persistent()
-        .get::<_, Address>(&DataKey::TokenApproved(token_id))
-    {
+    if let Some(approved) = ttl::get::<_, Address>(env, &DataKey::TokenApproved(token_id)) {
         if spender == &approved {
             return true;
         }
@@ -90,56 +78,36 @@ pub fn do_transfer(
         return Err(ContractError::ContractPaused);
     }
 
-    let owner: Address = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenOwner(token_id))
-        .ok_or(ContractError::TokenNotFound)?;
+    let owner: Address =
+        ttl::get(env, &DataKey::TokenOwner(token_id)).ok_or(ContractError::TokenNotFound)?;
 
     if &owner != from {
         return Err(ContractError::NotOwner);
     }
 
     // Clear per-token approval on transfer
-    env.storage()
-        .persistent()
-        .remove(&DataKey::TokenApproved(token_id));
+    ttl::remove(env, &DataKey::TokenApproved(token_id));
 
     // Update TokenData: new owner, increment transfer_count, set timestamp
-    let mut token_data: TokenData = env
-        .storage()
-        .persistent()
-        .get(&DataKey::TokenData(token_id))
-        .ok_or(ContractError::TokenNotFound)?;
+    let mut token_data: TokenData =
+        ttl::get(env, &DataKey::TokenData(token_id)).ok_or(ContractError::TokenNotFound)?;
     token_data.owner = to.clone();
     token_data.transfer_count = token_data.transfer_count.saturating_add(1);
     token_data.last_transfer_at = env.ledger().timestamp();
-    env.storage()
-        .persistent()
-        .set(&DataKey::TokenData(token_id), &token_data);
+    ttl::set(env, &DataKey::TokenData(token_id), &token_data);
 
-    env.storage()
-        .persistent()
-        .set(&DataKey::TokenOwner(token_id), to);
+    ttl::set(env, &DataKey::TokenOwner(token_id), to);
 
     // Update balances
-    let from_bal: u64 = env
-        .storage()
-        .persistent()
-        .get(&DataKey::Balance(from.clone()))
-        .unwrap_or(0);
-    env.storage()
-        .persistent()
-        .set(&DataKey::Balance(from.clone()), &from_bal.saturating_sub(1));
+    let from_bal: u64 = ttl::get(env, &DataKey::Balance(from.clone())).unwrap_or(0);
+    ttl::set(
+        env,
+        &DataKey::Balance(from.clone()),
+        &from_bal.saturating_sub(1),
+    );
 
-    let to_bal: u64 = env
-        .storage()
-        .persistent()
-        .get(&DataKey::Balance(to.clone()))
-        .unwrap_or(0);
-    env.storage()
-        .persistent()
-        .set(&DataKey::Balance(to.clone()), &(to_bal + 1));
+    let to_bal: u64 = ttl::get(env, &DataKey::Balance(to.clone())).unwrap_or(0);
+    ttl::set(env, &DataKey::Balance(to.clone()), &(to_bal + 1));
 
     events::emit_transfer(env, from.clone(), to.clone(), token_id);
     Ok(())
