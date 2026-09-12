@@ -1,0 +1,22 @@
+# The Vercel project's Root Directory is `frontend`, so the CLI uploads the
+# repository from its root. Everything that is not the frontend workspace — and
+# the frontend's own dependency and build directories — is excluded: none of it
+# is an input to the frontend build, and uploading the monorepo (plus several
+# node_modules trees and the Rust target directory) makes each deployment
+# needlessly large.
+backend
+mobile-app
+admin
+packages
+soroban
+.github
+scripts
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.turbo
+**/out
+**/.expo
+**/target
