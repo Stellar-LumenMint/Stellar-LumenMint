@@ -1,5 +1,6 @@
 // Gas benchmarks for the factory and collection entrypoints.
 mod benchmarks;
+mod error_codes;
 
 use crate::collection::{NftCollection, NftCollectionClient};
 use crate::factory::{CollectionFactory, CollectionFactoryClient};

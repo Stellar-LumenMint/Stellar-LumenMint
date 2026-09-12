@@ -1,6 +1,7 @@
 // Gas benchmarks. Declared here so they are part of the test target; the file
 // previously sat in `src/test/` with no `mod` declaration and never compiled.
 mod benchmarks;
+mod error_codes;
 
 use crate::types::{CollectionConfig, RoyaltyInfo, TokenAttribute};
 use crate::{NftContract, NftContractClient};
