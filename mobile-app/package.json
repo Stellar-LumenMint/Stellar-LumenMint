@@ -18,21 +18,21 @@
     "@react-navigation/native-stack": "^7.14.10",
     "@react-navigation/stack": "^7.1.1",
     "bip39": "^3.1.0",
-    "expo": "~54.0.0",
-    "expo-clipboard": "~7.1.5",
-    "expo-crypto": "~14.1.5",
-    "expo-secure-store": "~12.2.0",
-    "expo-status-bar": "~3.0.9",
-    "lucide-react-native": "^0.446.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-native": "0.73.7",
+    "expo": "~57.0.21",
+    "expo-clipboard": "~57.0.1",
+    "expo-crypto": "~57.0.2",
+    "expo-secure-store": "~57.0.3",
+    "expo-status-bar": "~57.0.1",
+    "lucide-react-native": "^1.43.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.87.1",
     "react-native-safe-area-context": "^5.1.0",
     "react-native-screens": "^4.6.0",
     "react-native-svg": "^15.11.2",
-    "react-native-web": "^0.19.13",
+    "react-native-web": "^0.21.2",
     "stellar-hd-wallet": "^1.0.2",
-    "stellar-sdk": "^12.3.0",
+    "stellar-sdk": "^13.3.0",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
@@ -48,6 +48,6 @@
   "private": true,
   "overrides": {
     "@types/react": "~18.2.79",
-    "react-native": "0.73.7"
+    "react-native": "0.87.1"
   }
 }
