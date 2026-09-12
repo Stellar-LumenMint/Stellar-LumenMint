@@ -208,6 +208,50 @@ fn test_transaction_records_use_per_id_persistent_storage() {
     assert_eq!(client.get_sale(&second).price, 2_000_000i128);
 }
 
+/// Auctions, their bid books and Dutch pricing data must each occupy their own
+/// persistent entry. Previously all three were `Map<u64, ...>` values in the
+/// shared instance entry, so one bid rewrote every auction on the book.
+#[test]
+fn test_auction_records_use_per_id_persistent_storage() {
+    use crate::storage::auction_store::AuctionKey;
+
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let bidder = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    client.add_supported_asset(&admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let auction_id = client.create_auction(
+        &seller,
+        &nft,
+        &1u64,
+        &100_000i128,
+        &100_000i128,
+        &3600u64,
+        &1_000i128,
+        &AuctionType::English,
+        &asset,
+    );
+    client.place_bid(&auction_id, &bidder, &100_000i128, &None);
+
+    env.as_contract(&cid, || {
+        assert!(env
+            .storage()
+            .persistent()
+            .has(&AuctionKey::Auction(auction_id)));
+        assert!(env
+            .storage()
+            .persistent()
+            .has(&AuctionKey::Bids(auction_id)));
+    });
+
+    assert_eq!(client.get_auction(&auction_id).highest_bid, 100_000i128);
+}
+
 #[test]
 fn test_cancel_sale_non_seller_fails() {
     let (env, cid, client, admin) = new_env();

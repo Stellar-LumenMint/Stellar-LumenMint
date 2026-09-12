@@ -55,7 +55,6 @@ pub struct AuctionTransaction {
     pub start_time: u64,
     pub end_time: u64,
     pub state: TransactionState,
-    pub bids: Vec<Bid>,
     pub extension_window: u64, // Time extension for last-minute bids
     pub currency: Asset,
     pub royalty_info: RoyaltyDistribution,

@@ -80,7 +80,6 @@ impl AuctionEngine {
             start_time,
             end_time,
             state: TransactionState::Pending,
-            bids: Vec::new(env),
             extension_window: config.extension_window,
             currency: currency.clone(),
             royalty_info: RoyaltyDistribution {
