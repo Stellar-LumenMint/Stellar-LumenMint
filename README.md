@@ -121,7 +121,7 @@ Each contract is initialised, its role allowlists are set, and its version is re
 - Responsive design with dark/light mode and the **Lumen Minimal** design system
 
 ### ⛓️ Stellar & Soroban Integration
-- **Stellar wallets**: Freighter, Albedo, WalletConnect
+- **Stellar wallets**: Freighter and Albedo. WalletConnect is not implemented yet — it is tracked in [#1](https://github.com/Stellar-LumenMint/Stellar-LumenMint/issues/1) rather than advertised.
 - **Soroban smart contracts**: NFT minting, marketplace settlement, collection factory, transaction history
 - On-chain event indexing and transfer tracking
 - Stellar account validation and management
@@ -237,6 +237,7 @@ Contract source: [`soroban/contracts/`](./soroban/contracts) · [Contract Invari
 | [soroban/CONTRACT_INVARIANTS.md](./soroban/CONTRACT_INVARIANTS.md) | Smart contract safety invariants |
 | [soroban/SECURITY.md](./soroban/SECURITY.md) | Smart contract security considerations |
 | [soroban/GAS.md](./soroban/GAS.md) | Gas benchmarks, regression ceilings and Testnet fee measurements |
+| [docs/ERROR_CODES.md](./docs/ERROR_CODES.md) | Every error code across the contracts, API and frontend (generated) |
 | [.github/workflows/README.md](./.github/workflows/README.md) | CI/CD pipeline architecture |
 
 ---
