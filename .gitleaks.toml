@@ -1,0 +1,19 @@
+# Gitleaks configuration.
+#
+# The default rule set is kept in full (`useDefault = true`); the allowlist
+# below is deliberately narrow and covers a single placeholder value that appears
+# in unit-test fixtures. Anything else gitleaks finds is reported.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Placeholder payment-token address used by listing test fixtures, e.g. `tokenAddress: '0x1234567890abcdef'`. Not a credential: it never leaves a test and is not a valid address on any network."
+regexTarget = "match"
+regexes = [
+  '''0x1234567890abcdef''',
+]
+paths = [
+  '''(^|/)backend/src/modules/listing/listing\.(controller|service)\.spec\.ts$''',
+  '''(^|/)nftopia-backend/src/modules/listing/listing\.(controller|service)\.spec\.ts$''',
+]

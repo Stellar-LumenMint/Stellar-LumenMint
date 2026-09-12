@@ -53,7 +53,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -62,10 +61,24 @@ jobs:
           # Full history so gitleaks can scan commits, not just the worktree.
           fetch-depth: 0
 
+      # The gitleaks GitHub Action requires a paid licence key to run in an
+      # organisation, so it aborted after five seconds on every push and the
+      # scan never actually ran. The gitleaks CLI itself is free and scans the
+      # same history against the same rules, so it is invoked directly.
       - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pinned so a new upstream release cannot change the ruleset silently.
+          GITLEAKS_VERSION: "8.30.1"
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            -o /tmp/gitleaks.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks detect \
+            --source . \
+            --config .gitleaks.toml \
+            --no-banner \
+            --redact \
+            --exit-code 1
 
   dependency-audit:
     name: Dependency Audit (${{ matrix.workspace }})
@@ -94,9 +107,12 @@ jobs:
             npm ci
           fi
 
+      # `npm audit --audit-level=high` fails on every high advisory, including
+      # the ones npm reports as having no fix short of a breaking framework
+      # upgrade, which leaves the job permanently red and therefore ignored.
+      # This gate fails when a fix is available now and reports the rest.
       - name: Audit dependencies
-        working-directory: ./${{ matrix.workspace }}
-        run: npm audit --audit-level=high
+        run: node scripts/dependency-audit.mjs ${{ matrix.workspace }}
 
   cargo-audit:
     name: Cargo Audit (Rust)
