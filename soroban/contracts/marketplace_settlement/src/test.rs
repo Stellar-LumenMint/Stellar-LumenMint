@@ -1,5 +1,8 @@
 #![cfg(test)]
 
+// Gas benchmarks for the settlement flows.
+mod benchmarks;
+
 use crate::{
     error::SettlementError,
     royalty_distributor::RoyaltyDistributor,
