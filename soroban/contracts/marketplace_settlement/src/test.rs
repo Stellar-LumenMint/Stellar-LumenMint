@@ -503,9 +503,10 @@ fn test_create_english_auction_success() {
     let (env, cid, client, _admin) = new_env();
     let _asset = mk_asset(&env);
     let seller = Address::generate(&env);
-    let nft = Address::generate(&env);
+    let nft = env.register(MockNft, ());
     let creator = Address::generate(&env);
     reg(&env, &cid, &nft, &creator, &_admin, &_asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
     let id = client.create_auction(
         &seller,
         &nft,
@@ -525,9 +526,10 @@ fn test_create_dutch_auction_success() {
     let (env, cid, client, _admin) = new_env();
     let _asset = mk_asset(&env);
     let seller = Address::generate(&env);
-    let nft = Address::generate(&env);
+    let nft = env.register(MockNft, ());
     let creator = Address::generate(&env);
     reg(&env, &cid, &nft, &creator, &_admin, &_asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
     let id = client.create_auction(
         &seller,
         &nft,
@@ -571,9 +573,10 @@ fn test_bid_below_starting_price_fails() {
     let _asset = mk_asset(&env);
     let seller = Address::generate(&env);
     let bidder = Address::generate(&env);
-    let nft = Address::generate(&env);
+    let nft = env.register(MockNft, ());
     let creator = Address::generate(&env);
     reg(&env, &cid, &nft, &creator, &_admin, &_asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
     let id = client.create_auction(
         &seller,
         &nft,
@@ -595,9 +598,10 @@ fn test_get_dutch_auction_price() {
     let (env, cid, client, _admin) = new_env();
     let _asset = mk_asset(&env);
     let seller = Address::generate(&env);
-    let nft = Address::generate(&env);
+    let nft = env.register(MockNft, ());
     let creator = Address::generate(&env);
     reg(&env, &cid, &nft, &creator, &_admin, &_asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
     let id = client.create_auction(
         &seller,
         &nft,
@@ -618,6 +622,152 @@ fn test_get_nonexistent_auction_fails() {
     let (_env, _cid, client, _admin) = new_env();
     let _asset = mk_asset(&_env);
     assert!(client.try_get_auction(&9999u64).is_err());
+}
+
+/// A cleared reserve has to settle the whole trade, not just flip a flag: the
+/// winner takes ownership of the lot that was escrowed at creation, and the
+/// auction records the platform fee it actually split out.
+#[test]
+fn test_end_auction_delivers_lot_and_settles() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let bidder = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    let nft_client = MockNftClient::new(&env, &nft);
+    nft_client.set_owner(&seller);
+
+    let auction_id = client.create_auction(
+        &seller,
+        &nft,
+        &1u64,
+        &100_000i128,
+        &80_000i128,
+        &3600u64,
+        &1_000i128,
+        &AuctionType::English,
+        &asset,
+    );
+
+    // Listing an auction escrows the lot, so the seller cannot move it out from
+    // under a bidder while the clock runs.
+    assert_eq!(nft_client.owner_of(&1u64), cid);
+
+    client.place_bid(&auction_id, &bidder, &150_000i128, &None);
+
+    env.ledger().set_timestamp(env.ledger().timestamp() + 3601);
+    client.end_auction(&auction_id, &admin);
+
+    assert_eq!(nft_client.owner_of(&1u64), bidder);
+    let auction = client.get_auction(&auction_id);
+    assert_eq!(auction.state, TransactionState::Executed);
+    assert!(
+        auction.platform_fee > 0,
+        "settlement must record the platform fee it paid"
+    );
+}
+
+/// When the reserve is not cleared the leading bidder is repaid and the lot is
+/// returned to the seller, so neither side is left holding the other's asset.
+#[test]
+fn test_end_auction_below_reserve_returns_lot() {
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let bidder = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    let nft_client = MockNftClient::new(&env, &nft);
+    nft_client.set_owner(&seller);
+
+    // The reserve sits above the opening bid, which is the only shape in which
+    // a valid bid can still fail to clear it.
+    let auction_id = client.create_auction(
+        &seller,
+        &nft,
+        &1u64,
+        &100_000i128,
+        &500_000i128,
+        &3600u64,
+        &1_000i128,
+        &AuctionType::English,
+        &asset,
+    );
+
+    client.place_bid(&auction_id, &bidder, &100_000i128, &None);
+
+    env.ledger().set_timestamp(env.ledger().timestamp() + 3601);
+    client.end_auction(&auction_id, &admin);
+
+    assert_eq!(nft_client.owner_of(&1u64), seller);
+    assert_eq!(
+        client.get_auction(&auction_id).state,
+        TransactionState::Cancelled
+    );
+}
+
+/// Outbid deposits are returned as they are displaced, and a bidder who raises
+/// their own bid is not left with two escrowed records for one lot.
+///
+/// The bid book used to keep every deposit `refunded: false` forever: nothing
+/// repaid the leader when a higher bid arrived, and settlement repaid a single
+/// record while transferring the whole highest bid. Asserting the flag on each
+/// record pins the accounting the payouts depend on.
+#[test]
+fn test_auction_refunds_displaced_and_repeated_bidders() {
+    use crate::storage::auction_store::AuctionKey;
+
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let first = Address::generate(&env);
+    let second = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let auction_id = client.create_auction(
+        &seller,
+        &nft,
+        &1u64,
+        &100_000i128,
+        &80_000i128,
+        &3600u64,
+        &1_000i128,
+        &AuctionType::English,
+        &asset,
+    );
+
+    // The first bidder raises their own bid. Their first deposit must be
+    // repaid; only the new leading bid stays escrowed.
+    client.place_bid(&auction_id, &first, &100_000i128, &None);
+    client.place_bid(&auction_id, &first, &150_000i128, &None);
+
+    // A second bidder displaces them; the raised deposit is returned too.
+    client.place_bid(&auction_id, &second, &200_000i128, &None);
+
+    let bids: soroban_sdk::Vec<crate::types::Bid> = env.as_contract(&cid, || {
+        env.storage()
+            .persistent()
+            .get(&AuctionKey::Bids(auction_id))
+            .expect("bid book must exist")
+    });
+
+    assert_eq!(bids.len(), 3);
+    assert!(bids.get(0).unwrap().refunded, "100k deposit must be repaid");
+    assert!(bids.get(1).unwrap().refunded, "150k deposit must be repaid");
+    assert!(
+        !bids.get(2).unwrap().refunded,
+        "only the leading bid stays escrowed"
+    );
+
+    let auction = client.get_auction(&auction_id);
+    assert_eq!(auction.highest_bid, 200_000i128);
+    assert_eq!(auction.highest_bidder, Some(second));
 }
 
 // ─── Fee Manager ─────────────────────────────────────────────────────────────
@@ -1270,9 +1420,10 @@ fn test_reveal_wrong_salt_fails() {
     let _asset = mk_asset(&env);
     let seller = Address::generate(&env);
     let bidder = Address::generate(&env);
-    let nft = Address::generate(&env);
+    let nft = env.register(MockNft, ());
     let creator = Address::generate(&env);
     reg(&env, &cid, &nft, &creator, &_admin, &_asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
     let id = client.create_auction(
         &seller,
         &nft,
@@ -1457,9 +1608,10 @@ fn test_rate_limiter_admin_update_config() {
 
     let bidder = Address::generate(&env);
     let seller = Address::generate(&env);
-    let nft = Address::generate(&env);
+    let nft = env.register(MockNft, ());
     let creator = Address::generate(&env);
     reg(&env, &cid2, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
 
     let id = c2.create_auction(
         &seller,

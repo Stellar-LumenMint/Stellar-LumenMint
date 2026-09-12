@@ -593,6 +593,23 @@ impl MarketplaceSettlement {
             // Validate asset
             asset_utils::validate_asset(&currency, &supported_assets, &env)?;
 
+            // Escrow the lot for the lifetime of the auction. Settlement moves
+            // the token straight out of the marketplace and into the winner's
+            // custody, so the seller neither has to be present nor to have
+            // approved the marketplace when the hammer falls. Without this the
+            // auction could take the winning bid and still leave the winner
+            // without the token, because nothing held the seller to the sale.
+            asset_utils::validate_nft_contract(&nft_address, &env)?;
+            asset_utils::check_nft_ownership(&nft_address, token_id, &seller, &env)?;
+            asset_utils::transfer_nft_from(
+                &nft_address,
+                &seller,
+                &seller,
+                &env.current_contract_address(),
+                token_id,
+                &env,
+            )?;
+
             AuctionEngine::create_auction(
                 &env,
                 auction_type,

@@ -6,6 +6,8 @@ use crate::events::{
     AuctionEndedEvent, AuctionExtendedEvent, BidBelowMinimumIncrementEvent, BidEscrowedEvent,
     BidPlacedEvent, BidRefundedEvent, BidRevealedEvent,
 };
+use crate::fee_manager::FeeManager;
+use crate::royalty_distributor::RoyaltyDistributor;
 use crate::security::frontrun_protection::{CommitRevealScheme, FrontRunningDetector};
 use crate::storage::auction_store::{AuctionStore, DutchAuctionStore};
 use crate::types::{
@@ -193,7 +195,8 @@ impl AuctionEngine {
             refunded: false,
         };
 
-        // Escrow bid funds: transfer from bidder into contract
+        // Direct bids are escrowed immediately and take the lead. Sealed bids
+        // only become the leading bid on reveal.
         if !bid.is_committed {
             asset_utils::transfer_tokens(
                 &auction.currency.contract,
@@ -211,6 +214,11 @@ impl AuctionEngine {
                     timestamp,
                 },
             );
+
+            // Return every deposit the displaced leader still has with the
+            // contract *before* the new bid is recorded, so `refund_all_bids`
+            // can never see — and repay — the bid being placed right now.
+            Self::refund_displaced_bidder(env, &auction, timestamp)?;
         }
 
         // Store bid
@@ -221,14 +229,10 @@ impl AuctionEngine {
         // minimum-increment rule never applied (the next bid fell through to
         // the "first bid" branch), any bidder could take the lot for the
         // starting price, and `end_auction` would settle against a zero
-        // highest bid. Sealed bids only become the leading bid on reveal.
+        // highest bid.
         if !bid.is_committed {
             auction.highest_bid = bid_amount;
             auction.highest_bidder = Some(bidder.clone());
-        }
-
-        // Update auction if direct bid
-        if !bid.is_committed {
             AuctionStore::update(env, &auction)?;
         }
 
@@ -340,7 +344,15 @@ impl AuctionEngine {
         Ok(())
     }
 
-    /// End an auction
+    /// End an auction and settle it.
+    ///
+    /// Reaching the end time used to only flip a state flag: the winning bid
+    /// stayed in the contract, the seller was never paid, and the lot never
+    /// moved. Settlement now mirrors a fixed-price sale — the token is
+    /// delivered out of escrow, the hammer price is split into creator
+    /// royalty, platform fee and seller proceeds, and each share is paid — so
+    /// an auction winner ends up with the same ownership and the same payout
+    /// arithmetic as a direct buyer.
     pub fn end_auction(
         env: &Env,
         auction_id: u64,
@@ -354,21 +366,91 @@ impl AuctionEngine {
         }
 
         let timestamp = env.ledger().timestamp();
-        let mut reason = "ended";
 
-        // Determine winner and final price
-        let (winner, final_price) = if auction.highest_bid >= auction.reserve_price {
-            (auction.highest_bidder.clone(), auction.highest_bid)
+        // The lot only sells when the leading bid clears the reserve. A
+        // reserve either wasn't set (0) or was met by the leading bid.
+        let winner = auction.highest_bidder.clone();
+        let reserve_met = winner.is_some() && auction.highest_bid >= auction.reserve_price;
+
+        if reserve_met {
+            let winner = winner.ok_or(SettlementError::NotFound)?;
+            let final_price = auction.highest_bid;
+
+            // Resolve the fee through the module that owns the configuration
+            // and reuse it for both the distribution and the stored record, so
+            // the two can never disagree the way the fixed-price path once
+            // did.
+            let fee_config = FeeManager::get_fee_config(env)?;
+            let platform_fee = FeeManager::calculate_fee(env, final_price, &auction.seller)?;
+            let distribution = RoyaltyDistributor::calculate_royalties(
+                env,
+                &auction.nft_address,
+                auction.token_id,
+                final_price,
+                &auction.seller,
+                &fee_config.fee_recipient,
+                platform_fee,
+            )?;
+
+            // Deliver the lot, then pay the sellers. The split is validated
+            // before any transfer, so a malformed distribution reverts the
+            // whole settlement instead of paying some recipients and leaving
+            // the rest stranded.
+            asset_utils::transfer_nft(
+                &auction.nft_address,
+                &env.current_contract_address(),
+                &winner,
+                auction.token_id,
+                env,
+            )?;
+
+            RoyaltyDistributor::distribute_royalties(
+                env,
+                auction_id,
+                &distribution,
+                &auction.currency,
+            )?;
+
+            // The stored fee is the amount that was actually split out to the
+            // platform, read back from the validated distribution rather than
+            // recomputed, so the record cannot drift from the payout.
+            let platform_amount = distribution
+                .amounts
+                .get(distribution.platform_address.clone())
+                .unwrap_or(0);
+
+            // Volume counted toward the buyer's discount tier, exactly as on a
+            // direct sale.
+            FeeManager::record_platform_volume(env, &winner, platform_amount)?;
+
+            auction.platform_fee = platform_amount;
+            auction.royalty_info = distribution;
+            auction.state = TransactionState::Executed;
+            AuctionStore::update(env, &auction)?;
+
+            emit_auction_ended(
+                env,
+                AuctionEndedEvent {
+                    auction_id,
+                    winner: Some(winner),
+                    final_price,
+                    reason: Bytes::from_slice(env, b"sold"),
+                    timestamp,
+                },
+            );
         } else {
-            reason = "reserve_not_met";
-            // Refund the highest bidder
-            if let Some(ref losing_bidder) = auction.highest_bidder {
-                AuctionStore::mark_bid_refunded(env, auction_id, losing_bidder)?;
+            // Reserve not met: the leading bidder gets their whole escrow back
+            // and the lot returns to the seller. `refund_all_bids` repays every
+            // deposit rather than a single record, which is what used to let a
+            // bidder collect their deposit twice while an earlier one stayed
+            // marked as outstanding.
+            if let Some(ref losing_bidder) = winner {
+                let amount = AuctionStore::refund_all_bids(env, auction_id, losing_bidder)?;
                 asset_utils::transfer_tokens(
                     &auction.currency.contract,
                     &env.current_contract_address(),
                     losing_bidder,
-                    auction.highest_bid,
+                    amount,
                     env,
                 )?;
                 emit_bid_refunded(
@@ -376,28 +458,35 @@ impl AuctionEngine {
                     BidRefundedEvent {
                         auction_id,
                         bidder: losing_bidder.clone(),
-                        amount: auction.highest_bid,
+                        amount,
                         reason: Bytes::from_slice(env, b"reserve_not_met"),
                         timestamp,
                     },
                 );
             }
-            (None, 0)
-        };
 
-        // Update auction state
-        auction.state = TransactionState::Executed;
-        AuctionStore::update(env, &auction)?;
+            asset_utils::transfer_nft(
+                &auction.nft_address,
+                &env.current_contract_address(),
+                &auction.seller,
+                auction.token_id,
+                env,
+            )?;
 
-        // Emit auction ended event
-        let event = AuctionEndedEvent {
-            auction_id,
-            winner,
-            final_price,
-            reason: Bytes::from_slice(env, reason.as_bytes()),
-            timestamp,
-        };
-        emit_auction_ended(env, event);
+            auction.state = TransactionState::Cancelled;
+            AuctionStore::update(env, &auction)?;
+
+            emit_auction_ended(
+                env,
+                AuctionEndedEvent {
+                    auction_id,
+                    winner: None,
+                    final_price: 0,
+                    reason: Bytes::from_slice(env, b"reserve_not_met"),
+                    timestamp,
+                },
+            );
+        }
 
         Ok(())
     }
@@ -446,6 +535,15 @@ impl AuctionEngine {
             return Err(SettlementError::InvalidState);
         }
 
+        // The lot was escrowed at creation, so it has to go home.
+        asset_utils::transfer_nft(
+            &auction.nft_address,
+            &env.current_contract_address(),
+            &auction.seller,
+            auction.token_id,
+            env,
+        )?;
+
         auction.state = TransactionState::Cancelled;
         AuctionStore::update(env, &auction)?;
 
@@ -469,30 +567,46 @@ impl AuctionEngine {
         }
 
         let timestamp = env.ledger().timestamp();
-        let refunded_bidder = auction.highest_bidder.clone();
-        let refunded_amount = auction.highest_bid;
+        let mut refunded_bidder = None;
+        let mut refunded_amount: i128 = 0;
 
-        // Refund current highest bidder if one exists
-        if let Some(ref bidder) = refunded_bidder {
-            AuctionStore::mark_bid_refunded(env, auction_id, bidder)?;
-            asset_utils::transfer_tokens(
-                &auction.currency.contract,
-                &env.current_contract_address(),
-                bidder,
-                refunded_amount,
-                env,
-            )?;
-            emit_bid_refunded(
-                env,
-                BidRefundedEvent {
-                    auction_id,
-                    bidder: bidder.clone(),
-                    amount: refunded_amount,
-                    reason: Bytes::from_slice(env, b"cancelled"),
-                    timestamp,
-                },
-            );
+        // Refund every outstanding deposit of the current highest bidder. A
+        // bidder who raised their own bid several times had several deposits
+        // held; repaying only one record while paying out the full highest bid
+        // left the books disagreeing with the balance.
+        if let Some(ref bidder) = auction.highest_bidder {
+            let amount = AuctionStore::refund_all_bids(env, auction_id, bidder)?;
+            if amount > 0 {
+                asset_utils::transfer_tokens(
+                    &auction.currency.contract,
+                    &env.current_contract_address(),
+                    bidder,
+                    amount,
+                    env,
+                )?;
+                emit_bid_refunded(
+                    env,
+                    BidRefundedEvent {
+                        auction_id,
+                        bidder: bidder.clone(),
+                        amount,
+                        reason: Bytes::from_slice(env, b"cancelled"),
+                        timestamp,
+                    },
+                );
+            }
+            refunded_bidder = Some(bidder.clone());
+            refunded_amount = amount;
         }
+
+        // Return the escrowed lot to its seller.
+        asset_utils::transfer_nft(
+            &auction.nft_address,
+            &env.current_contract_address(),
+            &auction.seller,
+            auction.token_id,
+            env,
+        )?;
 
         auction.state = TransactionState::Cancelled;
         AuctionStore::update(env, &auction)?;
@@ -531,22 +645,14 @@ impl AuctionEngine {
             return Err(SettlementError::InvalidState);
         }
 
-        // Find the bid and check it hasn't been refunded yet
-        let bids = AuctionStore::get_bids(env, auction_id);
-        let bid = bids
-            .iter()
-            .find(|b| b.bidder == *bidder)
-            .ok_or(SettlementError::NotFound)?;
-
-        if bid.refunded {
-            return Err(SettlementError::InvalidState);
-        }
-
-        let amount = bid.amount;
         let timestamp = env.ledger().timestamp();
 
-        // Mark refunded first (checks-effects-interactions)
-        AuctionStore::mark_bid_refunded(env, auction_id, bidder)?;
+        // Repay every outstanding deposit, marking the bids refunded before
+        // the transfer lands (checks-effects-interactions). Returning only the
+        // first matching record stranded the rest of a bidder's escrow: the
+        // other records stayed unrefunded but were unreachable because a second
+        // withdrawal hit the already-refunded first record.
+        let amount = AuctionStore::refund_all_bids(env, auction_id, bidder)?;
 
         asset_utils::transfer_tokens(
             &auction.currency.contract,
@@ -614,7 +720,14 @@ impl AuctionEngine {
             return Err(SettlementError::InvalidAmount);
         }
 
-        if reserve_price < 0 || reserve_price > starting_price {
+        // A reserve is a floor *above* the opening price: the auction runs from
+        // `starting_price` but only sells if bidding reaches `reserve_price`.
+        // Rejecting a reserve greater than the opening price inverted that
+        // relationship and made the reserve unenforceable — every bid had to
+        // clear the opening price anyway, so a lower reserve could never fail
+        // and `end_auction` never refunded on an unmet reserve. `0` means the
+        // lot sells at the opening price.
+        if reserve_price < 0 {
             return Err(SettlementError::InvalidAmount);
         }
 
@@ -698,6 +811,56 @@ impl AuctionEngine {
         Ok(())
     }
 
+    /// Refund every deposit the current leading bidder still holds with the
+    /// contract and clear the lead in memory.
+    ///
+    /// Called before a new leading bid is recorded. A bidder who has raised
+    /// their own bid has deposits on the books too, so this repays the previous
+    /// leader whether or not they are the incoming bidder. A leader with no
+    /// outstanding deposit (for example a sealed-bid placeholder) is not an
+    /// error — there is simply nothing to return.
+    fn refund_displaced_bidder(
+        env: &Env,
+        auction: &AuctionTransaction,
+        timestamp: u64,
+    ) -> Result<(), SettlementError> {
+        let prev_bidder = match auction.highest_bidder.clone() {
+            Some(bidder) => bidder,
+            None => return Ok(()),
+        };
+
+        let amount = match AuctionStore::refund_all_bids(env, auction.auction_id, &prev_bidder) {
+            Ok(total) => total,
+            Err(SettlementError::NotFound) => return Ok(()),
+            Err(err) => return Err(err),
+        };
+
+        if amount <= 0 {
+            return Ok(());
+        }
+
+        asset_utils::transfer_tokens(
+            &auction.currency.contract,
+            &env.current_contract_address(),
+            &prev_bidder,
+            amount,
+            env,
+        )?;
+
+        emit_bid_refunded(
+            env,
+            BidRefundedEvent {
+                auction_id: auction.auction_id,
+                bidder: prev_bidder,
+                amount,
+                reason: Bytes::from_slice(env, b"outbid"),
+                timestamp,
+            },
+        );
+
+        Ok(())
+    }
+
     /// Internal: Process a direct bid
     fn process_direct_bid(
         env: &Env,
@@ -707,27 +870,7 @@ impl AuctionEngine {
         timestamp: u64,
     ) -> Result<Bid, SettlementError> {
         // Refund the displaced highest bidder before overwriting
-        if let Some(ref prev_bidder) = auction.highest_bidder.clone() {
-            let prev_amount = auction.highest_bid;
-            AuctionStore::mark_bid_refunded(env, auction.auction_id, prev_bidder)?;
-            asset_utils::transfer_tokens(
-                &auction.currency.contract,
-                &env.current_contract_address(),
-                prev_bidder,
-                prev_amount,
-                env,
-            )?;
-            emit_bid_refunded(
-                env,
-                BidRefundedEvent {
-                    auction_id: auction.auction_id,
-                    bidder: prev_bidder.clone(),
-                    amount: prev_amount,
-                    reason: Bytes::from_slice(env, b"outbid"),
-                    timestamp,
-                },
-            );
-        }
+        Self::refund_displaced_bidder(env, auction, timestamp)?;
 
         // Update auction state
         auction.highest_bid = bid_amount;

@@ -102,6 +102,42 @@ impl AuctionStore {
         Err(SettlementError::NotFound)
     }
 
+    /// Mark every outstanding bid from `bidder` as refunded and return the
+    /// total they had escrowed.
+    ///
+    /// A bidder may bid repeatedly and be outbid each time, and every one of
+    /// those deposits is held by the contract. Refunding only the first bid
+    /// left the rest stranded: the first bid was already marked refunded, so a
+    /// second withdrawal attempt was rejected and the remaining deposits became
+    /// permanently unreachable.
+    pub fn refund_all_bids(
+        env: &Env,
+        auction_id: u64,
+        bidder: &Address,
+    ) -> Result<i128, SettlementError> {
+        let mut bids = Self::get_bids(env, auction_id);
+        let mut total: i128 = 0;
+        let mut found = false;
+
+        for i in 0..bids.len() {
+            if let Some(mut bid) = bids.get(i) {
+                if bid.bidder == *bidder && !bid.refunded {
+                    total = total.saturating_add(bid.amount);
+                    bid.refunded = true;
+                    bids.set(i, bid);
+                    found = true;
+                }
+            }
+        }
+
+        if !found {
+            return Err(SettlementError::NotFound);
+        }
+
+        Self::put_bids(env, auction_id, &bids);
+        Ok(total)
+    }
+
     /// Update a bid in an auction (for committed bids)
     pub fn update_bid(
         env: &Env,
