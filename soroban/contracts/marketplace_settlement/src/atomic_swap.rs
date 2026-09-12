@@ -1,10 +1,22 @@
 use crate::error::SettlementError;
+use crate::ttl;
 use crate::types::{Asset, ExecutionResult};
 use crate::utils::asset_utils;
-use soroban_sdk::{contracttype, symbol_short, Address, Bytes, Env, Map, Symbol, Vec};
+use soroban_sdk::{contracttype, Address, Bytes, Env, Symbol, Vec};
 
-// Storage keys
-const ATOMIC_SWAPS: Symbol = symbol_short!("atom_swps");
+/// Storage key for an escrow record.
+///
+/// Escrows used to be one `Map<u64, AtomicSwap>` in **instance** storage, keyed
+/// by a generated swap id, and every lookup scanned the whole map comparing
+/// transaction ids. That made each listing rewrite every escrow on the book and
+/// every settlement linear in the number of open sales. Keying directly by
+/// transaction id — the only thing callers ever look up by — removes the scan
+/// and gives each escrow its own entry and TTL.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum EscrowKey {
+    Swap(u64),
+}
 
 /// Represents an escrow holding
 #[contracttype]
@@ -27,7 +39,6 @@ pub struct EscrowHolding {
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AtomicSwap {
-    pub swap_id: u64,
     pub transaction_id: u64,
     pub seller_escrow: Vec<EscrowHolding>,
     pub buyer_escrow: Vec<EscrowHolding>,
@@ -77,8 +88,6 @@ impl AtomicSwapEngine {
         payment_asset: &Asset,
         payment_amount: i128,
     ) -> Result<u64, SettlementError> {
-        let swap_id = Self::next_swap_id(env);
-
         let mut seller_escrow = Vec::new(env);
         seller_escrow.push_back(EscrowHolding {
             transaction_id,
@@ -95,7 +104,6 @@ impl AtomicSwapEngine {
         });
 
         let atomic_swap = AtomicSwap {
-            swap_id,
             transaction_id,
             seller_escrow,
             buyer_escrow: Vec::new(env),
@@ -108,7 +116,7 @@ impl AtomicSwapEngine {
         };
 
         Self::store_swap(env, &atomic_swap)?;
-        Ok(swap_id)
+        Ok(transaction_id)
     }
 
     /// Deposit funds/NFTs into escrow
@@ -449,30 +457,9 @@ impl AtomicSwapEngine {
         Ok(())
     }
 
-    /// Internal: Get next swap ID
-    fn next_swap_id(env: &Env) -> u64 {
-        let current_id: u64 = env
-            .storage()
-            .instance()
-            .get(&Symbol::new(env, "next_swap"))
-            .unwrap_or(1);
-        let next_id = current_id + 1;
-        env.storage()
-            .instance()
-            .set(&Symbol::new(env, "next_swap"), &next_id);
-        current_id
-    }
-
     /// Internal: Store atomic swap
     fn store_swap(env: &Env, swap: &AtomicSwap) -> Result<(), SettlementError> {
-        let mut swaps: Map<u64, AtomicSwap> = env
-            .storage()
-            .instance()
-            .get(&ATOMIC_SWAPS)
-            .unwrap_or(Map::new(env));
-
-        swaps.set(swap.swap_id, swap.clone());
-        env.storage().instance().set(&ATOMIC_SWAPS, &swaps);
+        ttl::set(env, &EscrowKey::Swap(swap.transaction_id), swap);
         Ok(())
     }
 
@@ -481,19 +468,7 @@ impl AtomicSwapEngine {
         env: &Env,
         transaction_id: u64,
     ) -> Result<AtomicSwap, SettlementError> {
-        let swaps: Map<u64, AtomicSwap> = env
-            .storage()
-            .instance()
-            .get(&ATOMIC_SWAPS)
-            .ok_or(SettlementError::NotFound)?;
-
-        for (_, swap) in swaps.iter() {
-            if swap.transaction_id == transaction_id {
-                return Ok(swap);
-            }
-        }
-
-        Err(SettlementError::NotFound)
+        ttl::get(env, &EscrowKey::Swap(transaction_id)).ok_or(SettlementError::NotFound)
     }
 }
 

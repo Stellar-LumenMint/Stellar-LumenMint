@@ -252,6 +252,34 @@ fn test_auction_records_use_per_id_persistent_storage() {
     assert_eq!(client.get_auction(&auction_id).highest_bid, 100_000i128);
 }
 
+/// Each escrow must be its own entry, addressed by transaction id.
+///
+/// Escrows used to share one `Map<u64, AtomicSwap>` in instance storage keyed by
+/// a generated swap id, and lookups scanned every escrow comparing transaction
+/// ids. Asserting the storage key pins both halves of the fix: the location and
+/// the fact that the transaction id is the key.
+#[test]
+fn test_escrow_records_use_per_transaction_storage() {
+    use crate::atomic_swap::EscrowKey;
+
+    let (env, cid, client, admin) = new_env();
+    let asset = mk_asset(&env);
+    let seller = Address::generate(&env);
+    let nft = env.register(MockNft, ());
+    let creator = Address::generate(&env);
+    reg(&env, &cid, &nft, &creator, &admin, &asset);
+    MockNftClient::new(&env, &nft).set_owner(&seller);
+
+    let id = client.create_sale(&seller, &nft, &1u64, &1_000_000i128, &asset, &86400u64);
+
+    env.as_contract(&cid, || {
+        assert!(env.storage().persistent().has(&EscrowKey::Swap(id)));
+        let swap = crate::atomic_swap::AtomicSwapEngine::get_swap_by_transaction(&env, id)
+            .expect("escrow must be readable by transaction id");
+        assert_eq!(swap.transaction_id, id);
+    });
+}
+
 #[test]
 fn test_cancel_sale_non_seller_fails() {
     let (env, cid, client, admin) = new_env();
