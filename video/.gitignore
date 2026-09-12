@@ -1,0 +1,16 @@
+# Regenerable build inputs.
+#
+# Everything here is produced by `npm run build`: screenshots from the live
+# deployment, narration from the TTS engine, subtitles and the intermediate
+# render work. They are large binaries, they change on every run, and committing
+# them would bloat the repository for no benefit — the generators are the source
+# of truth.
+assets/
+audio/
+.work/
+manifest.json
+narration.json
+*.log
+
+# The rendered deliverables in `out/` are deliberately committed: the README
+# links to them, so they must exist in the repository.

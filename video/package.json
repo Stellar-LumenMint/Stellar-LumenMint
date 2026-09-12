@@ -1,0 +1,19 @@
+{
+  "name": "@stellar-lumenmint/pitch-video",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Reproducible generator for the LumenMint product pitch video.",
+  "type": "module",
+  "scripts": {
+    "capture": "node capture.mjs",
+    "narrate": "node narrate.mjs",
+    "assemble": "node assemble.mjs",
+    "thumbnail": "node thumbnail.mjs",
+    "transcript": "node transcript.mjs",
+    "verify": "node verify-video.mjs",
+    "build": "node capture.mjs && node narrate.mjs && node assemble.mjs && node thumbnail.mjs && node transcript.mjs && node verify-video.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.49.1"
+  }
+}

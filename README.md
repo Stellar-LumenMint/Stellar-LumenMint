@@ -6,6 +6,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+[![Watch the pitch](https://img.shields.io/badge/%E2%96%B6_watch_the_pitch-5_min-00D4FF.svg)](./video/out/stellar-lumenmint-pitch.mp4)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
 <!-- CI/CD Status Badges -->
@@ -33,6 +34,25 @@
 [![pnpm](https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm&logoColor=white)](https://pnpm.io)
 
 </div>
+
+---
+
+## ▶ Watch the pitch
+
+[![Watch the LumenMint product pitch — five minutes, captioned](./video/out/thumbnail.png)](./video/out/stellar-lumenmint-pitch.mp4)
+
+**[▶ Watch the 5-minute product pitch](./video/out/stellar-lumenmint-pitch.mp4)** — 1080p, captioned, with a [timestamped transcript](./video/out/TRANSCRIPT.md).
+
+A five-minute walkthrough of the problem, the product, the architecture, the live deployment and the engineering behind it. Every figure on screen — the gas benchmarks, the test counts, the error-code registry, the contract addresses — is read from this repository when the video is rendered, and the whole thing is produced by a [scripted pipeline](./video/README.md) rather than edited by hand, so it cannot drift from the code it describes.
+
+| At | Chapter | Covers |
+|---|---|---|
+| `0:00` | **The gap** | Why Stellar's NFT layer is thin, and what never settles |
+| `0:25` | **The product** | What LumenMint is, and what real settlement means |
+| `1:05` | **Architecture** | Contracts, API, interfaces and tooling in one monorepo |
+| `2:14` | **Live product** | The production deployment, end to end |
+| `2:58` | **Engineering** | Settlement code, gas benchmarks, audits and coverage |
+| `4:15` | **Why it matters** | Open-source readiness and where to contribute |
 
 ---
 
