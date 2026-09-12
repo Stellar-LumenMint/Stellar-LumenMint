@@ -299,13 +299,24 @@ impl DisputeResolutionManager {
             .ok_or(SettlementError::NotFound)
     }
 
-    /// Update dispute configuration
-    pub fn update_dispute_config(
-        env: &Env,
-        config: &DisputeConfig,
-        _admin: &Address,
-    ) -> Result<(), SettlementError> {
-        // Check admin permissions
+    /// Validate and store the dispute configuration.
+    ///
+    /// Internal setter: authorization belongs to the entry point that calls it,
+    /// so that a caller which already holds the admin's authorization — as
+    /// `initialize` does — does not trigger the host's
+    /// "frame is already authorized" error by requiring it a second time.
+    ///
+    /// A zero quorum is rejected: it would let a single vote (or none) settle a
+    /// dispute, which is the value the whole arbitration path is meant to
+    /// protect.
+    pub fn set_dispute_config(env: &Env, config: &DisputeConfig) -> Result<(), SettlementError> {
+        if config.arbitration_quorum == 0 {
+            return Err(SettlementError::InvalidAmount);
+        }
+        if config.min_arbitrator_reputation > 10_000 {
+            return Err(SettlementError::InvalidAmount);
+        }
+
         env.storage().instance().set(&DISPUTE_CONFIG, config);
         Ok(())
     }
@@ -469,12 +480,17 @@ impl DisputeResolutionManager {
     /// Internal: Execute fund split — divides escrowed funds between buyer and seller per arbitration
     fn execute_split_funds(env: &Env, dispute: &Dispute) -> Result<(), SettlementError> {
         use crate::atomic_swap::AtomicSwapEngine;
+        use crate::utils::asset_utils;
         let swap = AtomicSwapEngine::get_swap_by_transaction(env, dispute.transaction_id)?;
 
-        // Split: refund 50% to buyer, release NFT to seller as compromise
+        let seller = swap.seller_escrow.get(0).map(|h| h.holder);
+
+        // Split: half the payment back to the buyer, the remainder to the
+        // seller, who keeps the NFT as the compromise. Paying only the buyer's
+        // half stranded the rest in the contract: nothing else can move it out,
+        // because it was never recorded as withdrawable platform fees.
         for holding in swap.buyer_escrow.iter() {
             if !holding.is_nft {
-                use crate::utils::asset_utils;
                 let half = holding.amount.saturating_div(2);
                 if half > 0 {
                     asset_utils::transfer_tokens(
@@ -482,6 +498,18 @@ impl DisputeResolutionManager {
                         &env.current_contract_address(),
                         &holding.holder,
                         half,
+                        env,
+                    )?;
+                }
+
+                let remainder = holding.amount.saturating_sub(half);
+                if remainder > 0 {
+                    let seller_address = seller.clone().ok_or(SettlementError::NotFound)?;
+                    asset_utils::transfer_tokens(
+                        &holding.asset.contract,
+                        &env.current_contract_address(),
+                        &seller_address,
+                        remainder,
                         env,
                     )?;
                 }
@@ -578,33 +606,9 @@ impl Default for DisputeConfig {
     }
 }
 
-/// Dispute evidence manager
-pub struct DisputeEvidenceManager;
-
-impl DisputeEvidenceManager {
-    /// Store dispute evidence on-chain
-    pub fn store_evidence(
-        _env: &Env,
-        _dispute_id: u64,
-        _evidence_data: &Vec<u8>,
-        _submitter: &Address,
-    ) -> Result<(), SettlementError> {
-        Ok(())
-    }
-
-    /// Get evidence for a dispute
-    pub fn get_evidence(env: &Env, _dispute_id: u64) -> Result<Vec<Bytes>, SettlementError> {
-        // Placeholder
-        Ok(Vec::new(env))
-    }
-
-    /// Validate evidence format
-    pub fn validate_evidence(evidence: &Vec<u8>) -> Result<(), SettlementError> {
-        // Basic validation - check size limits
-        if evidence.len() > 10000 {
-            // 10KB limit
-            return Err(SettlementError::InvalidAmount);
-        }
-        Ok(())
-    }
-}
+// `DisputeEvidenceManager` was removed. `store_evidence` returned `Ok(())`
+// without writing anything and `get_evidence` returned an empty vector, so the
+// pair claimed to record dispute evidence while silently discarding it.
+// Evidence is carried on the `Dispute` record itself (`evidence_uri`, written
+// by `initiate_dispute`), which is the single source of truth; a second API
+// that does nothing is a trap for integrators, not a feature.

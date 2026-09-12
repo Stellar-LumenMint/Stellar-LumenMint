@@ -307,6 +307,41 @@ fn test_fee_ledger_uses_per_key_persistent_storage() {
     assert!(client.get_user_volume(&buyer) > 0);
 }
 
+/// The dispute configuration must be changeable through an authorized path,
+/// and a quorum of zero must be rejected.
+#[test]
+fn test_update_dispute_config_requires_admin() {
+    use crate::dispute_resolution::DisputeConfig;
+
+    let (env, _cid, client, admin) = new_env();
+    let stranger = Address::generate(&env);
+
+    let config = DisputeConfig {
+        arbitration_quorum: 5,
+        cooling_period: 3600,
+        evidence_submission_period: 3600,
+        max_arbitrators_per_dispute: 5,
+        min_arbitrator_reputation: 100,
+    };
+
+    // A non-admin must not be able to rewrite who settles disputes.
+    assert_eq!(
+        client.try_update_dispute_config(&config, &stranger),
+        Err(Ok(SettlementError::Unauthorized))
+    );
+
+    client.update_dispute_config(&config, &admin);
+
+    let zero_quorum = DisputeConfig {
+        arbitration_quorum: 0,
+        ..config
+    };
+    assert_eq!(
+        client.try_update_dispute_config(&zero_quorum, &admin),
+        Err(Ok(SettlementError::InvalidAmount))
+    );
+}
+
 #[test]
 fn test_cancel_sale_non_seller_fails() {
     let (env, cid, client, admin) = new_env();

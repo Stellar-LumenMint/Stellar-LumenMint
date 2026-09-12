@@ -54,6 +54,11 @@ impl MarketplaceSettlement {
         admin: Address,
         fee_config: FeeConfig,
     ) -> Result<(), SettlementError> {
+        // The admin must consent to the role before the contract records it, so
+        // the deployer cannot install an address that never authorized the
+        // capability (fee withdrawal, pause, blocklist) that comes with it.
+        admin.require_auth();
+
         let admin_config = AdminConfig {
             admin: admin.clone(),
             // Emergency withdrawal is a high-impact capability that moves user
@@ -82,7 +87,7 @@ impl MarketplaceSettlement {
 
         // Set default dispute config
         let dispute_config = crate::dispute_resolution::DisputeConfig::default();
-        DisputeResolutionManager::update_dispute_config(&env, &dispute_config, &admin)?;
+        DisputeResolutionManager::set_dispute_config(&env, &dispute_config)?;
 
         // Initialize with empty supported assets list
         let empty_assets: Vec<Asset> = Vec::new(&env);
@@ -1402,6 +1407,30 @@ impl MarketplaceSettlement {
 
             Ok(())
         })
+    }
+
+    /// Replace the dispute arbitration configuration (admin only).
+    ///
+    /// There was no way to change it after deployment: the internal setter
+    /// ignored the admin address it was handed and never authorized it, so the
+    /// capability was unreachable rather than merely unrestricted.
+    pub fn update_dispute_config(
+        env: Env,
+        config: crate::dispute_resolution::DisputeConfig,
+        admin: Address,
+    ) -> Result<(), SettlementError> {
+        admin.require_auth();
+
+        let admin_config: AdminConfig = env
+            .storage()
+            .instance()
+            .get(&symbol_short!("admin_cfg"))
+            .ok_or(SettlementError::Unauthorized)?;
+        if admin_config.admin != admin {
+            return Err(SettlementError::Unauthorized);
+        }
+
+        DisputeResolutionManager::set_dispute_config(&env, &config)
     }
 
     /// Update fee configuration (admin only)
