@@ -1,0 +1,52 @@
+name: Stellar-LumenMint Video CI
+
+on:
+  push:
+    paths:
+      - "video/**"
+      - "README.md"
+      - ".github/workflows/stellar-lumenmint-video.yml"
+    branches: [main, develop]
+  pull_request:
+    paths:
+      - "video/**"
+      - "README.md"
+      - ".github/workflows/stellar-lumenmint-video.yml"
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: stellar-lumenmint-video-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  verify:
+    name: Verify pitch artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # The check needs `ffprobe` and nothing else, so the workspace is
+      # deliberately not installed: pulling in the Playwright dependency tree
+      # would add minutes to every run for a job that never launches a browser.
+      # `ffprobe` ships with ffmpeg, which the ubuntu-latest image already has.
+      - name: Verify ffprobe is available
+        run: ffprobe -version | head -n 1
+
+      # Catches a truncated render, a thumbnail at the wrong resolution, a
+      # transcript that no longer matches the script, and any relative link in a
+      # README that points at a file which was renamed or deleted. None of those
+      # are visible in a diff or on the rendered page.
+      - name: Verify the pitch video and README links
+        working-directory: ./video
+        run: npm run verify

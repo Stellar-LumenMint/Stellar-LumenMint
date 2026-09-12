@@ -19,6 +19,7 @@
 [![Security Scan](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-security.yml)
 [![Vercel Deploy](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml)
 [![Release](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml)
+[![Video CI](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-video.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-video.yml)
 
 <!-- Tech Stack Badges -->
 [![Stellar](https://img.shields.io/badge/Stellar-090020?logo=stellar&logoColor=white)](https://stellar.org)
@@ -279,6 +280,7 @@ Every workspace has automated CI triggered on push/PR:
 | **Release** | Semver, changelog, Docker publish to GHCR | [![Release](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml/badge.svg)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-release.yml) |
 | **Vercel** | Automatic production deploy on `main`, preview per PR | [![Vercel](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-vercel.yml) |
 | **Deploy** | Manual deploy/rollback with health checks | Manual |
+| **Video** | Verifies the pitch video, thumbnail, transcript and README links | [![Video](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-video.yml/badge.svg?branch=main)](https://github.com/Stellar-LumenMint/Stellar-LumenMint/actions/workflows/stellar-lumenmint-video.yml) |
 
 ---
 
